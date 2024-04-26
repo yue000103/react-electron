@@ -1,0 +1,5 @@
+
+
+//同时启动electron
+//  "dev": "react-scripts start | electron .", 
+//     "dev:debug": "react-scripts start | electron . --debug" 
