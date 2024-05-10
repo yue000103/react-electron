@@ -1,7 +1,6 @@
 import logo from "./logo.svg";
 import "./App.css";
 import Test from "./views/test";
-import Home from "./views/home";
 
 function MyButton() {
     return <button>我是一个按钮</button>;
@@ -27,7 +26,6 @@ function App() {
                 <button>我是一个</button>
             </header>
             <Test></Test>
-            <Home></Home>
         </div>
     );
 }

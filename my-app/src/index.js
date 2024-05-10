@@ -4,7 +4,6 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import Test from "./views/test";
-import Home from "./views/home";
 
 import reportWebVitals from "./reportWebVitals";
 
@@ -13,7 +12,6 @@ root.render(
     <React.StrictMode>
         {/* <App></App> */}
         <Test></Test>
-        {/* <Home></Home> */}
     </React.StrictMode>
 );
 
