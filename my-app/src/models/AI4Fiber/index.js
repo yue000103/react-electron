@@ -3,13 +3,10 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./pages/index.css";
 import App from "./pages/App";
-import * as AntDesign from "antd";
 
 import reportWebVitals from "./pages/reportWebVitals";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-const { Button, Input, Form, Modal, Table, Row, Flex, Layout } = AntDesign;
-
 root.render(
     <React.StrictMode>
         <App></App>

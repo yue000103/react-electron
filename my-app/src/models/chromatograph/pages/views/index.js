@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Flex, Layout, Button } from "antd";
+import { Flex, Layout, Button, Row, Col } from "antd";
 import "./index.css";
 import Line from "@components/d3/line";
 import Buttons from "@components/button/index";
@@ -7,24 +7,24 @@ import Buttons from "@components/button/index";
 const { Header, Sider, Content } = Layout;
 
 let num = [
-    { x: 0, y: 1, flag: 36 },
-    { x: 1, y: 3, flag: 234 },
-    { x: 3, y: 4, flag: 298 },
-    { x: 4, y: 5, flag: 317 },
-    { x: 5, y: 7, flag: 72 },
-    { x: 7, y: 8, flag: 200 },
-    { x: 8, y: 9, flag: 333 },
-    { x: 9, y: 10, flag: 117 },
-    { x: 10, y: 11, flag: 260 },
-    { x: 11, y: 12, flag: 45 },
-    { x: 12, y: 13, flag: 184 },
-    { x: 13, y: 14, flag: 78 },
-    { x: 14, y: 15, flag: 197 },
-    { x: 15, y: 16, flag: 319 },
-    { x: 16, y: 17, flag: 253 },
-    { x: 17, y: 18, flag: 342 },
-    { x: 18, y: 19, flag: 206 },
-    { x: 19, y: 20, flag: 157 },
+    { x: 0, y: 1, tube: 36 },
+    { x: 1, y: 3, tube: 234 },
+    { x: 3, y: 4, tube: 298 },
+    { x: 4, y: 5, tube: 317 },
+    { x: 5, y: 7, tube: 72 },
+    { x: 7, y: 8, tube: 200 },
+    { x: 8, y: 9, tube: 333 },
+    { x: 9, y: 10, tube: 117 },
+    { x: 10, y: 11, tube: 260 },
+    { x: 11, y: 12, tube: 45 },
+    { x: 12, y: 13, tube: 184 },
+    { x: 13, y: 14, tube: 78 },
+    { x: 14, y: 15, tube: 197 },
+    { x: 15, y: 16, tube: 319 },
+    { x: 16, y: 17, tube: 253 },
+    { x: 17, y: 18, tube: 342 },
+    { x: 18, y: 19, tube: 206 },
+    { x: 19, y: 20, tube: 157 },
 ];
 const data = [
     { x: 0, y: 62 },
@@ -49,71 +49,69 @@ const data = [
     { x: 21, y: 97 },
 ];
 
-let selectedFlags = [];
-let selectedFlag = {};
+const tube_list = [];
+
+let selected_tube = []; // 接收到的试管列表
+let selected_tubes = []; //总的是试管列表
+let selected_reverse = [];
+
 const App = () => {
     const [nums, setNum] = useState(num);
+    const handleReceiveFlags = (select_tubes, numss) => {
+        selected_tube = select_tubes;
+        num = numss;
+    };
+    // flag  ： undefined  没被选中   true  保留  false  废弃
 
-    // 处理接收子组件传回的 selectedFlags 数据
-    const handleReceiveFlags = (flags, nums) => {
-        selectedFlags = flags;
-        num = nums;
+    const process_data_flag = (flag) => {
+        num = num.map((item) => {
+            if (selected_tube.includes(item.tube)) {
+                return { ...item, flag: flag };
+            }
+            return item;
+        });
+
+        setNum(num);
     };
     const saveFlags = () => {
-        console.log("-----------", selectedFlag);
-        selectedFlag = { selectedFlags };
-        console.log("-----------", selectedFlag);
-
-        num = num.map((item) => {
-            const newStatus =
-                item.status === 0
-                    ? selectedFlags.includes(item.flag)
-                        ? 1
-                        : 0
-                    : item.status === undefined
-                    ? 0
-                    : item.status;
-            return {
-                x: item.x,
-                y: item.y,
-                flag: item.flag,
-                status: newStatus,
-            };
-        });
-        console.log("-----------num", num);
-
-        setNum(num);
+        let new_tube = { tube_list: selected_tube, status: "retain" };
+        selected_tubes = [...selected_tubes, new_tube];
+        process_data_flag(true);
+        selected_reverse = [];
     };
     const abandonFlags = () => {
-        num = num.map((item) => {
-            const newStatus =
-                item.status === 0
-                    ? selectedFlags.includes(item.flag)
-                        ? 2
-                        : 0
-                    : item.status === undefined
-                    ? 0
-                    : item.status;
-            return {
-                x: item.x,
-                y: item.y,
-                flag: item.flag,
-                status: newStatus,
-            };
-        });
-        setNum(num);
+        let new_tube = { tube_list: selected_tube, status: "discard" };
+        selected_tubes = [...selected_tubes, new_tube];
+        process_data_flag(false);
+        selected_reverse = [];
     };
+    const reverseFlags = () => {
+        selected_reverse = selected_tube;
+        let reverse = num.filter(
+            (item) =>
+                !selected_reverse.includes(item.tube) && item.flag == undefined
+        );
+        selected_reverse = reverse.map((item) => item.tube);
+        setNum(selected_reverse);
+    };
+
     return (
         <Flex gap="middle" wrap className="container">
             <Layout className="layoutStyle">
-                <div className="headerStyle">
-                    <Line data={data} num={num}></Line>
-                    {/* <Test data={data}></Test> */}
-                </div>
+                <Row>
+                    <Col span={12}>
+                        <div className="headerStyle">
+                            <Line data={data} num={num}></Line>
+                            {/* <Test data={data}></Test> */}
+                        </div>
+                    </Col>
+                    <Col span={12}>col-12</Col>
+                </Row>
                 <Layout>
                     <Sider width="65%" className="siderStyle">
                         <Buttons
                             num={num}
+                            selected={selected_reverse}
                             callback={handleReceiveFlags}
                         ></Buttons>
                     </Sider>
@@ -133,7 +131,11 @@ const App = () => {
                             >
                                 废弃
                             </Button>
-                            <Button type="primary" className="button">
+                            <Button
+                                type="primary"
+                                onClick={() => reverseFlags()}
+                                className="button"
+                            >
                                 反转
                             </Button>
                             <Button type="primary  " className="button">

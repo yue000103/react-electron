@@ -25,7 +25,9 @@
         "eject": "react-app-rewired eject",
         "start:test": "cross-env MODEL_NAME=test react-app-rewired start",
         "start:chromatograph": "cross-env MODEL_NAME=chromatograph react-app-rewired start",
-        "build:chromatograph": "cross-env MODEL_NAME=chromatograph react-app-rewired build"
+        "build:chromatograph": "cross-env MODEL_NAME=chromatograph react-app-rewired build",
+        "start:AI4Fiber": "cross-env MODEL_NAME=AI4Fiber react-app-rewired start",
+        "build:AI4Fiber": "cross-env MODEL_NAME=AI4Fiber react-app-rewired build"
     },
     "eslintConfig": {
         "extends": [

@@ -26,8 +26,8 @@
 .layoutStyle  {
   border-radius: 8;
   overflow:  hidden ;
-  width:  calc(80% - 8px) ;
-  max-width:  calc(90% - 8px) ;
+  width:  calc(50% - 8px) ;
+  max-width:  calc(50% - 8px) ;
 }
 .button{
   margin-left: 1rem;

@@ -129,7 +129,7 @@ const LineChart = (props) => {
             .attr("y", 30) // 计算中间位置的 y 坐标
 
             .attr("text-anchor", "middle")
-            .text((d) => d.flag);
+            .text((d) => d.tube);
     }, [data, dimensions]); // 仅在组件挂载时执行一次
 
     return (
