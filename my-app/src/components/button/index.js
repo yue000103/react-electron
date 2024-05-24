@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button, Flex } from "antd";
 import "./index.css";
+import color from "@components/color/index"; // 引入样式对象
 
 let select_tube = [];
 
@@ -38,21 +39,13 @@ const App = ({ num, callback, selected }) => {
             {num.map((item, index) => {
                 const tube = item.tube;
                 const isSelected = selectedFlag.includes(tube);
-                let buttonStyle = {};
-
+                let buttonColorStyle = {};
                 let buttonDisabled = false;
-                if (item?.flag === true) {
-                    buttonDisabled = true; // 当状态为 1 时禁用按钮
-                    buttonStyle = {
-                        backgroundColor: "#d5d5f5",
-                        color: "white",
-                    };
-                } else if (item?.flag === false) {
-                    buttonStyle = {
-                        backgroundColor: "red",
-                        color: "white",
-                    };
+
+                if (item.color) {
                     buttonDisabled = true;
+                    let colorName = `color${item.color}`;
+                    buttonColorStyle = color[colorName];
                 }
 
                 return (
@@ -64,7 +57,7 @@ const App = ({ num, callback, selected }) => {
                         style={{
                             backgroundColor: isSelected ? "#d5d5f5" : "",
                             color: isSelected ? "white" : "black",
-                            ...buttonStyle,
+                            ...buttonColorStyle,
                         }}
                         onClick={() => handleButtonClick(tube)}
                     >

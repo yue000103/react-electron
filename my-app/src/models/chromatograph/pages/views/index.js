@@ -3,6 +3,8 @@ import { Flex, Layout, Button, Row, Col } from "antd";
 import "./index.css";
 import Line from "@components/d3/line";
 import Buttons from "@components/button/index";
+import TaskList from "@components/taskList/index";
+import { color } from "d3";
 
 const { Header, Sider, Content } = Layout;
 
@@ -50,7 +52,19 @@ const data = [
 ];
 
 const tube_list = [];
-
+const colorMap = {
+    0: "Zero",
+    1: "One",
+    2: "Two",
+    3: "Three",
+    4: "Four",
+    5: "Five",
+    6: "Six",
+    7: "Seven",
+    8: "Eight",
+    9: "Nine",
+};
+let colorNum = 0;
 let selected_tube = []; // 接收到的试管列表
 let selected_tubes = []; //总的是试管列表
 let selected_reverse = [];
@@ -63,26 +77,35 @@ const App = () => {
     };
     // flag  ： undefined  没被选中   true  保留  false  废弃
 
-    const process_data_flag = (flag) => {
+    const process_data_flag = (selected_tube, flag, color) => {
         num = num.map((item) => {
             if (selected_tube.includes(item.tube)) {
-                return { ...item, flag: flag };
+                return { ...item, flag: flag, color: color };
             }
             return item;
         });
 
         setNum(num);
+        console.log(num);
     };
     const saveFlags = () => {
         let new_tube = { tube_list: selected_tube, status: "retain" };
         selected_tubes = [...selected_tubes, new_tube];
-        process_data_flag(true);
+        let color = selected_tubes.length;
+        if (colorNum != 9) {
+            colorNum++;
+        } else {
+            colorNum = 1;
+        }
+        process_data_flag(selected_tube, true, colorMap[colorNum]);
         selected_reverse = [];
     };
     const abandonFlags = () => {
         let new_tube = { tube_list: selected_tube, status: "discard" };
         selected_tubes = [...selected_tubes, new_tube];
-        process_data_flag(false);
+        let color = 0;
+
+        process_data_flag(selected_tube, false, colorMap[color]);
         selected_reverse = [];
     };
     const reverseFlags = () => {
@@ -93,55 +116,71 @@ const App = () => {
         );
         selected_reverse = reverse.map((item) => item.tube);
         setNum(selected_reverse);
+        handleReceiveFlags(selected_reverse, num);
     };
-
+    const undoReceiveFlags = (index) => {
+        const tubeList = selected_tubes[index].tube_list;
+        selected_tubes = selected_tubes.filter((_, idx) => idx !== index);
+        process_data_flag(tubeList, undefined);
+    };
     return (
         <Flex gap="middle" wrap className="container">
             <Layout className="layoutStyle">
                 <Row>
-                    <Col span={12}>
+                    <Col span={20}>
                         <div className="headerStyle">
-                            <Line data={data} num={num}></Line>
+                            <Line
+                                data={data}
+                                num={num}
+                                selected_tubes={selected_tubes}
+                            ></Line>
                             {/* <Test data={data}></Test> */}
                         </div>
                     </Col>
-                    <Col span={12}>col-12</Col>
+                    <Col span={4}>
+                        <div className="contentStyle">
+                            <Flex wrap gap="small">
+                                <Button
+                                    type="primary"
+                                    className="button"
+                                    onClick={() => saveFlags()}
+                                >
+                                    保留
+                                </Button>
+                                <Button
+                                    type="primary"
+                                    className="button"
+                                    onClick={() => abandonFlags()}
+                                >
+                                    废弃
+                                </Button>
+                                <Button
+                                    type="primary"
+                                    onClick={() => reverseFlags()}
+                                    className="button"
+                                >
+                                    反转
+                                </Button>
+                                <Button type="primary  " className="button">
+                                    暂停
+                                </Button>
+                            </Flex>
+                        </div>
+                    </Col>
                 </Row>
                 <Layout>
-                    <Sider width="65%" className="siderStyle">
+                    <Sider width="50%" className="siderStyle">
                         <Buttons
                             num={num}
                             selected={selected_reverse}
                             callback={handleReceiveFlags}
                         ></Buttons>
                     </Sider>
-                    <Content className="contentStyle">
-                        <Flex wrap gap="small">
-                            <Button
-                                type="primary"
-                                className="button"
-                                onClick={() => saveFlags()}
-                            >
-                                保留
-                            </Button>
-                            <Button
-                                type="primary"
-                                className="button"
-                                onClick={() => abandonFlags()}
-                            >
-                                废弃
-                            </Button>
-                            <Button
-                                type="primary"
-                                onClick={() => reverseFlags()}
-                                className="button"
-                            >
-                                反转
-                            </Button>
-                            <Button type="primary  " className="button">
-                                暂停
-                            </Button>
-                        </Flex>
+                    <Content className="taskStyle">
+                        <TaskList
+                            selected_tubes={selected_tubes}
+                            callback={undoReceiveFlags}
+                        ></TaskList>
                     </Content>
                 </Layout>
             </Layout>

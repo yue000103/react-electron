@@ -4,4 +4,33 @@
 }
 
 
+.colorOne{
+  background-color: #f3c3d1;
+  color: white,
+}
 
+.colorTwo{
+  background-color: #f5e9d5;
+  color: white,
+  
+}
+
+.colorThere{background-color: #e7f5d5;
+  color: white,
+  
+}.colorFour{background-color: #d5f5e3;
+  color: white,
+  
+}.colorFive{background-color: #d5ecf5;
+  color: white,
+  
+}.colorSix{background-color: #d5d5f5;
+  color: white,
+  
+}.colorSeven{background-color: #efd5f5;
+  color: white,
+  
+}.colorEight{background-color: #f56b6b;
+  color: white,
+  
+}

@@ -1,10 +1,19 @@
  
 .contentStyle  {
-  text-align:  center ;
-  color:  #fff ;
   /* background-color:  #0958d9 ; */
-  background-color: #ffffff;
+  background-color: #ffffff !important;
+  display: flex;
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+  height: 100%;
 
+
+}
+.taskStyle{
+   /* background-color:  #0958d9 ; */
+   background-color: #ffffff !important;
+   align-items: center; 
 }
 .siderStyle  {
   
@@ -28,6 +37,8 @@
   overflow:  hidden ;
   width:  calc(80% - 8px) ;
   max-width:  calc(90% - 8px) ;
+  background-color:  #ffffff !important;
+
 }
 .button{
   margin-left: 1rem;

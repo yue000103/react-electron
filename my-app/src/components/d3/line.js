@@ -1,10 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
+import colors from "@components/color/index";
+let fillAreaDatas = [];
+let fillAreaData = [];
 const LineChart = (props) => {
     const svgRef = useRef(null);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const data = props.data;
     const num = props.num;
+    const selected = props.selected_tubes;
+    console.log("num selected", selected);
 
     // 监听 headerStyle 的大小变化
     useEffect(() => {
@@ -83,7 +88,7 @@ const LineChart = (props) => {
             .line()
             .x((d) => xScale(d.x))
             .y((d) => yScale(d.y))
-            .curve(d3.curveCardinal); // 使用 Cardinal 曲线插值
+            .curve(d3.curveLinear); // 使用 Cardinal 曲线插值
 
         // 绘制折线路径
         svg.append("path")
@@ -97,7 +102,8 @@ const LineChart = (props) => {
             .line()
             .x((d) => xScale(d.x))
             .y(height)
-            .curve(d3.curveCardinal);
+            .curve(d3.curveLinear);
+
         svg.append("path")
             .datum(data)
             .attr("fill", "none")
@@ -130,7 +136,60 @@ const LineChart = (props) => {
 
             .attr("text-anchor", "middle")
             .text((d) => d.tube);
-    }, [data, dimensions]); // 仅在组件挂载时执行一次
+
+        // 生成填充区域的路径生成器
+        const area = d3
+            .area()
+            .x((d) => xScale(d.x))
+            .y0(height)
+            .y1((d) => yScale(d.y))
+            .curve(d3.curveLinear);
+
+        const getXandY = (tube) => {
+            const selectedTube = num.find((item) => item.tube === tube);
+            if (selectedTube) {
+                return {
+                    x1: selectedTube.x,
+                    x2: selectedTube.y,
+                    color: selectedTube.color,
+                };
+            } else {
+                return null; // 如果未找到匹配的 tube，则返回 null 或者其他你认为合适的值
+            }
+        };
+        selected.forEach((selectTube) => {
+            console.log("selectTube", selectTube["tube_list"]);
+            let fillColor = "";
+            selectTube["tube_list"].forEach((tube) => {
+                const xy = getXandY(tube);
+                if (xy) {
+                    const { x1, x2, color } = xy;
+                    fillColor = color;
+                    let yObject1 = data.find((item) => item.x === x1);
+                    fillAreaData = [...fillAreaData, yObject1];
+                    let yObject2 = data.find((item) => item.x === x2);
+                    fillAreaData = [...fillAreaData, yObject2];
+                }
+            });
+            fillAreaData = fillAreaData.sort((a, b) => a.x - b.x);
+            let fill = { area: fillAreaData, color: fillColor };
+            fillAreaDatas = [...fillAreaDatas, fill];
+            fillAreaData = [];
+        });
+        for (let fill in fillAreaDatas) {
+            console.log(fillAreaDatas[fill]["color"]);
+            if (fillAreaDatas[fill]["color"]) {
+                let colorName = `color${fillAreaDatas[fill]["color"]}`;
+                svg.append("path")
+                    .datum(fillAreaDatas[fill]["area"])
+                    .attr("fill", colors[colorName].backgroundColor) // 设置填充颜色及透明度
+                    .attr("stroke", "none")
+                    .attr("d", area);
+            }
+        }
+        fillAreaDatas = [];
+        // 绘制填充区域
+    }, [data, dimensions, num]); // 仅在组件挂载时执行一次
 
     return (
         <div
@@ -140,7 +199,7 @@ const LineChart = (props) => {
                 height: "300px",
                 border: "none",
                 position: "relative",
-                top: "-10px",
+                top: "0px",
             }}
         >
             <svg ref={svgRef} width="100%" height="100%"></svg>
