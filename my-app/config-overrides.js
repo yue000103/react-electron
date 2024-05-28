@@ -7,15 +7,17 @@ function resolve(dir) {
 }
 
 module.exports = function (config, env) {
-    let pathDir = path.join(__dirname, "dist");
-    paths.appBuild = path.join(__dirname, "dist");
+    let pathDir = path.join(__dirname, "build");
+    paths.appBuild = path.join(__dirname, "build");
 
     if (process.env.MODEL_NAME) {
         let mName = process.env.MODEL_NAME;
 
         // 输出目录
-        pathDir = resolve(`dist/${mName}`);
-        paths.appBuild = resolve(`dist/${mName}`);
+        // pathDir = resolve(`build/${mName}`);
+        // paths.appBuild = resolve(`build/${mName}`);
+        pathDir = resolve(`build/`);
+        paths.appBuild = resolve(`build/`);
 
         // 模块入口
         // paths.appSrc = resolve(`src`);
@@ -64,6 +66,7 @@ module.exports = function (config, env) {
             ...config.alias,
             "@": path.resolve(__dirname, "src"),
             "@components": path.join(__dirname, "./src/components"),
+            "@AI4Fiber": path.join(__dirname, "./src/models/AI4Fiber"),
         },
     };
 

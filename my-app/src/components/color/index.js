@@ -2,7 +2,7 @@ import { color } from "d3";
 
 const colors = {
     colorOne: {
-        backgroundColor: "#f3c3d1",
+        backgroundColor: "rgba(221, 87, 60, 0.5)", // 背景颜色的 RGBA 值，透明度为50%
         color: "white",
         border: "none",
     },
@@ -32,7 +32,7 @@ const colors = {
         border: "none",
     },
     colorSeven: {
-        backgroundColor: "#efd5f5",
+        backgroundColor: "rgba(54, 55, 55, 1.0)", // 背景颜色的 RGBA 值，透明度为50%
         color: "white",
         border: "none",
     },
@@ -42,7 +42,7 @@ const colors = {
         border: "none",
     },
     colorZero: {
-        backgroundColor: "#f56b6b",
+        backgroundColor: "rgba(24, 68, 99, 0.2)", // 背景颜色的 RGBA 值，透明度为50%
         color: "white",
         border: "none",
     },

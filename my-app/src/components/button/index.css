@@ -1,6 +1,9 @@
-.button{
+.buttonTubes{
   margin-left: 1rem;
-  margin-top: 0.5rem;margin-bottom: 0.5rem;
+  /* margin-right: 1rem; */
+
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 
@@ -33,4 +36,8 @@
 }.colorEight{background-color: #f56b6b;
   color: white,
   
+}
+
+.card{
+  border: 2px solid black;
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Button, Flex } from "antd";
+import { Button, Flex, Row, Col, Card } from "antd";
 import "./index.css";
 import color from "@components/color/index"; // 引入样式对象
 
@@ -33,39 +33,90 @@ const App = ({ num, callback, selected }) => {
             }
         });
     };
+    const chunkArray = (array, chunkSize) => {
+        const results = [];
+        for (let i = 0; i < array.length; i += chunkSize) {
+            results.push(array.slice(i, chunkSize + i));
+        }
+        return results;
+    };
 
+    const groupsOfTen = chunkArray(num, 10);
+    const combineGroups = (array, groupSize) => {
+        const results = [];
+        for (let i = 0; i < array.length; i += groupSize) {
+            results.push(array.slice(i, groupSize + i));
+        }
+        return results;
+    };
+
+    const combinedGroups = combineGroups(groupsOfTen, 2);
     return (
-        <Flex wrap gap="small">
-            {num.map((item, index) => {
-                const tube = item.tube;
-                const isSelected = selectedFlag.includes(tube);
-                let buttonColorStyle = {};
-                let buttonDisabled = false;
+        <div>
+            {combinedGroups.map((group, groupIndex) => (
+                <Row key={groupIndex} gutter={[16, 16]}>
+                    {group.map((subGroup, subGroupIndex) => (
+                        <div className="card">
+                            <Col key={subGroupIndex} span={12}>
+                                {chunkArray(subGroup, 5).map(
+                                    (row, rowIndex) => (
+                                        <Row
+                                            key={rowIndex}
+                                            justify="space-around"
+                                            gutter={[16, 16]}
+                                        >
+                                            {row.map((item, index) => {
+                                                const tube = item.tube;
+                                                const isSelected =
+                                                    selectedFlag.includes(tube);
+                                                let buttonColorStyle = {};
+                                                let buttonDisabled = false;
 
-                if (item.color) {
-                    buttonDisabled = true;
-                    let colorName = `color${item.color}`;
-                    buttonColorStyle = color[colorName];
-                }
+                                                if (item.color) {
+                                                    buttonDisabled = true;
+                                                    let colorName = `color${item.color}`;
+                                                    buttonColorStyle =
+                                                        color[colorName];
+                                                }
 
-                return (
-                    <Button
-                        key={index}
-                        shape="circle"
-                        className="button"
-                        disabled={buttonDisabled}
-                        style={{
-                            backgroundColor: isSelected ? "#d5d5f5" : "",
-                            color: isSelected ? "white" : "black",
-                            ...buttonColorStyle,
-                        }}
-                        onClick={() => handleButtonClick(tube)}
-                    >
-                        {tube}
-                    </Button>
-                );
-            })}
-        </Flex>
+                                                return (
+                                                    <Col key={index} span={4}>
+                                                        <Button
+                                                            shape="circle"
+                                                            className="buttonTubes"
+                                                            disabled={
+                                                                buttonDisabled
+                                                            }
+                                                            style={{
+                                                                backgroundColor:
+                                                                    isSelected
+                                                                        ? "#d5d5f5"
+                                                                        : "",
+                                                                color: isSelected
+                                                                    ? "white"
+                                                                    : "black",
+                                                                ...buttonColorStyle,
+                                                            }}
+                                                            onClick={() =>
+                                                                handleButtonClick(
+                                                                    tube
+                                                                )
+                                                            }
+                                                        >
+                                                            {tube}
+                                                        </Button>
+                                                    </Col>
+                                                );
+                                            })}
+                                        </Row>
+                                    )
+                                )}
+                            </Col>
+                        </div>
+                    ))}
+                </Row>
+            ))}
+        </div>
     );
 };
 

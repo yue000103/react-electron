@@ -3,6 +3,16 @@ import * as d3 from "d3";
 import colors from "@components/color/index";
 let fillAreaDatas = [];
 let fillAreaData = [];
+let dataDynamic = [
+    { x: 0, y: 20 },
+    { x: 1, y: 20 },
+    { x: 3, y: 20 },
+    { x: 4, y: 71 },
+    { x: 5, y: 71 },
+    { x: 7, y: 71 },
+    { x: 8, y: 71 },
+    { x: 9, y: 71 },
+];
 const LineChart = (props) => {
     const svgRef = useRef(null);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -40,12 +50,17 @@ const LineChart = (props) => {
         // 创建 SVG 元素
 
         // 比例尺
-        const xScale = d3.scaleLinear().domain([0, 21]).range([0, width]);
+        const xScale = d3.scaleLinear().domain([0, 31]).range([0, width]);
         const yScale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
         // 坐标轴
         const xAxis = d3.axisTop(xScale);
         const yAxis = d3.axisRight(yScale);
-
+        // 比例尺
+        const x2Scale = d3.scaleLinear().domain([0, 10]).range([0, width]);
+        const y2Scale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
+        // 坐标轴
+        const x2Axis = d3.axisTop(x2Scale);
+        const y2Axis = d3.axisRight(y2Scale);
         // 绘制横坐标轴
         svg.append("g")
             .attr("transform", `translate(0, ${height})`)
@@ -59,14 +74,38 @@ const LineChart = (props) => {
             .call(yAxis);
         d3.select(svgRef.current).selectAll("text").remove();
         // 绘制数据点
+        // svg.selectAll("circle")
+        //     .data(data)
+        //     .enter()
+        //     .append("circle")
+        //     .attr("cx", (d) => xScale(d.x))
+        //     .attr("cy", (d) => yScale(d.y))
+        //     .attr("r", 5) // 设置圆点半径
+        //     .attr("fill", "red")
+        //     .on("mouseover", function (event, d) {
+        //         d3.select(this).style("opacity", 1); // 鼠标移入时显示圆点
+        //         const [x, y] = d3.pointer(event, svgRef.current);
+        //         // 获取鼠标位置
+        //         svg.append("text")
+        //             .attr("class", "coordinate-text")
+        //             .attr("x", x + 10)
+        //             .attr("y", y - 10)
+        //             .text(`(${d.x}, ${d.y})`)
+        //             .attr("font-size", "12px")
+        //             .attr("fill", "black")
+        //             .attr("pointer-events", "none"); // 防止文字影响鼠标事件
+        //     })
+        //     .on("mouseout", function () {
+        //         svg.selectAll(".coordinate-text").remove(); // 移除显示的坐标信息
+        //     });
         svg.selectAll("circle")
-            .data(data)
+            .data(dataDynamic)
             .enter()
             .append("circle")
-            .attr("cx", (d) => xScale(d.x))
-            .attr("cy", (d) => yScale(d.y))
+            .attr("cx", (d) => x2Scale(d.x))
+            .attr("cy", (d) => y2Scale(d.y))
             .attr("r", 5) // 设置圆点半径
-            .attr("fill", "red")
+            .attr("fill", "blue")
             .on("mouseover", function (event, d) {
                 d3.select(this).style("opacity", 1); // 鼠标移入时显示圆点
                 const [x, y] = d3.pointer(event, svgRef.current);
@@ -97,6 +136,21 @@ const LineChart = (props) => {
             .attr("stroke", "red")
             .attr("stroke-width", 2)
             .attr("d", line);
+
+        // 折线生成器
+        const line2 = d3
+            .line()
+            .x((d) => x2Scale(d.x))
+            .y((d) => y2Scale(d.y))
+            .curve(d3.curveLinear); // 使用 Cardinal 曲线插值
+
+        // 绘制折线路径
+        svg.append("path")
+            .datum(dataDynamic)
+            .attr("fill", "none")
+            .attr("stroke", "blue")
+            .attr("stroke-width", 2)
+            .attr("d", line2);
 
         const lineX = d3
             .line()
@@ -162,6 +216,7 @@ const LineChart = (props) => {
             let fillColor = "";
             selectTube["tube_list"].forEach((tube) => {
                 const xy = getXandY(tube);
+                console.log("xy", xy);
                 if (xy) {
                     const { x1, x2, color } = xy;
                     fillColor = color;

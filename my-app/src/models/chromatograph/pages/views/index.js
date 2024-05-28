@@ -1,33 +1,51 @@
 import React, { useState } from "react";
-import { Flex, Layout, Button, Row, Col } from "antd";
+import { Flex, Layout, Button, Row, Col, Alert, message } from "antd";
 import "./index.css";
 import Line from "@components/d3/line";
+import DynamicLine from "@components/d3/dynamicLine";
+
 import Buttons from "@components/button/index";
 import TaskList from "@components/taskList/index";
+import Clock from "@components/clock/index";
+import { Empty } from "antd";
+
 import { color } from "d3";
+import pkuImage from "@/assets/image/pku.png"; // 确保路径正确
+import "@components/css/overlay.css"; // 确保路径正确
 
 const { Header, Sider, Content } = Layout;
 
 let num = [
-    { x: 0, y: 1, tube: 36 },
-    { x: 1, y: 3, tube: 234 },
-    { x: 3, y: 4, tube: 298 },
-    { x: 4, y: 5, tube: 317 },
-    { x: 5, y: 7, tube: 72 },
-    { x: 7, y: 8, tube: 200 },
-    { x: 8, y: 9, tube: 333 },
-    { x: 9, y: 10, tube: 117 },
-    { x: 10, y: 11, tube: 260 },
-    { x: 11, y: 12, tube: 45 },
-    { x: 12, y: 13, tube: 184 },
-    { x: 13, y: 14, tube: 78 },
-    { x: 14, y: 15, tube: 197 },
-    { x: 15, y: 16, tube: 319 },
-    { x: 16, y: 17, tube: 253 },
-    { x: 17, y: 18, tube: 342 },
-    { x: 18, y: 19, tube: 206 },
-    { x: 19, y: 20, tube: 157 },
+    { x: 0, y: 1, tube: 1 },
+    { x: 1, y: 3, tube: 2 },
+    { x: 3, y: 4, tube: 3 },
+    { x: 4, y: 5, tube: 4 },
+    { x: 5, y: 7, tube: 5 },
+    { x: 7, y: 8, tube: 6 },
+    { x: 8, y: 9, tube: 7 },
+    { x: 9, y: 10, tube: 8 },
+    { x: 10, y: 11, tube: 9 },
+    { x: 11, y: 12, tube: 10 },
+    { x: 12, y: 13, tube: 11 },
+    { x: 13, y: 14, tube: 12 },
+    { x: 14, y: 15, tube: 13 },
+    { x: 15, y: 16, tube: 14 },
+    { x: 16, y: 17, tube: 15 },
+    { x: 17, y: 18, tube: 16 },
+    { x: 18, y: 19, tube: 17 },
+    { x: 19, y: 20, tube: 18 },
+    { x: 20, y: 21, tube: 19 },
+    { x: 21, y: 22, tube: 20 },
+    { x: 22, y: 23, tube: 21 },
+    { x: 23, y: 24, tube: 22 },
+    { x: 24, y: 25, tube: 23 },
+    { x: 25, y: 26, tube: 24 },
+    { x: 26, y: 27, tube: 25 },
+    { x: 27, y: 28, tube: 26 },
+    { x: 28, y: 29, tube: 27 },
+    { x: 29, y: 30, tube: 28 },
 ];
+
 const data = [
     { x: 0, y: 62 },
     { x: 1, y: 62 },
@@ -49,20 +67,29 @@ const data = [
     { x: 19, y: 72 },
     { x: 20, y: 97 },
     { x: 21, y: 97 },
+    { x: 22, y: 85 },
+    { x: 23, y: 45 },
+    { x: 24, y: 34 },
+    { x: 25, y: 66 },
+    { x: 26, y: 59 },
+    { x: 27, y: 73 },
+    { x: 28, y: 54 },
+    { x: 29, y: 38 },
+    { x: 30, y: 81 },
 ];
 
 const tube_list = [];
 const colorMap = {
     0: "Zero",
     1: "One",
-    2: "Two",
-    3: "Three",
-    4: "Four",
-    5: "Five",
-    6: "Six",
-    7: "Seven",
-    8: "Eight",
-    9: "Nine",
+    2: "One",
+    3: "One",
+    4: "One",
+    5: "One",
+    6: "One",
+    7: "One",
+    8: "One",
+    9: "One",
 };
 let colorNum = 0;
 let selected_tube = []; // 接收到的试管列表
@@ -71,6 +98,8 @@ let selected_reverse = [];
 
 const App = () => {
     const [nums, setNum] = useState(num);
+    const [messageApi, contextHolder] = message.useMessage();
+
     const handleReceiveFlags = (select_tubes, numss) => {
         selected_tube = select_tubes;
         num = numss;
@@ -88,99 +117,186 @@ const App = () => {
         setNum(num);
         console.log(num);
     };
-    const saveFlags = () => {
-        let new_tube = { tube_list: selected_tube, status: "retain" };
-        selected_tubes = [...selected_tubes, new_tube];
-        let color = selected_tubes.length;
-        if (colorNum != 9) {
-            colorNum++;
-        } else {
-            colorNum = 1;
+    const splitConsecutive = (selected_tube) => {
+        selected_tube = selected_tube.sort((a, b) => a - b);
+
+        let result = [];
+        let tempArray = [selected_tube[0]];
+
+        for (let i = 1; i < selected_tube.length; i++) {
+            if (selected_tube[i] === selected_tube[i - 1] + 1) {
+                tempArray.push(selected_tube[i]);
+            } else {
+                result.push(tempArray);
+                tempArray = [selected_tube[i]];
+            }
         }
-        process_data_flag(selected_tube, true, colorMap[colorNum]);
-        selected_reverse = [];
+        result.push(tempArray);
+        return result;
+    };
+
+    const retainFlags = () => {
+        if (selected_tube.length > 0) {
+            let consecutiveArrays = splitConsecutive(selected_tube);
+            consecutiveArrays.forEach((arr) => {
+                let new_tube = { tube_list: arr, status: "retain" };
+                selected_tubes.push(new_tube);
+            });
+            if (colorNum != 9) {
+                colorNum++;
+            } else {
+                colorNum = 1;
+            }
+            process_data_flag(selected_tube, true, colorMap[colorNum]);
+            selected_reverse = [];
+            selected_tube = [];
+        } else {
+            error();
+        }
     };
     const abandonFlags = () => {
-        let new_tube = { tube_list: selected_tube, status: "discard" };
-        selected_tubes = [...selected_tubes, new_tube];
-        let color = 0;
+        if (selected_tube.length > 0) {
+            let consecutiveArrays = splitConsecutive(selected_tube);
+            consecutiveArrays.forEach((arr) => {
+                let new_tube = { tube_list: arr, status: "discard" };
+                selected_tubes.push(new_tube);
+            });
+            // let new_tube = { tube_list: selected_tube, status: "discard" };
+            // selected_tubes = [...selected_tubes, new_tube];
+            let color = 0;
 
-        process_data_flag(selected_tube, false, colorMap[color]);
-        selected_reverse = [];
+            process_data_flag(selected_tube, false, colorMap[color]);
+            selected_reverse = [];
+            selected_tube = [];
+        } else {
+            error();
+        }
     };
     const reverseFlags = () => {
-        selected_reverse = selected_tube;
-        let reverse = num.filter(
-            (item) =>
-                !selected_reverse.includes(item.tube) && item.flag == undefined
-        );
-        selected_reverse = reverse.map((item) => item.tube);
-        setNum(selected_reverse);
-        handleReceiveFlags(selected_reverse, num);
+        if (selected_tube.length > 0) {
+            selected_reverse = selected_tube;
+            let reverse = num.filter(
+                (item) =>
+                    !selected_reverse.includes(item.tube) &&
+                    item.flag == undefined
+            );
+            selected_reverse = reverse.map((item) => item.tube);
+            setNum(selected_reverse);
+            handleReceiveFlags(selected_reverse, num);
+        } else {
+            error();
+        }
     };
     const undoReceiveFlags = (index) => {
         const tubeList = selected_tubes[index].tube_list;
         selected_tubes = selected_tubes.filter((_, idx) => idx !== index);
         process_data_flag(tubeList, undefined);
     };
+    const error = () => {
+        messageApi.open({
+            type: "error",
+            content: "请选择试管 !",
+            duration: 2,
+        });
+    };
     return (
         <Flex gap="middle" wrap className="container">
+            {contextHolder}
+
             <Layout className="layoutStyle">
                 <Row>
-                    <Col span={20}>
-                        <div className="headerStyle">
-                            <Line
-                                data={data}
-                                num={num}
-                                selected_tubes={selected_tubes}
-                            ></Line>
-                            {/* <Test data={data}></Test> */}
+                    <div className="title">
+                        {" "}
+                        <img src={pkuImage} alt="pku" className="image" />
+                        <div className="titleText">
+                            <h3>Chromatography Instrument</h3>
                         </div>
-                    </Col>
-                    <Col span={4}>
-                        <div className="contentStyle">
-                            <Flex wrap gap="small">
-                                <Button
-                                    type="primary"
-                                    className="button"
-                                    onClick={() => saveFlags()}
-                                >
-                                    保留
-                                </Button>
-                                <Button
-                                    type="primary"
-                                    className="button"
-                                    onClick={() => abandonFlags()}
-                                >
-                                    废弃
-                                </Button>
-                                <Button
-                                    type="primary"
-                                    onClick={() => reverseFlags()}
-                                    className="button"
-                                >
-                                    反转
-                                </Button>
-                                <Button type="primary  " className="button">
-                                    暂停
-                                </Button>
-                            </Flex>
+                        <div className="titleClock">
+                            <Clock></Clock>
                         </div>
-                    </Col>
+                    </div>
                 </Row>
-                <Layout>
+                <div
+                    style={{
+                        height: "300px",
+                        width: "100%",
+                    }}
+                >
+                    <Row>
+                        <Col span={4}>
+                            <div className="buttonStyle">
+                                <Flex wrap gap="small">
+                                    <Button
+                                        type="primary"
+                                        className={`button button1`} // 使用模板字符串
+                                        onClick={() => retainFlags()}
+                                    >
+                                        保留
+                                    </Button>
+                                    <Button
+                                        type="primary"
+                                        className={`button button2`}
+                                        onClick={() => abandonFlags()}
+                                    >
+                                        废弃
+                                    </Button>
+                                    <Button
+                                        type="primary"
+                                        onClick={() => reverseFlags()}
+                                        className={`button button3`}
+                                    >
+                                        反转
+                                    </Button>
+                                    <Button type="primary  " className="button">
+                                        暂停
+                                    </Button>
+                                </Flex>
+                            </div>
+                        </Col>
+                        <Col span={20}>
+                            <div className={`lineStyle overlayBox`}>
+                                <div className={`line_line overlayBox1`}>
+                                    <Line
+                                        data={data}
+                                        num={num}
+                                        selected_tubes={selected_tubes}
+                                    ></Line>
+                                </div>
+
+                                {/* <div className={`line_dynamic overlayBox2`}>
+                                    <DynamicLine></DynamicLine>
+                                </div> */}
+                            </div>
+                        </Col>
+                    </Row>
+                </div>
+                <Layout className="bottomStyle">
                     <Sider width="50%" className="siderStyle">
-                        <Buttons
-                            num={num}
-                            selected={selected_reverse}
-                            callback={handleReceiveFlags}
-                        ></Buttons>
+                        <div className="buttonTitle">试管列表</div>
+                        <div className="buttonTube">
+                            <Buttons
+                                num={num}
+                                selected={selected_reverse}
+                                callback={handleReceiveFlags}
+                            ></Buttons>
+                        </div>
                     </Sider>
                     <Content className="taskStyle">
-                        <TaskList
-                            selected_tubes={selected_tubes}
-                            callback={undoReceiveFlags}
-                        ></TaskList>
+                        <div className="buttonTitle">任务列表</div>
+                        <div className="buttonTube">
+                            {selected_tubes.length > 0 ? (
+                                <TaskList
+                                    selected_tubes={selected_tubes}
+                                    callback={undoReceiveFlags}
+                                />
+                            ) : (
+                                <Empty
+                                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                    imageStyle={{ height: 60 }}
+                                    description={<span>暂无任务</span>}
+                                />
+                            )}
+                        </div>
                     </Content>
                 </Layout>
             </Layout>

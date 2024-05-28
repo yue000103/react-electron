@@ -1,5 +1,83 @@
+.container{
+  height:60vh;
+  display: flex;
+  justify-content:center;
+  align-items:center;
+  
+} 
+
+
+.layoutStyle  {
+  border-radius: 8;
+  overflow:  hidden ;
+  width:  calc(100% - 8px) ;
+  max-width:  calc(100% - 8px) ;
+  /* background-color:  #ffffff !important; */
+  background-image: url(D:\front\react-electron\my-app\src\assets\image\p7_con_bg.jpg);
+
+}
+
+.title{
+  height: 30px;
+  width: 100%;
+  background-color: #9b0000 !important;
+  display: flex;
+  align-items: center;
+  position: relative; /* 确保内部使用绝对定位的元素相对于这个容器定位 */
+
+
+}
+
+.image {
+  position: absolute;
+  left: 2%; 
+  height: 80%;
+}
+
+.titleText{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 1rem;;
+}
+
+.titleClock {
+  position: absolute;
+  top: 50%;
+  right: 2%; /* 将 titleClock 定位到右侧 */
+  transform: translate(0, -50%);
+  color: #fff;
+}
+
+.lineStyle{
+  color: #fff;
+  line-height: 200px;
+  background-color: #ffffff;
+  margin-left:1rem !important;
+  margin-top:1rem !important;
+  border: none;
+
+}
+.line_dynamic{
  
-.contentStyle  {
+}
+.button{
+  margin-left: 1rem;
+  margin-top: 0.5rem;margin-bottom: 0.5rem;
+}
+.button1{
+  background-color: #597099;
+}
+.button2{
+  background-color: #b3aca8;
+}
+.button3{
+  background-color: #9a7e7a;
+}
+
+.buttonStyle  {
   /* background-color:  #0958d9 ; */
   background-color: #ffffff !important;
   display: flex;
@@ -7,50 +85,48 @@
   align-items: center; 
   justify-content: center; 
   height: 100%;
-
+  
 
 }
+
+.bottomStyle{
+  background-color: #ffffff !important;
+}
+
+.siderStyle  {
+  color:  #ffffff ;
+  margin-top: 1rem;
+  margin-left: 1rem;
+  background-color: #ffffff !important;
+}
+
+.buttonTitle{
+  height: 2rem;
+  color:  #9a0000 ;
+  font-weight: 1000;
+}
+.buttonTube{
+  border-top: 1px dotted #9b0000;
+  border-radius: 10px; 
+  border-width: 20%; 
+  height: 100%;
+}
+
 .taskStyle{
    /* background-color:  #0958d9 ; */
    background-color: #ffffff !important;
    align-items: center; 
-}
-.siderStyle  {
-  
-  text-align:  center ;
-
-  color:  #ffffff ;
-
-  background-color:  #ffffff !important;
-}
-
-
-.headerStyle{
-  color: #fff;
-  line-height: 200px;
-  background-color: #ffffff;
-  padding:0 !important;
-  border: none;
-}
-.layoutStyle  {
-  border-radius: 8;
-  overflow:  hidden ;
-  width:  calc(80% - 8px) ;
-  max-width:  calc(90% - 8px) ;
-  background-color:  #ffffff !important;
-
-}
-.button{
+   margin-top: 1rem;
   margin-left: 1rem;
-  margin-top: 0.5rem;margin-bottom: 0.5rem;
+
 }
-.container{
-  height:70vh;
-  display: flex;
-  justify-content:center;
-  align-items:center;
-}
-.lingImage{
-  width: 100%;
-  height: 100%;
-}
+
+
+
+
+
+
+
+
+
+
