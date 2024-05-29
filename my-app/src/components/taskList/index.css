@@ -37,7 +37,7 @@
 
 
 .scrollable-list {
-  height: 300px; /* 固定高度 */
+  height: 304px; /* 固定高度 */
   overflow-y: scroll; /* 保持垂直滚动 */
   -ms-overflow-style: none;  /* 适用于Internet Explorer和Edge */
   scrollbar-width: none;  /* 适用于Firefox */

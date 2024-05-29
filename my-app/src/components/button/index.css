@@ -1,9 +1,5 @@
 .buttonTubes{
-  margin-left: 1rem;
-  /* margin-right: 1rem; */
-
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin: 0.5rem; 
 }
 
 
@@ -39,5 +35,22 @@
 }
 
 .card{
-  border: 2px solid black;
+  border: 2px solid #9a0000;
+  margin-right: 0.5rem;
+  margin-left: 1.5rem;
+  margin-top: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(70, 45, 45, 0.1);
+
+}
+.card-button{
+  cursor: pointer;
+}
+.statusClass{
+  font-size: 20px;
+  font-weight: 500;
+}
+.listClass{
+  font-size: 20px;  font-weight: 500;
+
 }

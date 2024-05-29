@@ -2,7 +2,11 @@ import React from "react";
 import { List, Avatar, Button, Popconfirm } from "antd";
 import { FixedSizeList as VirtualList } from "react-window";
 import "./index.css";
-
+import {
+    DeleteFilled,
+    DeleteOutlined,
+    PlayCircleOutlined,
+} from "@ant-design/icons";
 const text = "Are you sure to delete this task?";
 const description = "Delete the task";
 
@@ -36,13 +40,29 @@ const App = (props) => {
                 <div className="buttonTask">
                     <Popconfirm
                         placement="topRight"
-                        title={text}
-                        description={description}
+                        title={"Are you sure to run this task?"}
+                        description={"Run the task"}
                         okText="Yes"
                         cancelText="No"
                         onConfirm={() => undo(index)}
                     >
-                        <Button type="text">Delete</Button>
+                        <PlayCircleOutlined
+                            style={{
+                                fontSize: "25px",
+                                color: "#9a0000",
+                                marginRight: "1rem",
+                            }}
+                        />
+                    </Popconfirm>
+                    <Popconfirm
+                        placement="topRight"
+                        title={text}
+                        description={"Delete the task"}
+                        okText="Yes"
+                        cancelText="No"
+                        onConfirm={() => undo(index)}
+                    >
+                        <DeleteFilled style={{ fontSize: "25px" }} />
                     </Popconfirm>
                 </div>
             </List.Item>
@@ -53,7 +73,7 @@ const App = (props) => {
         <div className="scrollable-list">
             <List>
                 <VirtualList
-                    height={350} // 容器高度
+                    height={280} // 容器高度
                     itemCount={selected_tubes.length}
                     itemSize={40} // 每项的高度
                 >

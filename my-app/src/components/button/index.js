@@ -54,16 +54,16 @@ const App = ({ num, callback, selected }) => {
     return (
         <div>
             {combinedGroups.map((group, groupIndex) => (
-                <Row key={groupIndex} gutter={[16, 16]}>
+                <Row key={groupIndex} gutter={0}>
                     {group.map((subGroup, subGroupIndex) => (
                         <div className="card">
-                            <Col key={subGroupIndex} span={12}>
+                            <Col key={subGroupIndex}>
                                 {chunkArray(subGroup, 5).map(
                                     (row, rowIndex) => (
                                         <Row
                                             key={rowIndex}
                                             justify="space-around"
-                                            gutter={[16, 16]}
+                                            gutter={0}
                                         >
                                             {row.map((item, index) => {
                                                 const tube = item.tube;
@@ -80,31 +80,35 @@ const App = ({ num, callback, selected }) => {
                                                 }
 
                                                 return (
-                                                    <Col key={index} span={4}>
-                                                        <Button
-                                                            shape="circle"
-                                                            className="buttonTubes"
-                                                            disabled={
-                                                                buttonDisabled
-                                                            }
-                                                            style={{
-                                                                backgroundColor:
-                                                                    isSelected
-                                                                        ? "#d5d5f5"
-                                                                        : "",
-                                                                color: isSelected
-                                                                    ? "white"
-                                                                    : "black",
-                                                                ...buttonColorStyle,
-                                                            }}
+                                                    <Col key={index}>
+                                                        <div
                                                             onClick={() =>
                                                                 handleButtonClick(
                                                                     tube
                                                                 )
                                                             }
+                                                            className="card_buttton"
                                                         >
-                                                            {tube}
-                                                        </Button>
+                                                            <Button
+                                                                shape="circle"
+                                                                className="buttonTubes"
+                                                                disabled={
+                                                                    buttonDisabled
+                                                                }
+                                                                style={{
+                                                                    backgroundColor:
+                                                                        isSelected
+                                                                            ? "#d5d5f5"
+                                                                            : "",
+                                                                    color: isSelected
+                                                                        ? "white"
+                                                                        : "black",
+                                                                    ...buttonColorStyle,
+                                                                }}
+                                                            >
+                                                                {tube}
+                                                            </Button>
+                                                        </div>
                                                     </Col>
                                                 );
                                             })}

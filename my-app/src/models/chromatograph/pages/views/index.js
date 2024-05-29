@@ -1,17 +1,14 @@
 import React, { useState } from "react";
-import { Flex, Layout, Button, Row, Col, Alert, message } from "antd";
+import { Flex, Layout, Button, Row, Col, Alert, message, Divider } from "antd";
 import "./index.css";
 import Line from "@components/d3/line";
 import DynamicLine from "@components/d3/dynamicLine";
 
 import Buttons from "@components/button/index";
 import TaskList from "@components/taskList/index";
-import Clock from "@components/clock/index";
 import { Empty } from "antd";
 
 import { color } from "d3";
-import pkuImage from "@/assets/image/pku.png"; // 确保路径正确
-import "@components/css/overlay.css"; // 确保路径正确
 
 const { Header, Sider, Content } = Layout;
 
@@ -200,57 +197,44 @@ const App = () => {
         });
     };
     return (
-        <Flex gap="middle" wrap className="container">
+        <Flex gap="middle" wrap>
             {contextHolder}
-
-            <Layout className="layoutStyle">
-                <Row>
-                    <div className="title">
-                        {" "}
-                        <img src={pkuImage} alt="pku" className="image" />
-                        <div className="titleText">
-                            <h3>Chromatography Instrument</h3>
-                        </div>
-                        <div className="titleClock">
-                            <Clock></Clock>
-                        </div>
-                    </div>
-                </Row>
+            <Layout>
                 <div
                     style={{
-                        height: "300px",
+                        height: "340px",
                         width: "100%",
+                        backgroundColor: "white",
                     }}
                 >
                     <Row>
                         <Col span={4}>
                             <div className="buttonStyle">
-                                <Flex wrap gap="small">
-                                    <Button
-                                        type="primary"
-                                        className={`button button1`} // 使用模板字符串
-                                        onClick={() => retainFlags()}
-                                    >
-                                        保留
-                                    </Button>
-                                    <Button
-                                        type="primary"
-                                        className={`button button2`}
-                                        onClick={() => abandonFlags()}
-                                    >
-                                        废弃
-                                    </Button>
-                                    <Button
-                                        type="primary"
-                                        onClick={() => reverseFlags()}
-                                        className={`button button3`}
-                                    >
-                                        反转
-                                    </Button>
-                                    <Button type="primary  " className="button">
-                                        暂停
-                                    </Button>
-                                </Flex>
+                                <Button
+                                    type="primary"
+                                    size="large"
+                                    danger
+                                    className={`button button1`} // 使用模板字符串
+                                    onClick={() => retainFlags()}
+                                >
+                                    开始
+                                </Button>
+                                <Button
+                                    type="primary"
+                                    size="large"
+                                    className={`button button2`}
+                                    onClick={() => abandonFlags()}
+                                >
+                                    暂停
+                                </Button>
+
+                                <Button
+                                    type="primary  "
+                                    size="large"
+                                    className="button"
+                                >
+                                    暂停
+                                </Button>
                             </div>
                         </Col>
                         <Col span={20}>
@@ -270,8 +254,17 @@ const App = () => {
                         </Col>
                     </Row>
                 </div>
+                <Divider
+                    className="divider"
+                    style={{
+                        color: "#9a0000",
+                        fontSize: "20px",
+                    }}
+                >
+                    操作
+                </Divider>
                 <Layout className="bottomStyle">
-                    <Sider width="50%" className="siderStyle">
+                    <Sider width="44%" className="siderStyle">
                         <div className="buttonTitle">试管列表</div>
                         <div className="buttonTube">
                             <Buttons
@@ -279,6 +272,36 @@ const App = () => {
                                 selected={selected_reverse}
                                 callback={handleReceiveFlags}
                             ></Buttons>
+                        </div>
+                    </Sider>
+                    <Sider width="9%" className="siderStyle">
+                        <div className="buttonStyle">
+                            <Flex wrap gap="small">
+                                <Button
+                                    type="primary"
+                                    className={`button button1`} // 使用模板字符串
+                                    onClick={() => retainFlags()}
+                                >
+                                    保留
+                                </Button>
+                                <Button
+                                    type="primary"
+                                    className={`button button2`}
+                                    onClick={() => abandonFlags()}
+                                >
+                                    废弃
+                                </Button>
+                                <Button
+                                    type="primary"
+                                    onClick={() => reverseFlags()}
+                                    className={`button button3`}
+                                >
+                                    反转
+                                </Button>
+                                <Button type="primary  " className="button">
+                                    暂停
+                                </Button>
+                            </Flex>
                         </div>
                     </Sider>
                     <Content className="taskStyle">
@@ -292,7 +315,7 @@ const App = () => {
                             ) : (
                                 <Empty
                                     image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                    imageStyle={{ height: 60 }}
+                                    imageStyle={{ height: 0 }}
                                     description={<span>暂无任务</span>}
                                 />
                             )}
