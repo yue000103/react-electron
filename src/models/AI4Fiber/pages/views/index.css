@@ -1,0 +1,45 @@
+ 
+.contentStyle  {
+  text-align:  center ;
+  color:  #fff ;
+  /* background-color:  #0958d9 ; */
+  background-color: #ffffff;
+
+}
+.siderStyle  {
+  
+  text-align:  center ;
+
+  color:  #ffffff ;
+
+  background-color:  #ffffff !important;
+}
+
+
+.headerStyle{
+  color: #fff;
+  line-height: 200px;
+  background-color: #ffffff;
+  padding:0 !important;
+  border: none;
+}
+.layoutStyle  {
+  border-radius: 8;
+  overflow:  hidden ;
+  width:  calc(50% - 8px) ;
+  max-width:  calc(50% - 8px) ;
+}
+.button{
+  margin-left: 1rem;
+  margin-top: 0.5rem;margin-bottom: 0.5rem;
+}
+.container{
+  height:70vh;
+  display: flex;
+  justify-content:center;
+  align-items:center;
+}
+.lingImage{
+  width: 100%;
+  height: 100%;
+}

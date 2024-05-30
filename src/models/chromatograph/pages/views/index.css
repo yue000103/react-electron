@@ -1,0 +1,90 @@
+.lineStyle{
+  color: #fff;
+  line-height: 200px;
+  background-color: rgba(255, 255, 255, 0.5);
+  margin-left:1rem !important;
+  margin-top:1rem !important;
+  border: none;
+
+
+}
+.line_dynamic{
+ 
+}
+.button{
+  margin-left: 1.5rem;
+  margin-top: 0.5rem;margin-bottom: 0.5rem;
+  
+}
+.button1{
+  background-color: #597099;
+}
+.button2{
+  background-color: #b3aca8;
+}
+.button3{
+  background-color: #9a7e7a;
+}
+
+.buttonStyle  {
+  /* background-color:  #0958d9 ; */
+  background-color: #ffffff !important;
+  display: flex;
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+  height: 18rem;
+  
+
+}
+
+.bottomStyle{
+  background-color: #ffffff !important;
+}
+
+.siderStyle  {
+  color:  #ffffff ;
+  margin-top: 1rem;
+  margin-left: 1rem;
+  background-color: #ffffff !important;
+  text-align: center;
+}
+
+.buttonTitle{
+  height: 2rem;
+  color:  #9a0000 ;
+  font-weight: 1000;
+}
+.buttonTube{
+  /* border-top: 1px dotted #9b0000; */
+  /* border-radius: 10px;  */
+  border-width: 20%; 
+  height: 100%;
+}
+
+.taskStyle{
+   /* background-color:  #0958d9 ; */
+   background-color: rgba(255, 255, 255, 0.5) !important;
+   align-items: center; 
+   margin-top: 1rem;
+  margin-left: 1rem;
+  text-align: center;
+
+}
+
+
+
+.divider{
+  background-color: rgba(255, 255, 255, 0.8);
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-left: 20px !important;
+
+  color: #9a0000;
+}
+
+
+
+
+
+

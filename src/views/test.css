@@ -1,0 +1,27 @@
+.test {
+  text-align: center;
+  
+}
+
+h1{
+  text-align: center;
+}
+p{
+  text-align: center;
+
+}
+.t2 {
+  position: relative;
+  max-width: 50%; /* 限制内容区域的最大宽度 */
+  margin: 0 auto;
+  
+}
+
+.t2 img {
+  display: block;
+  margin: 0 auto; /* 水平居中图片 */
+  max-width: 100%; /* 图片最大宽度不超过父元素 */
+  height: auto; /* 图片最大高度不超过视口高度 */
+  object-fit: contain; /* 保持图片比例填充，不会拉伸变形 */
+}
+

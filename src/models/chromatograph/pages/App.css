@@ -1,0 +1,105 @@
+.App {
+  text-align: center;
+}
+
+.container{
+  height:60vh;
+  display: flex;
+  justify-content:center;
+  align-items:center;
+  
+} 
+
+
+.layoutStyle  {
+  border-radius: 8;
+  overflow:  hidden ;
+  width:  calc(100% - 8px) ;
+  max-width:  calc(100% - 8px) ;
+  background-color:  #ffffff !important;
+
+  /* background-image: url(D:\front\react-electron\my-app\src\assets\image\p7_con_bg.jpg); */
+}
+.title{
+  height: 30px;
+  width: 100%;
+  background-color: #9b0000 !important;
+  display: flex;
+  align-items: center;
+  position: relative; /* 确保内部使用绝对定位的元素相对于这个容器定位 */
+
+}
+
+.image {
+  position: absolute;
+  left: 2%; 
+  height: 80%;
+
+}
+
+.titleText{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 1rem;
+
+}
+
+.titleClock {
+  position: absolute;
+  top: 50%;
+  right: 2%; /* 将 titleClock 定位到右侧 */
+  transform: translate(0, -50%);
+  color: #fff;
+
+}
+
+.tag {
+  display: flex;
+  height: 45rem; /* 可根据需要调整 */
+  width: 100%;
+  flex-direction: column; /* 垂直排列 */
+}
+
+.tag > div {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  writing-mode: vertical-rl; /* 文字垂直排列 */
+  text-orientation: mixed;   /* 保持文字正常方向 */
+  /* cursor: pointer; */
+  border: 0px solid #ccc;    /* 可选的边框样式 */
+  /* transition: background-color 0.3s; */
+}
+
+.tag_experiment {
+  background-color: #9b0000;
+  font-weight: 1000;
+  font-size: large;
+  color: #e6f7ff;
+}
+
+.tag_method {
+  background-color: #f6ffed;
+}
+
+.tag_historical {
+  background-color: #fff7e6;
+}
+
+.tag > div:hover {
+  /* background-color: #ddd; 鼠标悬停时的背景色 */
+}
+
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

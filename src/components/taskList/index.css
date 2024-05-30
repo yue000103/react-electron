@@ -1,0 +1,51 @@
+.statusClass{
+  margin-right: 1rem;
+
+}
+
+.listClass{
+  /* background-color:rgba(24, 68, 99, 0.2) ; */
+
+}
+.button{
+  text-align: center;
+}
+/* .taskStyle{
+  height: 2rem;
+} */
+
+
+
+
+
+.buttonTask {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 1rem;
+}
+
+.listItem {
+  /* display: flex; */
+  /* justify-content: space-between; */
+}
+
+.metaContent {
+  flex: 3; 
+
+}
+
+
+.scrollable-list {
+  height: 304px; /* 固定高度 */
+  overflow-y: scroll; /* 保持垂直滚动 */
+  -ms-overflow-style: none;  /* 适用于Internet Explorer和Edge */
+  scrollbar-width: none;  /* 适用于Firefox */
+  overflow:none
+}
+
+.content{
+  display: flex;
+  align-items: left;
+  margin-left: 1rem;
+}
