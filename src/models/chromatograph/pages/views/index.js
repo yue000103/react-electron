@@ -2,77 +2,62 @@ import React, { useState } from "react";
 import { Flex, Layout, Button, Row, Col, Alert, message, Divider } from "antd";
 import "./index.css";
 import Line from "@components/d3/line";
-import DynamicLine from "@components/d3/dynamicLine";
-
 import Buttons from "@components/button/index";
 import TaskList from "@components/taskList/index";
 import { Empty } from "antd";
-
-import { color } from "d3";
-
+import { getEluentCurve, getEluentVertical } from "../../api/eluent_curve";
+import { timeout } from "d3";
 const { Header, Sider, Content } = Layout;
 
 let num = [
-    { x: 0, y: 1, tube: 1 },
-    { x: 1, y: 3, tube: 2 },
-    { x: 3, y: 4, tube: 3 },
-    { x: 4, y: 5, tube: 4 },
-    { x: 5, y: 7, tube: 5 },
-    { x: 7, y: 8, tube: 6 },
-    { x: 8, y: 9, tube: 7 },
-    { x: 9, y: 10, tube: 8 },
-    { x: 10, y: 11, tube: 9 },
-    { x: 11, y: 12, tube: 10 },
-    { x: 12, y: 13, tube: 11 },
-    { x: 13, y: 14, tube: 12 },
-    { x: 14, y: 15, tube: 13 },
-    { x: 15, y: 16, tube: 14 },
-    { x: 16, y: 17, tube: 15 },
-    { x: 17, y: 18, tube: 16 },
-    { x: 18, y: 19, tube: 17 },
-    { x: 19, y: 20, tube: 18 },
-    { x: 20, y: 21, tube: 19 },
-    { x: 21, y: 22, tube: 20 },
-    { x: 22, y: 23, tube: 21 },
-    { x: 23, y: 24, tube: 22 },
-    { x: 24, y: 25, tube: 23 },
-    { x: 25, y: 26, tube: 24 },
-    { x: 26, y: 27, tube: 25 },
-    { x: 27, y: 28, tube: 26 },
-    { x: 28, y: 29, tube: 27 },
-    { x: 29, y: 30, tube: 28 },
+    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 1 },
+    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 2 },
+    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 3 },
+    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 4 },
+    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 5 },
+    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 6 },
+    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 7 },
+    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 8 },
+    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 9 },
+    // { time: "17:48:37", value: 88.51848125394666 },
+    // { time: "17:48:40", value: 88.51848125394666 },
+    // { time: "17:48:60", value: 20.51848125394666 },
 ];
 
-const data = [
-    { x: 0, y: 62 },
-    { x: 1, y: 62 },
-    { x: 3, y: 87 },
-    { x: 4, y: 57 },
-    { x: 5, y: 33 },
-    { x: 7, y: 20 },
-    { x: 8, y: 71 },
-    { x: 9, y: 19 },
-    { x: 10, y: 53 },
-    { x: 11, y: 89 },
-    { x: 12, y: 49 },
-    { x: 13, y: 82 },
-    { x: 14, y: 79 },
-    { x: 15, y: 17 },
-    { x: 16, y: 13 },
-    { x: 17, y: 29 },
-    { x: 18, y: 16 },
-    { x: 19, y: 72 },
-    { x: 20, y: 97 },
-    { x: 21, y: 97 },
-    { x: 22, y: 85 },
-    { x: 23, y: 45 },
-    { x: 24, y: 34 },
-    { x: 25, y: 66 },
-    { x: 26, y: 59 },
-    { x: 27, y: 73 },
-    { x: 28, y: 54 },
-    { x: 29, y: 38 },
-    { x: 30, y: 81 },
+let data = [
+    // { time: "17:46:47", value: 81.41712213857508 },
+    // { time: "17:48:37", value: 88.51848125394666 },
+    // { time: "17:48:40", value: 88.51848125394666 },
+    // { time: "17:48:60", value: 20.51848125394666 },
+    // { x: 0, y: 62 },
+    // { x: 1, y: 62 },
+    // { x: 3, y: 87 },
+    // { x: 4, y: 57 },
+    // { x: 5, y: 33 },
+    // { x: 7, y: 20 },
+    // { x: 8, y: 71 },
+    // { x: 9, y: 19 },
+    // { x: 10, y: 53 },
+    // { x: 11, y: 89 },
+    // { x: 12, y: 49 },
+    // { x: 13, y: 82 },
+    // { x: 14, y: 79 },
+    // { x: 15, y: 17 },
+    // { x: 16, y: 13 },
+    // { x: 17, y: 29 },
+    // { x: 18, y: 16 },
+    // { x: 19, y: 72 },
+    // { x: 20, y: 97 },
+    // { x: 21, y: 97 },
+    // { x: 22, y: 85 },
+    // { x: 23, y: 45 },
+    // { x: 24, y: 34 },
+    // { x: 25, y: 66 },
+    // { x: 26, y: 59 },
+    // { x: 27, y: 73 },
+    // { x: 28, y: 54 },
+    // { x: 29, y: 38 },
+    // { x: 30, y: 81 },
 ];
 
 const tube_list = [];
@@ -92,27 +77,32 @@ let colorNum = 0;
 let selected_tube = []; // 接收到的试管列表
 let selected_tubes = []; //总的是试管列表
 let selected_reverse = [];
+let intervalId1;
+let intervalId2;
 
 const App = () => {
-    const [nums, setNum] = useState(num);
+    // const [nums, setNum] = useState(num);
+    const [data, setData] = useState([]);
+    const [num, setNum] = useState([]);
+
     const [messageApi, contextHolder] = message.useMessage();
 
     const handleReceiveFlags = (select_tubes, numss) => {
         selected_tube = select_tubes;
-        num = numss;
+        setNum(numss);
     };
     // flag  ： undefined  没被选中   true  保留  false  废弃
 
     const process_data_flag = (selected_tube, flag, color) => {
-        num = num.map((item) => {
+        let nums = num.map((item) => {
             if (selected_tube.includes(item.tube)) {
                 return { ...item, flag: flag, color: color };
             }
             return item;
         });
 
-        setNum(num);
-        console.log(num);
+        setNum(nums);
+        console.log(nums);
     };
     const splitConsecutive = (selected_tube) => {
         selected_tube = selected_tube.sort((a, b) => a - b);
@@ -189,12 +179,51 @@ const App = () => {
         selected_tubes = selected_tubes.filter((_, idx) => idx !== index);
         process_data_flag(tubeList, undefined);
     };
+
     const error = () => {
         messageApi.open({
             type: "error",
             content: "请选择试管 !",
             duration: 2,
         });
+    };
+
+    const start = () => {
+        setData(() => []);
+        setNum(() => []);
+        intervalId1 = setInterval(() => {
+            getEluentCurve()
+                .then((responseData) => {
+                    setData((prevData) => [
+                        ...prevData,
+                        responseData.data.point,
+                    ]); // 更新状态
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
+        }, 1000); // 每隔 1000 毫秒（1 秒）执行一次
+        setTimeout(() => {
+            intervalId2 = setInterval(() => {
+                getEluentVertical()
+                    .then((responseData) => {
+                        setNum((prevNum) => [
+                            ...prevNum,
+                            responseData.data.point,
+                        ]); // 更新状态
+                    })
+                    .catch((error) => {
+                        console.log(error);
+                    });
+                console.log("num", num);
+            }, 5000); // 每隔 1000 毫秒（1 秒）执行一次
+        }, 10000);
+    };
+
+    const stop = () => {
+        console.log("stop-------------");
+        clearInterval(intervalId1);
+        clearInterval(intervalId2);
     };
     return (
         <Flex gap="middle" wrap>
@@ -215,7 +244,7 @@ const App = () => {
                                     size="large"
                                     danger
                                     className={`button button1`} // 使用模板字符串
-                                    onClick={() => retainFlags()}
+                                    onClick={() => start()}
                                 >
                                     开始
                                 </Button>
@@ -223,7 +252,7 @@ const App = () => {
                                     type="primary"
                                     size="large"
                                     className={`button button2`}
-                                    onClick={() => abandonFlags()}
+                                    onClick={() => stop()}
                                 >
                                     暂停
                                 </Button>
@@ -232,8 +261,17 @@ const App = () => {
                                     type="primary  "
                                     size="large"
                                     className="button"
+                                    onClick={() => stop()}
                                 >
-                                    暂停
+                                    终止
+                                </Button>
+                                <Button
+                                    type="primary  "
+                                    size="large"
+                                    className="button"
+                                    onClick={() => stop()}
+                                >
+                                    复位
                                 </Button>
                             </div>
                         </Col>
