@@ -27,7 +27,18 @@ const App = ({ num, callback, selected }) => {
                 callback(select_tube, num);
                 return select_tube;
             } else {
-                select_tube = [...prevFlags, tube];
+                console.log("prevFlags", prevFlags);
+                let newFlags = [tube];
+                if (prevFlags.length > 0) {
+                    newFlags = Array.from(
+                        {
+                            length: tube - prevFlags[prevFlags.length - 1] + 1,
+                        },
+                        (_, i) => prevFlags[prevFlags.length - 1] + i
+                    );
+                }
+
+                select_tube = [...newFlags];
                 callback(select_tube, num);
                 return select_tube;
             }

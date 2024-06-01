@@ -1,12 +1,28 @@
-import React, { useState } from "react";
-import { Flex, Layout, Button, Row, Col, Alert, message, Divider } from "antd";
+import React, { useState, useEffect } from "react";
+import {
+    Flex,
+    Layout,
+    Button,
+    Row,
+    Col,
+    Alert,
+    message,
+    Divider,
+    Spin,
+} from "antd";
 import "./index.css";
 import Line from "@components/d3/line";
 import Buttons from "@components/button/index";
 import TaskList from "@components/taskList/index";
 import { Empty } from "antd";
-import { getEluentCurve, getEluentVertical } from "../../api/eluent_curve";
+import {
+    getEluentCurve,
+    getEluentVertical,
+    getEluentLine,
+} from "../../api/eluent_curve";
 import { timeout } from "d3";
+import moment from "moment";
+
 const { Header, Sider, Content } = Layout;
 
 let num = [
@@ -60,6 +76,7 @@ let data = [
     // { x: 30, y: 81 },
 ];
 
+let linePoint = [];
 const tube_list = [];
 const colorMap = {
     0: "Zero",
@@ -79,11 +96,16 @@ let selected_tubes = []; //总的是试管列表
 let selected_reverse = [];
 let intervalId1;
 let intervalId2;
-
+let startTime;
+let flagStartTime = 1; //  1 实验从头开始  0 实验继续
+let lineFlag = 1; //  1 可以修改折线 0 不可以修改折线
 const App = () => {
+    const [loading, setLoading] = React.useState(false);
+
     // const [nums, setNum] = useState(num);
     const [data, setData] = useState([]);
     const [num, setNum] = useState([]);
+    const [linePoint, setLine] = useState([]);
 
     const [messageApi, contextHolder] = message.useMessage();
 
@@ -189,10 +211,16 @@ const App = () => {
     };
 
     const start = () => {
-        setData(() => []);
-        setNum(() => []);
+        lineFlag = 0;
+        setLoading(true);
+        if (flagStartTime == 1) {
+            reset();
+            startTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss"); // 或者使用适当的时间格式
+            flagStartTime = 0;
+        }
+
         intervalId1 = setInterval(() => {
-            getEluentCurve()
+            getEluentCurve({ start_time: startTime })
                 .then((responseData) => {
                     setData((prevData) => [
                         ...prevData,
@@ -203,28 +231,48 @@ const App = () => {
                     console.log(error);
                 });
         }, 1000); // 每隔 1000 毫秒（1 秒）执行一次
-        setTimeout(() => {
-            intervalId2 = setInterval(() => {
-                getEluentVertical()
-                    .then((responseData) => {
-                        setNum((prevNum) => [
-                            ...prevNum,
-                            responseData.data.point,
-                        ]); // 更新状态
-                    })
-                    .catch((error) => {
-                        console.log(error);
-                    });
-                console.log("num", num);
-            }, 5000); // 每隔 1000 毫秒（1 秒）执行一次
-        }, 10000);
+        intervalId2 = setInterval(() => {
+            getEluentVertical({ start_time: startTime })
+                .then((responseData) => {
+                    setNum((prevNum) => [...prevNum, responseData.data.point]); // 更新状态
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
+            console.log("num", num);
+        }, 5000); // 每隔 1000 毫秒（1 秒）执行一次
     };
+    useEffect(() => {
+        console.log(intervalId1, intervalId2); // 添加这行调试
+    }, [intervalId1, intervalId2]);
+    const terminate = () => {
+        flagStartTime = 1;
 
-    const stop = () => {
-        console.log("stop-------------");
         clearInterval(intervalId1);
         clearInterval(intervalId2);
+        setLoading(false);
     };
+    const pause = () => {
+        clearInterval(intervalId1);
+
+        clearInterval(intervalId2);
+    };
+    const reset = () => {
+        lineFlag = 1;
+        getEluentLine().then((responseData) => {
+            setLine((prevLine) => responseData.data.point);
+        });
+        console.log("reset---------- :");
+        setData(() => []);
+        setNum(() => []);
+        selected_tubes = [];
+    };
+    useEffect(() => {
+        getEluentLine().then((responseData) => {
+            console.log("responseData", responseData.data.point);
+            setLine(responseData.data.point);
+        });
+    }, []);
     return (
         <Flex gap="middle" wrap>
             {contextHolder}
@@ -252,7 +300,7 @@ const App = () => {
                                     type="primary"
                                     size="large"
                                     className={`button button2`}
-                                    onClick={() => stop()}
+                                    onClick={() => pause()}
                                 >
                                     暂停
                                 </Button>
@@ -261,7 +309,7 @@ const App = () => {
                                     type="primary  "
                                     size="large"
                                     className="button"
-                                    onClick={() => stop()}
+                                    onClick={() => terminate()}
                                 >
                                     终止
                                 </Button>
@@ -269,7 +317,7 @@ const App = () => {
                                     type="primary  "
                                     size="large"
                                     className="button"
-                                    onClick={() => stop()}
+                                    onClick={() => reset()}
                                 >
                                     复位
                                 </Button>
@@ -282,6 +330,8 @@ const App = () => {
                                         data={data}
                                         num={num}
                                         selected_tubes={selected_tubes}
+                                        linePoint={linePoint}
+                                        lineFlag={lineFlag}
                                     ></Line>
                                 </div>
 
@@ -301,65 +351,75 @@ const App = () => {
                 >
                     操作
                 </Divider>
-                <Layout className="bottomStyle">
-                    <Sider width="44%" className="siderStyle">
-                        <div className="buttonTitle">试管列表</div>
-                        <div className="buttonTube">
-                            <Buttons
-                                num={num}
-                                selected={selected_reverse}
-                                callback={handleReceiveFlags}
-                            ></Buttons>
-                        </div>
-                    </Sider>
-                    <Sider width="9%" className="siderStyle">
-                        <div className="buttonStyle">
-                            <Flex wrap gap="small">
-                                <Button
-                                    type="primary"
-                                    className={`button button1`} // 使用模板字符串
-                                    onClick={() => retainFlags()}
-                                >
-                                    保留
-                                </Button>
-                                <Button
-                                    type="primary"
-                                    className={`button button2`}
-                                    onClick={() => abandonFlags()}
-                                >
-                                    废弃
-                                </Button>
-                                <Button
-                                    type="primary"
-                                    onClick={() => reverseFlags()}
-                                    className={`button button3`}
-                                >
-                                    反转
-                                </Button>
-                                <Button type="primary  " className="button">
-                                    暂停
-                                </Button>
-                            </Flex>
-                        </div>
-                    </Sider>
-                    <Content className="taskStyle">
-                        <div className="buttonTitle">任务列表</div>
-                        <div className="buttonTube">
-                            {selected_tubes.length > 0 ? (
-                                <TaskList
-                                    selected_tubes={selected_tubes}
-                                    callback={undoReceiveFlags}
-                                />
-                            ) : (
-                                <Empty
-                                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                    imageStyle={{ height: 0 }}
-                                    description={<span>暂无任务</span>}
-                                />
-                            )}
-                        </div>
-                    </Content>
-                </Layout>
+                <Spin spinning={loading} delay={500}>
+                    <Layout className="bottomStyle">
+                        <Sider width="44%" className="siderStyle">
+                            <div className="buttonTitle">试管列表</div>
+                            <div className="buttonTube">
+                                {num.length > 0 ? (
+                                    <Buttons
+                                        num={num}
+                                        selected={selected_reverse}
+                                        callback={handleReceiveFlags}
+                                    ></Buttons>
+                                ) : (
+                                    <Empty
+                                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                        imageStyle={{ height: 0 }}
+                                        description={<span>暂无试管</span>}
+                                    />
+                                )}
+                            </div>
+                        </Sider>
+                        <Sider width="9%" className="siderStyle">
+                            <div className="buttonStyle">
+                                <Flex wrap gap="small">
+                                    <Button
+                                        type="primary"
+                                        className={`button button1`} // 使用模板字符串
+                                        onClick={() => retainFlags()}
+                                    >
+                                        保留
+                                    </Button>
+                                    <Button
+                                        type="primary"
+                                        className={`button button2`}
+                                        onClick={() => abandonFlags()}
+                                    >
+                                        废弃
+                                    </Button>
+                                    <Button
+                                        type="primary"
+                                        onClick={() => reverseFlags()}
+                                        className={`button button3`}
+                                    >
+                                        反转
+                                    </Button>
+                                    <Button type="primary  " className="button">
+                                        暂停
+                                    </Button>
+                                </Flex>
+                            </div>
+                        </Sider>
+                        <Content className="taskStyle">
+                            <div className="buttonTitle">任务列表</div>
+                            <div className="buttonTube">
+                                {selected_tubes.length > 0 ? (
+                                    <TaskList
+                                        selected_tubes={selected_tubes}
+                                        callback={undoReceiveFlags}
+                                    />
+                                ) : (
+                                    <Empty
+                                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                        imageStyle={{ height: 0 }}
+                                        description={<span>暂无任务</span>}
+                                    />
+                                )}
+                            </div>
+                        </Content>
+                    </Layout>
+                </Spin>
             </Layout>
         </Flex>
     );
