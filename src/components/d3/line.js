@@ -5,6 +5,7 @@ import { Modal, Input, TimePicker, Button, InputNumber } from "antd";
 import dayjs from "dayjs";
 import { PlusOutlined, MinusOutlined } from "@ant-design/icons";
 import "./line.css";
+import KeyboardNumber from "@components/keyboard/number/index.js";
 
 let fillAreaDatas = [];
 let fillAreaData = [];
@@ -425,6 +426,10 @@ const renderLine = (
     }
 };
 
+const handleReceiveFlags = (inputNumber) => {
+    // inputNumber
+    console.log("inputNumber :", inputNumber);
+};
 const LineChart = (props) => {
     const svgRef = useRef(null);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -531,7 +536,7 @@ const LineChart = (props) => {
             <svg ref={svgRef} width="100%" height="100%"></svg>
             <Modal
                 title="Edit Point"
-                visible={isModalVisible}
+                open={isModalVisible}
                 onOk={handleOk}
                 onCancel={handleCancel}
             >
@@ -564,6 +569,7 @@ const LineChart = (props) => {
                         downIcon: <MinusOutlined />,
                     }}
                 />
+                <KeyboardNumber callback={handleReceiveFlags}></KeyboardNumber>
             </Modal>
         </div>
     );

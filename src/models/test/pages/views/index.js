@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Flex, Layout, Button } from "antd";
 import "./index.css";
-import Line from "@components/d3/line";
-import Buttons from "@components/button/index";
+// import Line from "@components/d3/line";
+// import Buttons from "@components/button/index";
 
 const { Header, Sider, Content } = Layout;
 
@@ -107,16 +107,10 @@ const App = () => {
         <Flex gap="middle" wrap className="container">
             <Layout className="layoutStyle">
                 <div className="headerStyle">
-                    <Line data={data} num={num}></Line>
                     {/* <Test data={data}></Test> */}
                 </div>
                 <Layout>
-                    <Sider width="65%" className="siderStyle">
-                        <Buttons
-                            num={num}
-                            callback={handleReceiveFlags}
-                        ></Buttons>
-                    </Sider>
+                    <Sider width="65%" className="siderStyle"></Sider>
                     <Content className="contentStyle">
                         <Flex wrap gap="small">
                             <Button

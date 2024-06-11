@@ -225,26 +225,24 @@ const App = () => {
                     setData((prevData) => [
                         ...prevData,
                         responseData.data.point,
-                    ]); // 更新状态
+                    ]);
                 })
                 .catch((error) => {
                     console.log(error);
                 });
-        }, 1000); // 每隔 1000 毫秒（1 秒）执行一次
+        }, 1000);
         intervalId2 = setInterval(() => {
             getEluentVertical({ start_time: startTime })
                 .then((responseData) => {
-                    setNum((prevNum) => [...prevNum, responseData.data.point]); // 更新状态
+                    setNum((prevNum) => [...prevNum, responseData.data.point]);
                 })
                 .catch((error) => {
                     console.log(error);
                 });
             console.log("num", num);
-        }, 5000); // 每隔 1000 毫秒（1 秒）执行一次
+        }, 5000);
     };
-    useEffect(() => {
-        console.log(intervalId1, intervalId2); // 添加这行调试
-    }, [intervalId1, intervalId2]);
+
     const terminate = () => {
         flagStartTime = 1;
 
@@ -260,18 +258,22 @@ const App = () => {
     const reset = () => {
         lineFlag = 1;
         getEluentLine().then((responseData) => {
-            setLine((prevLine) => responseData.data.point);
+            setLine(responseData.data.point);
         });
-        console.log("reset---------- :");
+
         setData(() => []);
         setNum(() => []);
         selected_tubes = [];
     };
     useEffect(() => {
         getEluentLine().then((responseData) => {
-            console.log("responseData", responseData.data.point);
             setLine(responseData.data.point);
         });
+        // let rubePoint = [];
+        // for (let i = 1; i < 41; i++) {
+        //     rubePoint.push({ timeStart: "", timeEnd: "", tube: i });
+        // }
+        // setNum((prevNum) => rubePoint); // 更新状态
     }, []);
     return (
         <Flex gap="middle" wrap>
