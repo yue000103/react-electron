@@ -9,8 +9,9 @@ const App = () => {
 
     useEffect(() => {
         // 使用你的Swagger JSON文件的URL
-        const swaggerUrl = "http://127.0.0.1:5000/swagger-json/";
-
+        const swaggerUrl = "http://192.168.5.155:5000/swagger/";
+        // "http://192.168.5.155:5000/swagger/"
+        // "http://127.0.0.1:5000/swagger-json/"
         axios
             .get(swaggerUrl)
             .then((response) => {
@@ -21,7 +22,7 @@ const App = () => {
                 console.error("Error fetching Swagger data:", error)
             );
     }, []);
-
+   
     const handleInputChange = (path, paramName, value) => {
         console.log("paramName :", paramName);
 
@@ -38,35 +39,53 @@ const App = () => {
         const operation = swaggerData.paths[path][method];
         const params = operation.parameters.reduce((acc, param) => {
             if (param.in === "body") {
-                const schema =
-                    swaggerData.definitions[param.schema.$ref.split("/").pop()];
+                const schema = swaggerData.definitions[param.schema.$ref.split("/").pop()];
                 Object.keys(schema.properties).forEach((key) => {
                     if (!schema.properties[key].readOnly) {
-                        acc[key] = inputValues[path]
-                            ? inputValues[path][key]
-                            : "";
+                        acc[key] = inputValues[path] ? inputValues[path][key] : "";
                     }
                 });
             } else {
-                acc[param.name] = inputValues[path]
-                    ? inputValues[path][param.name]
-                    : "";
+                acc[param.name] = inputValues[path] ? inputValues[path][param.name] : "";
             }
             return acc;
         }, {});
-
-        const config = {
-            method: method,
-            url: `http://127.0.0.1:5000${path}`,
-            params: method === "get" ? params : {},
-            headers:
-                method !== "get" ? { "Content-Type": "application/json" } : {},
-        };
-
-        if (method !== "get") {
-            config.data = params;
+    
+        console.log("path", path);
+        console.log("method", method);
+        console.log("params", params);
+    
+        // 替换路径中的占位符
+        let dynamicPath = path;
+        Object.keys(params).forEach(paramName => {
+            const paramValue = params[paramName];
+            const placeholder = `{${paramName}}`;
+            if (dynamicPath.includes(placeholder)) {
+                dynamicPath = dynamicPath.replace(placeholder, paramValue);
+                delete params[paramName]; // 删除已替换的参数
+            }
+        });
+    
+        let config = {};
+    
+        if (method === "get") {
+            config = {
+                method: method,
+                url: `http://192.168.5.155:5000${dynamicPath}`,
+                params: params, // 剩余查询参数
+                headers: {},
+            };
+        } else {
+            config = {
+                method: method,
+                url: `http://192.168.5.155:5000${dynamicPath}`,
+                headers: { "Content-Type": "application/json" },
+                data: params, // 设置数据字段
+            };
         }
-
+    
+        console.log("config", config);
+    
         axios(config)
             .then((response) => {
                 setOutputValues((prevValues) => ({
@@ -74,10 +93,13 @@ const App = () => {
                     [path + method]: JSON.stringify(response.data, null, 2),
                 }));
             })
-            .catch((error) =>
-                console.error("Error making API request:", error)
-            );
-    };
+            .catch((error) => console.error("Error making API request:", error));
+    }
+                // if (method !== "get") {
+                //     config.data = params;
+        // }
+
+     
 
     if (!swaggerData) {
         return <div>Loading...</div>;
@@ -86,7 +108,7 @@ const App = () => {
     const renderInputField = (path, key, property) => {
         // console.log("path :", path);
         // console.log("key :", key);
-        // console.log("property :", property);
+        console.log("property :", property);
 
         const defaultValue =
             property.default !== undefined ? property.default : "";
@@ -143,14 +165,17 @@ const App = () => {
                 {Object.entries(swaggerData.paths).map(([path, methods]) =>
                     Object.entries(methods).map(([method, details]) => (
                         <div
-                            key={path}
+                            key={`${path}_${method}`}
                             style={{
                                 marginBottom: "20px",
                                 border: "1px solid #ddd",
                                 padding: "10px",
                             }}
                         >
-                            <h2>{swaggerData.paths[path][method].tags}</h2>
+<h2>
+    {swaggerData.paths[path][method].tags + " "}
+    <span style={{ color: 'red' }}>{method}</span>
+</h2>
                             {details.parameters.map((param) => {
                                 if (param.in === "body") {
                                     const schema =
@@ -222,7 +247,7 @@ const App = () => {
                                 style={{
                                     border: "1px solid #ddd",
                                     padding: "10px",
-                                    height: "100rem",
+                                    height: "30rem",
                                     width: "25rem",
                                     textAlign: "left",
                                 }}
