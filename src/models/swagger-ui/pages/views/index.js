@@ -6,6 +6,7 @@ const App = () => {
     const [swaggerData, setSwaggerData] = useState(null);
     const [inputValues, setInputValues] = useState({});
     const [outputValues, setOutputValues] = useState({});
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         // 使用你的Swagger JSON文件的URL
@@ -36,6 +37,14 @@ const App = () => {
     };
 
     const handleSubmit = (path, method) => {
+        setLoading(true)
+        // setInputValues((prevValues) => ({
+        //     ...prevValues,
+        //     [path]: {
+        //         ...prevValues[path],
+        //         loading: true, // 设置loading状态
+        //     },
+        // }));        
         const operation = swaggerData.paths[path][method];
         const params = operation.parameters.reduce((acc, param) => {
             if (param.in === "body") {
@@ -93,8 +102,45 @@ const App = () => {
                     [path + method]: JSON.stringify(response.data, null, 2),
                 }));
             })
-            .catch((error) => console.error("Error making API request:", error));
-    }
+            .catch((error) => {
+                if (error.response) {
+                    // 请求已发出，但服务器返回状态码不在 2xx 范围内
+                    console.error("Server responded with non-2xx status:", error.response.data);
+                    const errorMessage = error.response.data.message; // 获取错误信息
+                    setOutputValues((prevValues) => ({
+                        ...prevValues,
+                        [path + method]: JSON.stringify({ error: errorMessage }, null, 2), // 显示错误信息
+                    }));
+                } else if (error.request) {
+                    // 请求已发出，但没有收到响应
+                    console.error("No response received from server:", error.request);
+                    setOutputValues((prevValues) => ({
+                        ...prevValues,
+                        [path + method]: JSON.stringify({ error: "No response from server" }, null, 2), // 显示错误信息
+                    }));
+                } else {
+                    // 发生请求设置时的错误
+                    console.error("Error setting up the request:", error.message);
+                    setOutputValues((prevValues) => ({
+                        ...prevValues,
+                        [path + method]: JSON.stringify({ error: "Request setup error" }, null, 2), // 显示错误信息
+                    }));
+                }
+            })
+            .finally(() => setLoading(false)); // 请求完成后重置 loading 状态
+        }
+            // .catch((error) => console.error("Error making API request:", error))
+            // .finally(() => {
+            //     setInputValues((prevValues) => ({
+            //         ...prevValues,
+            //         [path]: {
+            //             ...prevValues[path],
+            //             loading: false, // 请求完成后重置loading状态
+            //         },
+            //     }));
+            // });    
+            // .finally(() => setLoading(false)); // 请求完成后重置 loading 状态
+            // }
                 // if (method !== "get") {
                 //     config.data = params;
         // }
@@ -117,21 +163,43 @@ const App = () => {
                 ? inputValues[path][key]
                 : defaultValue;
         if (property.enum) {
+            const initialValue = value || property.enum[0];
+            if (!value) {
+                handleInputChange(path, key, initialValue);
+            }
             console.log("property.validate :", property.validate);
-            return (
-                <select
+            if (property.type === "boolean"){
+                const filteredOptions = property.enum.filter(option => option === true || option === false);
+
+                return ( <select
                     value={value}
                     onChange={(e) =>
                         handleInputChange(path, key, e.target.value)
                     }
                 >
-                    {property.enum.map((option) => (
+                    {filteredOptions.map((option) => (
                         <option key={option} value={option}>
-                            {option}
+                            {option == true? "true" : "false"} 
                         </option>
                     ))}
-                </select>
-            );
+                </select>)
+            }else{
+
+                return (
+                    <select
+                        value={value}
+                        onChange={(e) =>
+                            handleInputChange(path, key, e.target.value)
+                        }
+                    >
+                        {property.enum.map((option) => (
+                            <option key={option} value={option}>
+                                {option}
+                            </option>
+                        ))}
+                    </select>
+                );
+            }
         } else {
             if (!property.readOnly) {
                 return (
@@ -236,20 +304,29 @@ const App = () => {
                                     );
                                 }
                             })}
-                            <button
-                                onClick={() => handleSubmit(path, method)}
-                                style={{ marginBottom: "10px" }}
-                            >
-                                Submit
-                            </button>
+                          {/* <button
+    onClick={() => handleSubmit(path, method)}
+    disabled={inputValues[path] && inputValues[path].loading}
+    style={{ marginBottom: "10px" }}
+>
+    {inputValues[path] && inputValues[path].loading ? "Loading..." : "Submit"}
+</button> */}
+<button
+    onClick={() => handleSubmit(path, method)}
+    disabled={loading} // 禁用按钮
+    style={{ marginBottom: "10px" }}
+>
+    {loading ? "Loading..." : "Submit"}
+</button>
                             {/* {outputValues[path + method] && ( */}
                             <div
                                 style={{
                                     border: "1px solid #ddd",
                                     padding: "10px",
-                                    height: "30rem",
+                                    height: "20rem",
                                     width: "25rem",
                                     textAlign: "left",
+                                    overflowY: "auto", // 添加垂直滚动条
                                 }}
                             >
                                 <pre>{outputValues[path + method]}</pre>
