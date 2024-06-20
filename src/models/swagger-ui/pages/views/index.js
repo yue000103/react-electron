@@ -28,6 +28,7 @@ const App = () => {
         console.log("paramName :", paramName);
 
         setInputValues((prevValues) => ({
+
             ...prevValues,
             [path]: {
                 ...prevValues[path],
@@ -35,7 +36,68 @@ const App = () => {
             },
         }));
     };
+    const handleArrayInputChange = (path, paramName, index, value) => {
+        setInputValues((prevValues) => {
+            const updatedArray = prevValues[path]?.[paramName]?.slice() || [];
+            updatedArray[index] = value;
+            return {
+                ...prevValues,
+                [path]: {
+                    ...prevValues[path],
+                    [paramName]: updatedArray,
+                },
+            };
+        });
+    };
+    const renderArrayInputField = (path, paramName) => {
+        const values = inputValues[path]?.[paramName] || [];
+        
+        return values.map((value, index) => (
+            <div key={index} style={{ marginBottom: "10px" }}>
+                <label style={{ marginRight: "10px" }}>
+                    {paramName} [{index}]:
+                </label>
+                <input
+                    type="text"
+                    value={value}
+                    onChange={(e) =>
+                        handleArrayInputChange(path, paramName, index, e.target.value)
+                    }
+                />
+                <button onClick={() => removeArrayItem(path, paramName, index)}>Remove</button>
+            </div>
+        ));
+    };
 
+// Function to add a new item to the array
+const addArrayItem = (path, paramName) => {
+    setInputValues((prevValues) => {
+        const updatedArray = prevValues[path]?.[paramName]?.slice() || [];
+        updatedArray.push(""); // Add a new empty string to the array
+        return {
+            ...prevValues,
+            [path]: {
+                ...prevValues[path],
+                [paramName]: updatedArray,
+            },
+        };
+    });
+};
+
+// Function to remove an item from the array
+const removeArrayItem = (path, paramName, index) => {
+    setInputValues((prevValues) => {
+        const updatedArray = prevValues[path]?.[paramName]?.slice() || [];
+        updatedArray.splice(index, 1); // Remove the item at the specified index
+        return {
+            ...prevValues,
+            [path]: {
+                ...prevValues[path],
+                [paramName]: updatedArray,
+            },
+        };
+    });
+};
     const handleSubmit = (path, method) => {
         setLoading(true)
         // setInputValues((prevValues) => ({
@@ -162,6 +224,15 @@ const App = () => {
             inputValues[path] && inputValues[path][key] !== undefined
                 ? inputValues[path][key]
                 : defaultValue;
+                if (property.type === "array" && property.items) {
+                    return (
+                        <div>
+                            {renderArrayInputField(path, key)}
+                            <button onClick={() => addArrayItem(path, key)}>Add Item</button>
+                        </div>
+                    );
+                }
+            
         if (property.enum) {
             const initialValue = value || property.enum[0];
             if (!value) {
