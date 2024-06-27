@@ -395,7 +395,7 @@ const removeArrayItem = (path, paramName, index) => {
                                     border: "1px solid #ddd",
                                     padding: "10px",
                                     height: "20rem",
-                                    width: "25rem",
+                                    width: "23rem",
                                     textAlign: "left",
                                     overflowY: "auto", // 添加垂直滚动条
                                 }}
