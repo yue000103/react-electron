@@ -1,0 +1,56 @@
+.money {
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e9e9e9;
+  margin: 0 24px;
+
+  .sufix {
+    font-size: 36px;
+    font-weight: bold;
+  }
+
+  .amount {
+    font-size: 40px;
+    padding-left: 10px;
+  }
+}
+
+.keyBoard {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+
+  > div {
+    border: 0.1px solid rgba(92, 175, 162, 0.1);
+    padding: 5px 0px;
+    border-radius: 3px;
+    font-size: 22px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    &:hover {
+      cursor: pointer;
+    }
+
+    &:active {
+      background-color: rgba(230, 230, 230, 0.1);
+    }
+  }
+
+  .confirm {
+    grid-column-start: 4;
+    grid-column-end: 5;
+    grid-row-start: 2;
+    grid-row-end: 5;
+    background-color: rgb(21, 146, 127);
+    color: #fff;
+
+    &:active {
+      background-color: rgba(21, 146, 127, 0.2);
+    }
+  }
+
+  .zero {
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
+}
