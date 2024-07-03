@@ -10,7 +10,7 @@ const App = () => {
 
     useEffect(() => {
         // 使用你的Swagger JSON文件的URL
-        const swaggerUrl = "http://192.168.5.155:5000/swagger/";
+        const swaggerUrl = "http://127.0.0.1:5000/swagger/";
         // "http://192.168.5.155:5000/swagger/"
         // "http://127.0.0.1:5000/swagger-json/"
         axios
@@ -142,14 +142,14 @@ const removeArrayItem = (path, paramName, index) => {
         if (method === "get") {
             config = {
                 method: method,
-                url: `http://192.168.5.155:5000${dynamicPath}`,
+                url: `http://127.0.0.1:5000${dynamicPath}`,
                 params: params, // 剩余查询参数
                 headers: {},
             };
         } else {
             config = {
                 method: method,
-                url: `http://192.168.5.155:5000${dynamicPath}`,
+                url: `http://127.0.0.1:5000${dynamicPath}`,
                 headers: { "Content-Type": "application/json" },
                 data: params, // 设置数据字段
             };

@@ -11,3 +11,8 @@ export function getEluentVertical(data) {
 export function getEluentLine() {
     return axiosInstance.get("/api/eluent/get_line");
 }
+
+
+export function getTube(data) {
+    return axiosInstance.post("/api/eluent/get_tube",data);
+}

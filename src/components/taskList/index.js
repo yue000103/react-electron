@@ -7,8 +7,15 @@ import {
     DeleteOutlined,
     PlayCircleOutlined,
 } from "@ant-design/icons";
+
+import {
+    getTube
+} from "@/models/chromatograph/api/eluent_curve";
+
 const text = "Are you sure to delete this task?";
 const description = "Delete the task";
+
+
 
 const App = (props) => {
     const { selected_tubes, callback } = props;
@@ -17,6 +24,19 @@ const App = (props) => {
         callback(index);
     };
 
+    const runs = (index,tubeObj) => {
+        console.log("index: " , index);
+        console.log("tubeObj",tubeObj.tube_list[0]);
+        getTube({ tube: tubeObj.tube_list[0] }).then((responseData) => {
+            
+        });
+        // callback(index);
+    };
+
+    const deletes = (index) => {
+       
+        callback(index);
+    };
     const Row = ({ index, style }) => {
         const tubeObj = selected_tubes[index];
         return (
@@ -44,7 +64,7 @@ const App = (props) => {
                         description={"Run the task"}
                         okText="Yes"
                         cancelText="No"
-                        onConfirm={() => undo(index)}
+                        onConfirm={() => runs(index,tubeObj)}
                     >
                         <PlayCircleOutlined
                             style={{
@@ -60,7 +80,7 @@ const App = (props) => {
                         description={"Delete the task"}
                         okText="Yes"
                         cancelText="No"
-                        onConfirm={() => undo(index)}
+                        onConfirm={() => deletes(index)}
                     >
                         <DeleteFilled style={{ fontSize: "25px" }} />
                     </Popconfirm>
