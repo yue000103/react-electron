@@ -1,18 +1,13 @@
 import axiosInstance from "./axiosInstance";
 
 export function getEluentCurve(data) {
-    return axiosInstance.post("/api/eluent/get_curve", data);
+    return axiosInstance.post("/eluent_curve/get_curve", data);
 }
 
 export function getEluentVertical(data) {
-    return axiosInstance.post("/api/eluent/get_vertical", data);
+    return axiosInstance.post("/eluent_curve/get_vertical", data);
 }
 
 export function getEluentLine() {
-    return axiosInstance.get("/api/eluent/get_line");
-}
-
-
-export function getTube(data) {
-    return axiosInstance.post("/api/eluent/get_tube",data);
+    return axiosInstance.get("/eluent_curve/get_line");
 }
