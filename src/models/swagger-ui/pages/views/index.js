@@ -10,7 +10,7 @@ const App = () => {
 
     useEffect(() => {
         // 使用你的Swagger JSON文件的URL
-        const swaggerUrl = "http://127.0.0.1:5000/swagger/";
+        const swaggerUrl = "http://192.168.5.185:5000/swagger/";
         // "http://192.168.5.155:5000/swagger/"
         // "http://127.0.0.1:5000/swagger-json/"
         axios
@@ -99,14 +99,14 @@ const removeArrayItem = (path, paramName, index) => {
     });
 };
     const handleSubmit = (path, method) => {
-        setLoading(true)
-        // setInputValues((prevValues) => ({
-        //     ...prevValues,
-        //     [path]: {
-        //         ...prevValues[path],
-        //         loading: true, // 设置loading状态
-        //     },
-        // }));        
+        // setLoading(true)
+        setInputValues((prevValues) => ({
+            ...prevValues,
+            [path]: {
+                ...prevValues[path],
+                loading: true, // 设置loading状态
+            },
+        }));        
         const operation = swaggerData.paths[path][method];
         const params = operation.parameters.reduce((acc, param) => {
             if (param.in === "body") {
@@ -142,14 +142,14 @@ const removeArrayItem = (path, paramName, index) => {
         if (method === "get") {
             config = {
                 method: method,
-                url: `http://127.0.0.1:5000${dynamicPath}`,
+                url: `http://192.168.5.185:5000${dynamicPath}`,
                 params: params, // 剩余查询参数
                 headers: {},
             };
         } else {
             config = {
                 method: method,
-                url: `http://127.0.0.1:5000${dynamicPath}`,
+                url: `http://192.168.5.185:5000${dynamicPath}`,
                 headers: { "Content-Type": "application/json" },
                 data: params, // 设置数据字段
             };
@@ -189,23 +189,18 @@ const removeArrayItem = (path, paramName, index) => {
                     }));
                 }
             })
-            .finally(() => setLoading(false)); // 请求完成后重置 loading 状态
-        }
-            // .catch((error) => console.error("Error making API request:", error))
-            // .finally(() => {
-            //     setInputValues((prevValues) => ({
-            //         ...prevValues,
-            //         [path]: {
-            //             ...prevValues[path],
-            //             loading: false, // 请求完成后重置loading状态
-            //         },
-            //     }));
-            // });    
+            .finally(() => {
+                setInputValues((prevValues) => ({
+                    ...prevValues,
+                    [path]: {
+                        ...prevValues[path],
+                        loading: false, // 请求完成后重置loading状态
+                    },
+                }));
+            });   
             // .finally(() => setLoading(false)); // 请求完成后重置 loading 状态
-            // }
-                // if (method !== "get") {
-                //     config.data = params;
-        // }
+        }
+            
 
      
 
@@ -375,20 +370,20 @@ const removeArrayItem = (path, paramName, index) => {
                                     );
                                 }
                             })}
-                          {/* <button
+                          <button
     onClick={() => handleSubmit(path, method)}
     disabled={inputValues[path] && inputValues[path].loading}
     style={{ marginBottom: "10px" }}
 >
     {inputValues[path] && inputValues[path].loading ? "Loading..." : "Submit"}
-</button> */}
-<button
+</button>
+{/* <button
     onClick={() => handleSubmit(path, method)}
     disabled={loading} // 禁用按钮
     style={{ marginBottom: "10px" }}
 >
     {loading ? "Loading..." : "Submit"}
-</button>
+</button> */}
                             {/* {outputValues[path + method] && ( */}
                             <div
                                 style={{
