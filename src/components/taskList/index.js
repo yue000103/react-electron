@@ -20,10 +20,11 @@ const App = (props) => {
         callback(index);
     };
 
-    const runs = (index, tubeObj) => {
+    const runs = (index, tubeObj, status) => {
+        console.log("status :", status);
         console.log("index: ", index);
         console.log("tubeObj", tubeObj.tube_list[0]);
-        getTube({ tube_list: tubeObj.tube_list, operate: "retain" }).then(
+        getTube({ tube_list: tubeObj.tube_list, operate: status }).then(
             (responseData) => {}
         );
         // callback(index);
@@ -59,7 +60,7 @@ const App = (props) => {
                         description={"Run the task"}
                         okText="Yes"
                         cancelText="No"
-                        onConfirm={() => runs(index, tubeObj)}
+                        onConfirm={() => runs(index, tubeObj, tubeObj.status)}
                     >
                         <PlayCircleOutlined
                             style={{

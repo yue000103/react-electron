@@ -19,6 +19,10 @@ import {
     getEluentCurve,
     getEluentVertical,
     getEluentLine,
+    updateEluentLine,
+    pauseEluentLine,
+    startEluentLine,
+    terminateEluentLine,
 } from "../../api/eluent_curve";
 import { timeout } from "d3";
 import moment from "moment";
@@ -99,6 +103,8 @@ let intervalId2;
 let startTime;
 let flagStartTime = 1; //  1 实验从头开始  0 实验继续
 let lineFlag = 1; //  1 可以修改折线 0 不可以修改折线
+let newPoints = [];
+
 const App = () => {
     const [loading, setLoading] = React.useState(false);
 
@@ -114,7 +120,13 @@ const App = () => {
         setNum(numss);
     };
     // flag  ： undefined  没被选中   true  保留  false  废弃
-
+    const handleUpdatePoint = (linePointChange) => {
+        console.log(
+            "-------------------------------------------------linePointChange",
+            linePointChange
+        );
+        newPoints = linePointChange;
+    };
     const process_data_flag = (selected_tube, flag, color) => {
         let nums = num.map((item) => {
             if (selected_tube.includes(item.tube)) {
@@ -215,8 +227,20 @@ const App = () => {
         setLoading(true);
         if (flagStartTime == 1) {
             reset();
-            startTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss"); // 或者使用适当的时间格式
+            startTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+            // 或者使用适当的时间格式
             flagStartTime = 0;
+            updateEluentLine({ point: newPoints, start_time: startTime })
+                .then((responseData) => {
+                    console.log("responseData :", responseData);
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
+        } else {
+            startEluentLine().then((responsedata) => {
+                console.log("responsedata :", responsedata);
+            });
         }
 
         intervalId1 = setInterval(() => {
@@ -240,7 +264,7 @@ const App = () => {
                     console.log(error);
                 });
             console.log("num", num);
-        }, 5000);
+        }, 10000);
     };
 
     const terminate = () => {
@@ -249,11 +273,17 @@ const App = () => {
         clearInterval(intervalId1);
         clearInterval(intervalId2);
         setLoading(false);
+        terminateEluentLine().then((responseData) => {
+            console.log("responseData :", responseData);
+        });
     };
     const pause = () => {
         clearInterval(intervalId1);
 
         clearInterval(intervalId2);
+        pauseEluentLine().then((responseData) => {
+            console.log("responseData :", responseData);
+        });
     };
     const reset = () => {
         lineFlag = 1;
@@ -268,7 +298,9 @@ const App = () => {
     useEffect(() => {
         getEluentLine().then((responseData) => {
             setLine(responseData.data.point);
+            newPoints = responseData.data.point;
         });
+
         // let rubePoint = [];
         // for (let i = 1; i < 41; i++) {
         //     rubePoint.push({ timeStart: "", timeEnd: "", tube: i });
@@ -334,6 +366,7 @@ const App = () => {
                                         selected_tubes={selected_tubes}
                                         linePoint={linePoint}
                                         lineFlag={lineFlag}
+                                        callback={handleUpdatePoint}
                                     ></Line>
                                 </div>
 
