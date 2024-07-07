@@ -61,11 +61,11 @@ const renderCurve = (svg, width, height, margin) => {
     // console.log("parse", parsedData);
     //洗脱液的曲线图
     const xScale = d3.scaleTime().domain([now, endTime]).range([0, width]);
-    const yScale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
+    const yScale = d3.scaleLinear().domain([0, 0.5]).range([height, 0]);
     const xAxis = d3.axisTop(xScale);
     const yAxis = d3
         .axisRight(yScale)
-        .tickFormat((d) => (d === 0 || d === 100 ? "" : d));
+        .tickFormat((d) => (d === 0 || d === 0.5 ? "" : d));
     svg.append("g")
         .attr("transform", `translate(0, ${height - 1})`)
         .style("color", "red")
