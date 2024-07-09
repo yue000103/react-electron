@@ -27,6 +27,8 @@ import {
 import { timeout } from "d3";
 import moment from "moment";
 
+import io from "socket.io-client";
+
 const { Header, Sider, Content } = Layout;
 
 let num = [
@@ -107,7 +109,6 @@ let newPoints = [];
 
 const App = () => {
     const [loading, setLoading] = React.useState(false);
-
     // const [nums, setNum] = useState(num);
     const [data, setData] = useState([]);
     const [num, setNum] = useState([]);
@@ -115,16 +116,37 @@ const App = () => {
 
     const [messageApi, contextHolder] = message.useMessage();
 
+    useEffect(() => {
+        const socket = io("http://127.0.0.1:5000"); // 确保 URL 正确
+        socket.on("connect", () => {
+            // console.log("Connected to WebSocket server");
+        });
+
+        socket.on("new_point", (data) => {
+            console.log("data", data);
+            setNum((prevNum) => [...prevNum, data.point]);
+        });
+
+        socket.on("disconnect", () => {
+            console.log("Disconnected from WebSocket server");
+        });
+
+        // Clean up the connection on component unmount
+        return () => {
+            socket.disconnect();
+        };
+    }, []);
     const handleReceiveFlags = (select_tubes, numss) => {
         selected_tube = select_tubes;
         setNum(numss);
     };
+
     // flag  ： undefined  没被选中   true  保留  false  废弃
     const handleUpdatePoint = (linePointChange) => {
-        console.log(
-            "-------------------------------------------------linePointChange",
-            linePointChange
-        );
+        // console.log(
+        //     "-------------------------------------------------linePointChange",
+        //     linePointChange
+        // );
         newPoints = linePointChange;
     };
     const process_data_flag = (selected_tube, flag, color) => {
@@ -136,7 +158,7 @@ const App = () => {
         });
 
         setNum(nums);
-        console.log(nums);
+        // console.log(nums);
     };
     const splitConsecutive = (selected_tube) => {
         selected_tube = selected_tube.sort((a, b) => a - b);
@@ -228,18 +250,20 @@ const App = () => {
         if (flagStartTime == 1) {
             reset();
             startTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+            console.log("startTime --------------------:", startTime);
+
             // 或者使用适当的时间格式
             flagStartTime = 0;
             updateEluentLine({ point: newPoints, start_time: startTime })
                 .then((responseData) => {
-                    console.log("responseData :", responseData);
+                    // console.log("responseData :", responseData);
                 })
                 .catch((error) => {
                     console.log(error);
                 });
         } else {
             startEluentLine().then((responsedata) => {
-                console.log("responsedata :", responsedata);
+                // console.log("responsedata :", responsedata);
             });
         }
 
@@ -255,34 +279,34 @@ const App = () => {
                     console.log(error);
                 });
         }, 1000);
-        intervalId2 = setInterval(() => {
-            getEluentVertical({ start_time: startTime })
-                .then((responseData) => {
-                    setNum((prevNum) => [...prevNum, responseData.data.point]);
-                })
-                .catch((error) => {
-                    console.log(error);
-                });
-            console.log("num", num);
-        }, 10000);
+        // intervalId2 = setInterval(() => {
+        console.log("---------------getEluentVertical----------------------");
+        getEluentVertical({ start_time: startTime })
+            .then((responseData) => {
+                // setNum((prevNum) => [...prevNum, responseData.data.point]);
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+        // }, 10000);
     };
 
     const terminate = () => {
         flagStartTime = 1;
 
         clearInterval(intervalId1);
-        clearInterval(intervalId2);
+        // clearInterval(intervalId2);
         setLoading(false);
         terminateEluentLine().then((responseData) => {
-            console.log("responseData :", responseData);
+            // console.log("responseData :", responseData);
         });
     };
     const pause = () => {
         clearInterval(intervalId1);
 
-        clearInterval(intervalId2);
+        // clearInterval(intervalId2);
         pauseEluentLine().then((responseData) => {
-            console.log("responseData :", responseData);
+            // console.log("responseData :", responseData);
         });
     };
     const reset = () => {
@@ -307,6 +331,7 @@ const App = () => {
         // }
         // setNum((prevNum) => rubePoint); // 更新状态
     }, []);
+
     return (
         <Flex gap="middle" wrap>
             {contextHolder}

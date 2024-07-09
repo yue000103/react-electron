@@ -45,7 +45,7 @@ const renderCurve = (svg, width, height, margin) => {
         ...d,
         time: parseTime(d.time),
     }));
-
+    // console.log("paeseData", parsedData);
     // if (data.length > 0) {
     //     const timeString = data[0].time;
     //     // now = new Date(timeString);
@@ -60,6 +60,8 @@ const renderCurve = (svg, width, height, margin) => {
     // }
     // console.log("parse", parsedData);
     //洗脱液的曲线图
+    // console.log("now:", now);
+    // console.log("endTime", endTime);
     const xScale = d3.scaleTime().domain([now, endTime]).range([0, width]);
     const yScale = d3.scaleLinear().domain([0, 0.5]).range([height, 0]);
     const xAxis = d3.axisTop(xScale);
@@ -103,10 +105,12 @@ const renderCurve = (svg, width, height, margin) => {
 };
 
 const renderVertical = (svg, xScale, height) => {
+    // console.log("num-----------", num);
+
     const parsedData = num?.map((d) => ({
         ...d,
-        timeStart: parseTime(d.timeStart),
-        timeEnd: parseTime(d.timeEnd),
+        timeStart: parseTime(d.time_start),
+        timeEnd: parseTime(d.time_end),
     }));
     // 生成垂直虚线的路径生成器
     const lineVertical = (d) => {
@@ -147,15 +151,15 @@ const renderArea = (svg, xScale, yScale, height) => {
         .y0(height)
         .y1((d) => yScale(d.value))
         .curve(d3.curveLinear);
-
+    console.log("num:", num);
     const getXandY = (tube) => {
         const selectedTube = num.find((item) => item.tube === tube);
         // console.log("selectedTube---------- :", selectedTube);
 
         if (selectedTube) {
             return {
-                x1: selectedTube.timeStart,
-                x2: selectedTube.timeEnd,
+                x1: selectedTube.time_start,
+                x2: selectedTube.time_end,
                 color: selectedTube.color,
             };
         } else {
@@ -163,19 +167,25 @@ const renderArea = (svg, xScale, yScale, height) => {
         }
     };
     selected.forEach((selectTube) => {
-        // console.log("selectTube", selectTube["tube_list"]);
+        console.log("selectTube", selectTube["tube_list"]);
         let fillColor = "";
+        // console.log("selectTube :", selectTube);
         selectTube["tube_list"].forEach((tube) => {
+            // console.log("tube :", tube);
+
             const xy = getXandY(tube);
             // console.log("xy", xy);
             if (xy) {
                 const { x1, x2, color } = xy;
                 // console.log("x1, x2, color :", x1, x2, color);
                 fillColor = color;
+                // console.log("data :", data);
+
                 let fillArea = data.filter((item) => {
                     return item.time >= x1 && item.time <= x2;
                 });
                 fillAreaData = [...fillAreaData, ...fillArea];
+                // console.log("fillAreaData :", fillAreaData);
             }
         });
         const { x1, x2, color } = selectTube["tube_list"][0]
