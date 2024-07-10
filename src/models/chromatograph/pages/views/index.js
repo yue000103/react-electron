@@ -132,6 +132,8 @@ const App = () => {
 
             if (responseData.point["value"] == 0){
                 setLoading(false);
+                flagStartTime = 1;
+
             }
             else {
                 setData((prevData) => [
