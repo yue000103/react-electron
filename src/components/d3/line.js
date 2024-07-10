@@ -269,11 +269,12 @@ const renderLine = (
     setlinePointChange,
     callback
 ) => {
-    // console.log("linePointChange :", linePointChange);
+    console.log("linePointChange :", linePointChange);
     const parsedData = linePointChange?.map((d) => ({
         ...d,
         time: parseTime(d.time),
     }));
+    console.log("parseLine",parsedData)
     //洗脱液的折线图
     // 定义拖拽行为
     const drag = d3

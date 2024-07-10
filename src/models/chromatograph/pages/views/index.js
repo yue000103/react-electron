@@ -127,6 +127,20 @@ const App = () => {
             setNum((prevNum) => [...prevNum, data.point]);
         });
 
+        socket.on("new_curve_point", (responseData) => {
+            console.log("responseData", responseData);
+
+            if (responseData.point["value"] == 0){
+                setLoading(false);
+            }
+            else {
+                setData((prevData) => [
+                    ...prevData,
+                    responseData.point,
+                ]);     
+            }
+               
+        });
         socket.on("disconnect", () => {
             console.log("Disconnected from WebSocket server");
         });
@@ -261,33 +275,45 @@ const App = () => {
                 .catch((error) => {
                     console.log(error);
                 });
+            // getEluentVertical({ start_time: startTime })
+            // .then((responseData) => {
+            //     // setNum((prevNum) => [...prevNum, responseData.data.point]);
+            // })
+            // .catch((error) => {
+            //     console.log(error);
+            // });
         } else {
+            console.log("startTime --------------2------:", startTime);
+
             startEluentLine().then((responsedata) => {
                 // console.log("responsedata :", responsedata);
             });
+            // getEluentVertical({ start_time: startTime })
+            // .then((responseData) => {
+            //     // setNum((prevNum) => [...prevNum, responseData.data.point]);
+            // })
+            // .catch((error) => {
+            //     console.log(error);
+            // });
         }
-
-        intervalId1 = setInterval(() => {
-            getEluentCurve({ start_time: startTime })
-                .then((responseData) => {
-                    setData((prevData) => [
-                        ...prevData,
-                        responseData.data.point,
-                    ]);
-                })
-                .catch((error) => {
-                    console.log(error);
-                });
-        }, 1000);
+        // setTimeout(() => {
+            // intervalId1 = setInterval(() => {
+                getEluentCurve({ start_time: startTime })
+                    .then((responseData) => {
+                        // setData((prevData) => [
+                        //     ...prevData,
+                        //     responseData.data.point,
+                        // ]);
+                    })
+                    .catch((error) => {
+                        console.log(error);
+                    });
+            // }, 1000);
+        // }, 7000);
+        
         // intervalId2 = setInterval(() => {
         console.log("---------------getEluentVertical----------------------");
-        getEluentVertical({ start_time: startTime })
-            .then((responseData) => {
-                // setNum((prevNum) => [...prevNum, responseData.data.point]);
-            })
-            .catch((error) => {
-                console.log(error);
-            });
+        
         // }, 10000);
     };
 
