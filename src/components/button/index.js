@@ -51,8 +51,12 @@ const App = ({ num, callback, selected }) => {
         }
         return results;
     };
-    num = num.push(num.length + 1);
+    console.log("num ---------------------",num)
+    // let last_num = {time_start:"",time_end:"",tube:num.length + 1}
+    // num = num.push(last_num);
     const groupsOfTen = chunkArray(num, 10);
+    console.log("groupsOfTen ---------------------",groupsOfTen)
+
     const combineGroups = (array, groupSize) => {
         const results = [];
         for (let i = 0; i < array.length; i += groupSize) {

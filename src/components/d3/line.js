@@ -45,23 +45,7 @@ const renderCurve = (svg, width, height, margin) => {
         ...d,
         time: parseTime(d.time),
     }));
-    // console.log("paeseData", parsedData);
-    // if (data.length > 0) {
-    //     const timeString = data[0].time;
-    //     // now = new Date(timeString);
-    //     now = new Date();
-    //     const [hours, minutes, seconds] = timeString.split(":").map(Number);
-    //     console.log("hours", hours);
-    //     console.log("minutsecondses", seconds);
-
-    //     now.setHours(hours, minutes, seconds);
-    // } else {
-    //     now = new Date();
-    // }
-    // console.log("parse", parsedData);
-    //洗脱液的曲线图
-    // console.log("now:", now);
-    // console.log("endTime", endTime);
+    console.log("data--------------------",parsedData);
     const xScale = d3.scaleTime().domain([now, endTime]).range([0, width]);
     const yScale = d3.scaleLinear().domain([0, 0.5]).range([height, 0]);
     const xAxis = d3.axisTop(xScale);
@@ -231,8 +215,10 @@ const parseTime = (timeString) => {
     // 解析时间字符串
     // console.log("timeString", timeString);
     const [hours, minutes, seconds] = timeString.split(":").map(Number);
+
     const parsedTime = new Date();
     parsedTime.setHours(hours, minutes, seconds, 0);
+    // console.log("parsedTime", parsedTime);
     // console.log("endTime", endTime);
     // console.log("startTime", startTime);
     // 计算相对于起始时间的差值（毫秒）

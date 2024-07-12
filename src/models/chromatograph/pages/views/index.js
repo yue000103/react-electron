@@ -344,6 +344,8 @@ const App = () => {
         });
     };
     const reset = () => {
+        flagStartTime = 1;
+
         lineFlag = 1;
         getEluentLine().then((responseData) => {
             setLine(responseData.data.point);
