@@ -117,7 +117,7 @@ const App = () => {
     const [messageApi, contextHolder] = message.useMessage();
 
     useEffect(() => {
-        const socket = io("http://127.0.0.1:5000"); // 确保 URL 正确
+        const socket = io("http://192.168.124.18:5000"); // 确保 URL 正确
         socket.on("connect", () => {
             // console.log("Connected to WebSocket server");
         });
@@ -130,18 +130,12 @@ const App = () => {
         socket.on("new_curve_point", (responseData) => {
             console.log("responseData", responseData);
 
-            if (responseData.point["value"] == 0){
+            if (responseData.point["value"] == 0) {
                 setLoading(false);
                 flagStartTime = 1;
-
+            } else {
+                setData((prevData) => [...prevData, responseData.point]);
             }
-            else {
-                setData((prevData) => [
-                    ...prevData,
-                    responseData.point,
-                ]);     
-            }
-               
         });
         socket.on("disconnect", () => {
             console.log("Disconnected from WebSocket server");
@@ -264,8 +258,8 @@ const App = () => {
         console.log("Starting");
         lineFlag = 0;
         setLoading(true);
-        
-        console.log("flagStartTime",flagStartTime);
+
+        console.log("flagStartTime", flagStartTime);
 
         if (flagStartTime == 1) {
             reset();
@@ -304,24 +298,24 @@ const App = () => {
             // });
         }
         // setTimeout(() => {
-            // intervalId1 = setInterval(() => {
-                console.log('--------------------9-------------------------');
-                getEluentCurve({ start_time: startTime })
-                    .then((responseData) => {
-                        // setData((prevData) => [
-                        //     ...prevData,
-                        //     responseData.data.point,
-                        // ]);
-                    })
-                    .catch((error) => {
-                        console.log(error);
-                    });
-            // }, 1000);
+        // intervalId1 = setInterval(() => {
+        console.log("--------------------9-------------------------");
+        getEluentCurve({ start_time: startTime })
+            .then((responseData) => {
+                // setData((prevData) => [
+                //     ...prevData,
+                //     responseData.data.point,
+                // ]);
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+        // }, 1000);
         // }, 7000);
-        
+
         // intervalId2 = setInterval(() => {
         console.log("---------------getEluentVertical----------------------");
-        
+
         // }, 10000);
     };
 
@@ -345,6 +339,8 @@ const App = () => {
     };
     const reset = () => {
         flagStartTime = 1;
+        let newnum = [];
+        setNum(newnum);
 
         lineFlag = 1;
         getEluentLine().then((responseData) => {
