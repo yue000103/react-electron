@@ -51,7 +51,7 @@ const App = ({ num, callback, selected }) => {
         }
         return results;
     };
-
+    num = num.push(num.length + 1);
     const groupsOfTen = chunkArray(num, 10);
     const combineGroups = (array, groupSize) => {
         const results = [];
