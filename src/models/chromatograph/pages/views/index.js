@@ -261,8 +261,12 @@ const App = () => {
     };
 
     const start = () => {
+        console.log("Starting");
         lineFlag = 0;
         setLoading(true);
+        
+        console.log("flagStartTime",flagStartTime);
+
         if (flagStartTime == 1) {
             reset();
             startTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
@@ -270,9 +274,10 @@ const App = () => {
 
             // 或者使用适当的时间格式
             flagStartTime = 0;
+            console.log("-------------------7----------------------");
             updateEluentLine({ point: newPoints, start_time: startTime })
                 .then((responseData) => {
-                    // console.log("responseData :", responseData);
+                    console.log("responseData :", responseData);
                 })
                 .catch((error) => {
                     console.log(error);
@@ -300,6 +305,7 @@ const App = () => {
         }
         // setTimeout(() => {
             // intervalId1 = setInterval(() => {
+                console.log('--------------------9-------------------------');
                 getEluentCurve({ start_time: startTime })
                     .then((responseData) => {
                         // setData((prevData) => [
