@@ -117,7 +117,7 @@ const App = () => {
     const [messageApi, contextHolder] = message.useMessage();
 
     useEffect(() => {
-        const socket = io("http://192.168.124.18:5000"); // 确保 URL 正确
+        const socket = io("http://192.168.183.1:5000"); // 确保 URL 正确
         socket.on("connect", () => {
             // console.log("Connected to WebSocket server");
         });
