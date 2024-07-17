@@ -112,12 +112,15 @@ const App = () => {
     // const [nums, setNum] = useState(num);
     const [data, setData] = useState([]);
     const [num, setNum] = useState([]);
+    //清洗标志，当0时，所有试管禁用，当1时，所有试管可以选择。
+    const [clean_flag, setCleanFlag] = useState(0);
+
     const [linePoint, setLine] = useState([]);
 
     const [messageApi, contextHolder] = message.useMessage();
 
     useEffect(() => {
-        const socket = io("http://192.168.183.1:5000"); // 确保 URL 正确
+        const socket = io("http://192.168.124.6:5000"); // 确保 URL 正确
         socket.on("connect", () => {
             // console.log("Connected to WebSocket server");
         });
@@ -226,6 +229,8 @@ const App = () => {
         }
     };
     const reverseFlags = () => {
+        console.log("selected_tube :", selected_tube);
+
         if (selected_tube.length > 0) {
             selected_reverse = selected_tube;
             let reverse = num.filter(
@@ -352,6 +357,8 @@ const App = () => {
         selected_tubes = [];
     };
     const clean = () => {
+        setCleanFlag(1);
+        console.log("clean_flag--- :", clean_flag);
         if (selected_tube.length > 0) {
             let consecutiveArrays = splitConsecutive(selected_tube);
             consecutiveArrays.forEach((arr) => {
@@ -366,9 +373,10 @@ const App = () => {
             process_data_flag(selected_tube, true, colorMap[colorNum]);
             selected_reverse = [];
             selected_tube = [];
-        } else {
-            error();
         }
+        // else {
+        //     error();
+        // }
     };
     useEffect(() => {
         getEluentLine().then((responseData) => {
@@ -397,7 +405,7 @@ const App = () => {
                     <Row>
                         <Col span={4}>
                             <Row>
-                                <Col span={12}>
+                                <Col span={24}>
                                     <div className="buttonStyle">
                                         <Button
                                             type="primary"
@@ -435,7 +443,7 @@ const App = () => {
                                         </Button>
                                     </div>
                                 </Col>
-                                <Col span={12}>
+                                {/* <Col span={12}>
                                     <div className="buttonStyle">
                                         <Button
                                             type="primary"
@@ -472,7 +480,7 @@ const App = () => {
                                             复位
                                         </Button>
                                     </div>
-                                </Col>
+                                </Col> */}
                             </Row>
                         </Col>
                         <Col span={20}>
@@ -482,6 +490,7 @@ const App = () => {
                                         data={data}
                                         num={num}
                                         selected_tubes={selected_tubes}
+                                        clean_flag={clean_flag}
                                         linePoint={linePoint}
                                         lineFlag={lineFlag}
                                         callback={handleUpdatePoint}
@@ -506,10 +515,10 @@ const App = () => {
                 </Divider>
                 <Spin spinning={loading} delay={500}>
                     <Layout className="bottomStyle">
-                        <Sider width="43%" className="siderStyle">
+                        <Sider width="42%" className="siderStyle">
                             <div className="buttonTitle">试管列表</div>
                             <div className="buttonTube">
-                                {num.length > 0 ? (
+                                {/* {num.length > 0 ? (
                                     <Buttons
                                         num={num}
                                         selected={selected_reverse}
@@ -521,12 +530,18 @@ const App = () => {
                                         imageStyle={{ height: 0 }}
                                         description={<span>暂无试管</span>}
                                     />
-                                )}
+                                )} */}
+                                <Buttons
+                                    num={num}
+                                    selected={selected_reverse}
+                                    clean_flag={clean_flag}
+                                    callback={handleReceiveFlags}
+                                ></Buttons>
                             </div>
                         </Sider>
                         <Sider width="15%" className="siderStyle">
                             <Row>
-                                <Col span={12}>
+                                <Col span={24}>
                                     <div className="buttonStyle">
                                         <Button
                                             type="primary"
@@ -558,7 +573,7 @@ const App = () => {
                                         </Button>
                                     </div>
                                 </Col>
-                                <Col span={12}>
+                                {/* <Col span={12}>
                                     <div className="buttonStyle">
                                         <Button
                                             type="primary"
@@ -589,7 +604,7 @@ const App = () => {
                                             清洗
                                         </Button>
                                     </div>
-                                </Col>
+                                </Col> */}
                             </Row>
                         </Sider>
                         <Content className="taskStyle">

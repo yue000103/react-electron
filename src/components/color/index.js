@@ -37,7 +37,7 @@ const colors = {
         border: "none",
     },
     colorEight: {
-        backgroundColor: "#f5d5e9",
+        backgroundColor: "#e4e2e2",
         color: "white",
         border: "none",
     },

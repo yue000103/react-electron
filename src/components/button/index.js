@@ -2,32 +2,117 @@ import React, { useState, useEffect } from "react";
 import { Button, Flex, Row, Col, Card } from "antd";
 import "./index.css";
 import color from "@components/color/index"; // 引入样式对象
+import { convertLegacyProps } from "antd/es/button";
 
 let select_tube = [];
-
-const App = ({ num, callback, selected }) => {
+let groups = [
+    [
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 1 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 2 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 3 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 4 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 5 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 6 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 7 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 8 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 9 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 10 },
+    ],
+    [
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 11 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 12 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 13 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 14 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 15 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 16 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 17 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 18 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 19 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 20 },
+    ],
+    [
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 21 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 22 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 23 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 24 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 25 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 26 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 27 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 28 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 29 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 30 },
+    ],
+    [
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 31 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 32 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 33 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 34 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 35 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 36 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 37 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 38 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 39 },
+        { time_start: "00:00:00", time_end: "00:00:00", tube: 40 },
+    ],
+];
+const App = ({ num, callback, selected, clean_flag }) => {
     const [selectedFlag, setSelectedFlags] = useState([]);
+    const [cleanFlag, setCleanFlag] = useState(0);
+    const [forceUpdate, setForceUpdate] = useState(0);
+    const [groupsOfTen, setGroupsOfTen] = useState(groups);
+
     useEffect(() => {
+        setCleanFlag(clean_flag);
+        if (num.length == 0) {
+            const groups_flag = generateGroups(4, 10); // 生成4组，每组10个管子的数组
+
+            setGroupsOfTen(groups_flag);
+        }
         if (selected) {
             setSelectedFlags(selected);
         } else {
             setSelectedFlags([]);
         }
         return () => {
-            select_tube = [];
+            // select_tube = [];
             console.log("组件即将卸载，清除副作用...");
         };
-    }, [num, selected]);
+    }, [num, selected, clean_flag]);
+    // useEffect(() => {
+    //     console.log("groupsOfTen updated:", groupsOfTen);
+    // }, [groupsOfTen]);
     // 处理按钮点击事件
+    const generateGroups = (groupCount, tubesPerGroup) => {
+        const groups = [];
+        let tubeNumber = 1;
+
+        for (let i = 0; i < groupCount; i++) {
+            const group = [];
+            for (let j = 0; j < tubesPerGroup; j++) {
+                group.push({
+                    time_start: "00:00:00",
+                    time_end: "00:00:00",
+                    tube: tubeNumber++,
+                });
+            }
+            groups.push(group);
+        }
+
+        return groups;
+    };
     const handleButtonClick = (tube) => {
         setSelectedFlags((prevFlags) => {
             const isSelected = prevFlags.includes(tube);
+            // console.log("select_tube ---isSelected :", isSelected);
+
             if (isSelected) {
                 select_tube = prevFlags.filter((f) => f !== tube);
+                // console.log("select_tube---1 :", select_tube);
+
                 callback(select_tube, num);
                 return select_tube;
             } else {
-                console.log("prevFlags", prevFlags);
+                // console.log("prevFlags", prevFlags);
                 let newFlags = [tube];
                 if (prevFlags.length > 0) {
                     newFlags = Array.from(
@@ -39,7 +124,12 @@ const App = ({ num, callback, selected }) => {
                 }
 
                 select_tube = [...newFlags];
+                // console.log("select_tube ---newFlags :", newFlags);
+                // console.log("select_tube---2 :", select_tube);
+
                 callback(select_tube, num);
+                console.log("select_tube---3 :", select_tube);
+
                 return select_tube;
             }
         });
@@ -51,11 +141,13 @@ const App = ({ num, callback, selected }) => {
         }
         return results;
     };
-    console.log("num ---------------------",num)
-    // let last_num = {time_start:"",time_end:"",tube:num.length + 1}
+
+    // let last_num = { time_start: "", time_end: "", tube: num.length + 1 };
     // num = num.push(last_num);
-    const groupsOfTen = chunkArray(num, 10);
-    console.log("groupsOfTen ---------------------",groupsOfTen)
+    console.log("num", num);
+    // const groupsOfTen = chunkArray(num, 10);
+
+    // console.log("groupsOfTen ---------------------", groupsOfTen);
 
     const combineGroups = (array, groupSize) => {
         const results = [];
@@ -64,7 +156,6 @@ const App = ({ num, callback, selected }) => {
         }
         return results;
     };
-
     const combinedGroups = combineGroups(groupsOfTen, 2);
     return (
         <div>
@@ -82,10 +173,43 @@ const App = ({ num, callback, selected }) => {
                                         >
                                             {row.map((item, index) => {
                                                 const tube = item.tube;
+
                                                 const isSelected =
                                                     selectedFlag.includes(tube);
+                                                groups = groupsOfTen;
+                                                num.map((n) => {
+                                                    let one = Math.floor(
+                                                        n["tube"] / 10
+                                                    );
+                                                    let two =
+                                                        Math.floor(
+                                                            n["tube"] % 10
+                                                        ) - 1;
+
+                                                    groups[one][two] = n;
+                                                });
+                                                const foundTube = num.find(
+                                                    (t) => t.tube === tube
+                                                );
+                                                let isNum =
+                                                    foundTube !== undefined;
+
                                                 let buttonColorStyle = {};
                                                 let buttonDisabled = false;
+
+                                                // console.log(
+                                                //     "item.color",
+                                                //     item.color
+                                                // );
+                                                if (cleanFlag == 1) {
+                                                    buttonDisabled = false;
+                                                } else {
+                                                    if (!isNum) {
+                                                        buttonColorStyle =
+                                                            color["colorEight"];
+                                                        buttonDisabled = true;
+                                                    }
+                                                }
 
                                                 if (item.color) {
                                                     buttonDisabled = true;

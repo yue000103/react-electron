@@ -37,7 +37,7 @@ endTime = new Date(now.getTime() + 5 * 60 * 1000);
 // now.setHours(1, 0, 0);
 // const endTime = new Date(now.getTime() + 5 * 60 * 1000);
 
-const renderCurve = (svg, width, height, margin) => {
+const renderCurve = (svg, width, height, margin, cleanFlag) => {
     // console.log("data", data);
     //data{time: '17:46:47', value: 81.41712213857508}
 
@@ -45,7 +45,7 @@ const renderCurve = (svg, width, height, margin) => {
         ...d,
         time: parseTime(d.time),
     }));
-    console.log("data--------------------",parsedData);
+    console.log("data--------------------", parsedData);
     const xScale = d3.scaleTime().domain([now, endTime]).range([0, width]);
     const yScale = d3.scaleLinear().domain([0, 0.5]).range([height, 0]);
     const xAxis = d3.axisTop(xScale);
@@ -85,7 +85,10 @@ const renderCurve = (svg, width, height, margin) => {
     //     .attr("stroke-width", 2)
     //     .attr("d", lineX);
     renderVertical(svg, xScale, height);
-    renderArea(svg, xScale, yScale, height);
+    console.log("cleanFlag", cleanFlag);
+    if (cleanFlag == 0) {
+        renderArea(svg, xScale, yScale, height);
+    }
 };
 
 const renderVertical = (svg, xScale, height) => {
@@ -260,7 +263,7 @@ const renderLine = (
         ...d,
         time: parseTime(d.time),
     }));
-    console.log("parseLine",parsedData)
+    console.log("parseLine", parsedData);
     //洗脱液的折线图
     // 定义拖拽行为
     const drag = d3
@@ -442,6 +445,7 @@ const LineChart = (props) => {
     data = props.data;
     // console.log("data.props", props.data);
     num = props.num;
+    let cleanFlag = props.clean_flag;
     linePoint = props.linePoint;
     // console.log("props :", props);
     lineFlag = props.lineFlag;
@@ -482,7 +486,7 @@ const LineChart = (props) => {
         const height = dimensions.height;
         const margin = { top: 20, right: width, bottom: 10, left: 0 };
 
-        renderCurve(svg, width, height, margin, num, selected);
+        renderCurve(svg, width, height, margin, cleanFlag);
         renderLine(
             width,
             height,
@@ -494,7 +498,8 @@ const LineChart = (props) => {
             setIsModalVisible,
             linePointChange,
             setlinePointChange,
-            props.callback
+            props.callback,
+            cleanFlag
         );
     }, [data, dimensions, num, selected, linePoint, linePointChange]);
     const handleOk = () => {
