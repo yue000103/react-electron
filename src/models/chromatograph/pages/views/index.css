@@ -25,15 +25,18 @@
 .button3{
   background-color: #9a7e7a;
 }
+.button4{
+  background-color: #99c7a6;
+}
 
 .buttonStyle  {
   /* background-color:  #0958d9 ; */
-  background-color: #ffffff !important;
+  background-color: #fdfdfd !important;
   display: flex;
   flex-direction: column; 
   align-items: center; 
   justify-content: center; 
-  height: 18rem;
+  height: 21rem;
   
 
 }
@@ -45,7 +48,7 @@
 .siderStyle  {
   color:  #ffffff ;
   margin-top: 1rem;
-  margin-left: 1rem;
+  margin-left: 0rem;
   background-color: #ffffff !important;
   text-align: center;
 }

@@ -351,6 +351,25 @@ const App = () => {
         setNum(() => []);
         selected_tubes = [];
     };
+    const clean = () => {
+        if (selected_tube.length > 0) {
+            let consecutiveArrays = splitConsecutive(selected_tube);
+            consecutiveArrays.forEach((arr) => {
+                let new_tube = { tube_list: arr, status: "clean" };
+                selected_tubes.push(new_tube);
+            });
+            if (colorNum != 9) {
+                colorNum++;
+            } else {
+                colorNum = 1;
+            }
+            process_data_flag(selected_tube, true, colorMap[colorNum]);
+            selected_reverse = [];
+            selected_tube = [];
+        } else {
+            error();
+        }
+    };
     useEffect(() => {
         getEluentLine().then((responseData) => {
             setLine(responseData.data.point);
@@ -377,42 +396,84 @@ const App = () => {
                 >
                     <Row>
                         <Col span={4}>
-                            <div className="buttonStyle">
-                                <Button
-                                    type="primary"
-                                    size="large"
-                                    danger
-                                    className={`button button1`} // 使用模板字符串
-                                    onClick={() => start()}
-                                >
-                                    开始
-                                </Button>
-                                <Button
-                                    type="primary"
-                                    size="large"
-                                    className={`button button2`}
-                                    onClick={() => pause()}
-                                >
-                                    暂停
-                                </Button>
+                            <Row>
+                                <Col span={12}>
+                                    <div className="buttonStyle">
+                                        <Button
+                                            type="primary"
+                                            size="large"
+                                            danger
+                                            className={`button button1`} // 使用模板字符串
+                                            onClick={() => start()}
+                                        >
+                                            开始
+                                        </Button>
+                                        <Button
+                                            type="primary"
+                                            size="large"
+                                            className={`button button2`}
+                                            onClick={() => pause()}
+                                        >
+                                            暂停
+                                        </Button>
 
-                                <Button
-                                    type="primary  "
-                                    size="large"
-                                    className="button"
-                                    onClick={() => terminate()}
-                                >
-                                    终止
-                                </Button>
-                                <Button
-                                    type="primary  "
-                                    size="large"
-                                    className="button"
-                                    onClick={() => reset()}
-                                >
-                                    复位
-                                </Button>
-                            </div>
+                                        <Button
+                                            type="primary  "
+                                            size="large"
+                                            className="button"
+                                            onClick={() => terminate()}
+                                        >
+                                            终止
+                                        </Button>
+                                        <Button
+                                            type="primary  "
+                                            size="large"
+                                            className="button"
+                                            onClick={() => reset()}
+                                        >
+                                            复位
+                                        </Button>
+                                    </div>
+                                </Col>
+                                <Col span={12}>
+                                    <div className="buttonStyle">
+                                        <Button
+                                            type="primary"
+                                            size="large"
+                                            danger
+                                            className={`button button1`} // 使用模板字符串
+                                            onClick={() => start()}
+                                        >
+                                            开始
+                                        </Button>
+                                        <Button
+                                            type="primary"
+                                            size="large"
+                                            className={`button button2`}
+                                            onClick={() => pause()}
+                                        >
+                                            暂停
+                                        </Button>
+
+                                        <Button
+                                            type="primary  "
+                                            size="large"
+                                            className="button"
+                                            onClick={() => terminate()}
+                                        >
+                                            终止
+                                        </Button>
+                                        <Button
+                                            type="primary  "
+                                            size="large"
+                                            className="button"
+                                            onClick={() => reset()}
+                                        >
+                                            复位
+                                        </Button>
+                                    </div>
+                                </Col>
+                            </Row>
                         </Col>
                         <Col span={20}>
                             <div className={`lineStyle overlayBox`}>
@@ -445,7 +506,7 @@ const App = () => {
                 </Divider>
                 <Spin spinning={loading} delay={500}>
                     <Layout className="bottomStyle">
-                        <Sider width="44%" className="siderStyle">
+                        <Sider width="43%" className="siderStyle">
                             <div className="buttonTitle">试管列表</div>
                             <div className="buttonTube">
                                 {num.length > 0 ? (
@@ -463,35 +524,73 @@ const App = () => {
                                 )}
                             </div>
                         </Sider>
-                        <Sider width="9%" className="siderStyle">
-                            <div className="buttonStyle">
-                                <Flex wrap gap="small">
-                                    <Button
-                                        type="primary"
-                                        className={`button button1`} // 使用模板字符串
-                                        onClick={() => retainFlags()}
-                                    >
-                                        保留
-                                    </Button>
-                                    <Button
-                                        type="primary"
-                                        className={`button button2`}
-                                        onClick={() => abandonFlags()}
-                                    >
-                                        废弃
-                                    </Button>
-                                    <Button
-                                        type="primary"
-                                        onClick={() => reverseFlags()}
-                                        className={`button button3`}
-                                    >
-                                        反转
-                                    </Button>
-                                    <Button type="primary  " className="button">
-                                        暂停
-                                    </Button>
-                                </Flex>
-                            </div>
+                        <Sider width="15%" className="siderStyle">
+                            <Row>
+                                <Col span={12}>
+                                    <div className="buttonStyle">
+                                        <Button
+                                            type="primary"
+                                            className={`button button1`} // 使用模板字符串
+                                            onClick={() => retainFlags()}
+                                        >
+                                            保留
+                                        </Button>
+                                        <Button
+                                            type="primary"
+                                            className={`button button2`}
+                                            onClick={() => abandonFlags()}
+                                        >
+                                            废弃
+                                        </Button>
+                                        <Button
+                                            type="primary"
+                                            onClick={() => reverseFlags()}
+                                            className={`button button3`}
+                                        >
+                                            反转
+                                        </Button>
+                                        <Button
+                                            type="primary"
+                                            onClick={() => clean()}
+                                            className={`button button4`}
+                                        >
+                                            清洗
+                                        </Button>
+                                    </div>
+                                </Col>
+                                <Col span={12}>
+                                    <div className="buttonStyle">
+                                        <Button
+                                            type="primary"
+                                            className={`button button1`} // 使用模板字符串
+                                            onClick={() => retainFlags()}
+                                        >
+                                            保留
+                                        </Button>
+                                        <Button
+                                            type="primary"
+                                            className={`button button2`}
+                                            onClick={() => abandonFlags()}
+                                        >
+                                            废弃
+                                        </Button>
+                                        <Button
+                                            type="primary"
+                                            onClick={() => reverseFlags()}
+                                            className={`button button3`}
+                                        >
+                                            反转
+                                        </Button>
+                                        <Button
+                                            type="primary"
+                                            onClick={() => clean()}
+                                            className={`button button4`}
+                                        >
+                                            清洗
+                                        </Button>
+                                    </div>
+                                </Col>
+                            </Row>
                         </Sider>
                         <Content className="taskStyle">
                             <div className="buttonTitle">任务列表</div>
