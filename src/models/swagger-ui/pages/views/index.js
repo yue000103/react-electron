@@ -142,14 +142,14 @@ const removeArrayItem = (path, paramName, index) => {
         if (method === "get") {
             config = {
                 method: method,
-                url: `http://192.168.5.185:5000${dynamicPath}`,
+                url: `http://192.168.137.1:5000${dynamicPath}`,
                 params: params, // 剩余查询参数
                 headers: {},
             };
         } else {
             config = {
                 method: method,
-                url: `http://192.168.5.185:5000${dynamicPath}`,
+                url: `http://192.168.137.1:5000${dynamicPath}`,
                 headers: { "Content-Type": "application/json" },
                 data: params, // 设置数据字段
             };
