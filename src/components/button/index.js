@@ -62,6 +62,7 @@ const App = ({ num, callback, selected, clean_flag }) => {
     const [groupsOfTen, setGroupsOfTen] = useState(groups);
 
     useEffect(() => {
+        console.log("selected",selected);
         setCleanFlag(clean_flag);
         if (num.length == 0) {
             const groups_flag = generateGroups(4, 10); // 生成4组，每组10个管子的数组
@@ -69,7 +70,12 @@ const App = ({ num, callback, selected, clean_flag }) => {
             setGroupsOfTen(groups_flag);
         }
         if (selected) {
+            console.log("---------------------------------------",selected);
             setSelectedFlags(selected);
+            console.log("---------------------------------------",select_tube);
+
+            callback(selected, num);
+
         } else {
             setSelectedFlags([]);
         }
@@ -178,6 +184,7 @@ const App = ({ num, callback, selected, clean_flag }) => {
                                                     selectedFlag.includes(tube);
                                                 groups = groupsOfTen;
                                                 num.map((n) => {
+                                                    
                                                     let one = Math.floor(
                                                         n["tube"] / 10
                                                     );
@@ -185,7 +192,10 @@ const App = ({ num, callback, selected, clean_flag }) => {
                                                         Math.floor(
                                                             n["tube"] % 10
                                                         ) - 1;
-
+                                                    if(n["tube"] % 10 === 0){
+                                                        one = one - 1
+                                                        two = n["tube"] - 1
+                                                    }
                                                     groups[one][two] = n;
                                                 });
                                                 const foundTube = num.find(
@@ -210,7 +220,6 @@ const App = ({ num, callback, selected, clean_flag }) => {
                                                         buttonDisabled = true;
                                                     }
                                                 }
-
                                                 if (item.color) {
                                                     buttonDisabled = true;
                                                     let colorName = `color${item.color}`;

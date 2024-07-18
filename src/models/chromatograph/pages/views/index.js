@@ -99,7 +99,7 @@ const colorMap = {
 let colorNum = 0;
 let selected_tube = []; // 接收到的试管列表
 let selected_tubes = []; //总的是试管列表
-let selected_reverse = [];
+// let selected_reverse = [];
 let intervalId1;
 let intervalId2;
 let startTime;
@@ -114,6 +114,8 @@ const App = () => {
     const [num, setNum] = useState([]);
     //清洗标志，当0时，所有试管禁用，当1时，所有试管可以选择。
     const [clean_flag, setCleanFlag] = useState(0);
+
+    const [selected_reverse , setSelectedReverse] = useState([]);
 
     const [linePoint, setLine] = useState([]);
 
@@ -150,6 +152,7 @@ const App = () => {
         };
     }, []);
     const handleReceiveFlags = (select_tubes, numss) => {
+        console.log("Receive flags",select_tubes);
         selected_tube = select_tubes;
         setNum(numss);
     };
@@ -204,7 +207,7 @@ const App = () => {
                 colorNum = 1;
             }
             process_data_flag(selected_tube, true, colorMap[colorNum]);
-            selected_reverse = [];
+            setSelectedReverse([])
             selected_tube = [];
         } else {
             error();
@@ -222,23 +225,26 @@ const App = () => {
             let color = 0;
 
             process_data_flag(selected_tube, false, colorMap[color]);
-            selected_reverse = [];
+            setSelectedReverse([])
             selected_tube = [];
         } else {
             error();
         }
     };
     const reverseFlags = () => {
-        console.log("selected_tube :", selected_tube);
-
-        if (selected_tube.length > 0) {
-            selected_reverse = selected_tube;
+        console.log("selected_tubes :", selected_tubes);
+        console.log("num :", num);
+        if (selected_tubes.length > 0) {
+            setSelectedReverse(selected_tubes)
             let reverse = num.filter(
                 (item) =>
                     !selected_reverse.includes(item.tube) &&
                     item.flag == undefined
             );
-            selected_reverse = reverse.map((item) => item.tube);
+            let selected_r = reverse.map((item) => item.tube);
+            setSelectedReverse(selected_r)
+            selected_tube = selected_r;
+            console.log("selected_tube :", selected_tube);
             setNum(selected_reverse);
             handleReceiveFlags(selected_reverse, num);
         } else {
@@ -345,6 +351,7 @@ const App = () => {
         });
     };
     const reset = () => {
+        setCleanFlag(0)
         flagStartTime = 1;
         let newnum = [];
         setNum(newnum);
@@ -359,6 +366,10 @@ const App = () => {
         selected_tubes = [];
     };
     const clean = () => {
+        setData(() => []);
+
+        setNum(() => []);
+
         setCleanFlag(1);
         console.log("clean_flag--- :", clean_flag);
         if (selected_tube.length > 0) {
@@ -373,7 +384,7 @@ const App = () => {
                 colorNum = 1;
             }
             process_data_flag(selected_tube, true, colorMap[colorNum]);
-            selected_reverse = [];
+            setSelectedReverse([])
             selected_tube = [];
         }
         // else {
