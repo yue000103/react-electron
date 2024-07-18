@@ -120,7 +120,7 @@ const App = () => {
     const [messageApi, contextHolder] = message.useMessage();
 
     useEffect(() => {
-        const socket = io("http://192.168.124.6:5000"); // 确保 URL 正确
+        const socket = io("http://192.168.137.1:5000"); // 确保 URL 正确
         socket.on("connect", () => {
             // console.log("Connected to WebSocket server");
         });
@@ -260,6 +260,8 @@ const App = () => {
     };
 
     const start = () => {
+        setCleanFlag(0);
+
         console.log("Starting");
         lineFlag = 0;
         setLoading(true);
