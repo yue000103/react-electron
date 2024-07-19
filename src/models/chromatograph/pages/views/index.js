@@ -14,6 +14,7 @@ import "./index.css";
 import Line from "@components/d3/line";
 import Buttons from "@components/button/index";
 import TaskList from "@components/taskList/index";
+import FloatB from "@components/floatB/index";
 import { Empty } from "antd";
 import {
     getEluentCurve,
@@ -115,14 +116,15 @@ const App = () => {
     //清洗标志，当0时，所有试管禁用，当1时，所有试管可以选择。
     const [clean_flag, setCleanFlag] = useState(0);
 
-    const [selected_reverse , setSelectedReverse] = useState([]);
+    const [selected_reverse, setSelectedReverse] = useState([]);
 
     const [linePoint, setLine] = useState([]);
 
     const [messageApi, contextHolder] = message.useMessage();
 
+    const [warningCode, setWaringCode] = useState(0);
     useEffect(() => {
-        const socket = io("http://192.168.137.1:5000"); // 确保 URL 正确
+        const socket = io("http://localhost:5000"); // 确保 URL 正确
         socket.on("connect", () => {
             // console.log("Connected to WebSocket server");
         });
@@ -142,6 +144,11 @@ const App = () => {
                 setData((prevData) => [...prevData, responseData.point]);
             }
         });
+        socket.on("warning", (responseData) => {
+            setWaringCode(responseData.code);
+            console.log("responseData---------------------", responseData.code);
+            console.log("warningCode :", warningCode);
+        });
         socket.on("disconnect", () => {
             console.log("Disconnected from WebSocket server");
         });
@@ -152,7 +159,7 @@ const App = () => {
         };
     }, []);
     const handleReceiveFlags = (select_tubes, numss) => {
-        console.log("Receive flags",select_tubes);
+        console.log("Receive flags", select_tubes);
         selected_tube = select_tubes;
         setNum(numss);
     };
@@ -207,7 +214,7 @@ const App = () => {
                 colorNum = 1;
             }
             process_data_flag(selected_tube, true, colorMap[colorNum]);
-            setSelectedReverse([])
+            setSelectedReverse([]);
             selected_tube = [];
         } else {
             error();
@@ -225,7 +232,7 @@ const App = () => {
             let color = 0;
 
             process_data_flag(selected_tube, false, colorMap[color]);
-            setSelectedReverse([])
+            setSelectedReverse([]);
             selected_tube = [];
         } else {
             error();
@@ -235,14 +242,14 @@ const App = () => {
         console.log("selected_tubes :", selected_tubes);
         console.log("num :", num);
         if (selected_tubes.length > 0) {
-            setSelectedReverse(selected_tubes)
+            setSelectedReverse(selected_tubes);
             let reverse = num.filter(
                 (item) =>
                     !selected_reverse.includes(item.tube) &&
                     item.flag == undefined
             );
             let selected_r = reverse.map((item) => item.tube);
-            setSelectedReverse(selected_r)
+            setSelectedReverse(selected_r);
             selected_tube = selected_r;
             console.log("selected_tube :", selected_tube);
             setNum(selected_reverse);
@@ -351,7 +358,7 @@ const App = () => {
         });
     };
     const reset = () => {
-        setCleanFlag(0)
+        setCleanFlag(0);
         flagStartTime = 1;
         let newnum = [];
         setNum(newnum);
@@ -384,7 +391,7 @@ const App = () => {
                 colorNum = 1;
             }
             process_data_flag(selected_tube, true, colorMap[colorNum]);
-            setSelectedReverse([])
+            setSelectedReverse([]);
             selected_tube = [];
         }
         // else {
@@ -407,6 +414,7 @@ const App = () => {
     return (
         <Flex gap="middle" wrap>
             {contextHolder}
+            <FloatB warningCode={warningCode} />
             <Layout>
                 <div
                     style={{
@@ -496,7 +504,7 @@ const App = () => {
                                 </Col> */}
                             </Row>
                         </Col>
-                        <Col span={20}>
+                        <Col span={19}>
                             <div className={`lineStyle overlayBox`}>
                                 <div className={`line_line overlayBox1`}>
                                     <Line
