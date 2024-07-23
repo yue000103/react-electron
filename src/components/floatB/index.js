@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { QuestionCircleOutlined, SyncOutlined } from "@ant-design/icons";
+import {
+    QuestionCircleOutlined,
+    SyncOutlined,
+    SlidersOutlined,
+} from "@ant-design/icons";
 import "./index.css";
 import Notice from "../notice/index";
+import FormStatus from "../formStatus/index";
 
 import {
     FloatButton,
@@ -12,22 +17,22 @@ import {
     Col,
     Card,
     Statistic,
+    Tooltip,
 } from "antd";
-import {
-    FireOutlined,
-    ThunderboltOutlined,
-    LineChartOutlined,
-    ApartmentOutlined,
-} from "@ant-design/icons";
 
 const App = (props) => {
     console.log("props :", props);
 
     const [openNotice, setOpenNotice] = useState(false);
     const [openWarning, setOpenWarning] = useState(false);
+    const [openSetting, setOpenSetting] = useState(false);
     const [loading, setLoading] = React.useState(true);
     const [size, setSize] = useState();
     const [warningCode, setWarningCode] = useState(0);
+    const [peristaltic, setPeristalic] = useState({});
+    const [spray, setSpray] = useState({});
+    const [runningFlag, setRunningFlag] = useState(0);
+
     const showDrawerNotice = () => {
         setSize("large");
         setOpenNotice(true);
@@ -49,6 +54,18 @@ const App = (props) => {
     };
     const onCloseWarning = () => {
         setOpenWarning(false);
+    };
+
+    const showDrawerSetting = () => {
+        setSize("large");
+
+        setTimeout(() => {
+            setLoading(false);
+        }, 0);
+        setOpenSetting(true);
+    };
+    const onCloseSetting = () => {
+        setOpenSetting(false);
     };
     const onChange = (key) => {
         console.log(key);
@@ -102,24 +119,36 @@ const App = (props) => {
             label: "机器状态",
             children: (
                 <Row gutter={16}>
-                    <Col span={12}>
-                        <Card title="示教按钮状态" bordered={false}>
-                            {/* 示教按钮状态内容 */}
+                    <Col span={24}>
+                        <Card title="设备状态参数" bordered={false}>
+                            <Row gutter={16}>
+                                <Col span={12}>
+                                    <Card title="喷淋泵">
+                                        <FormStatus
+                                            data={spray}
+                                            runningFlag={runningFlag}
+                                        ></FormStatus>
+                                    </Card>
+                                </Col>
+                                <Col span={12}>
+                                    <Card title="蠕动泵">
+                                        <FormStatus
+                                            data={peristaltic}
+                                            runningFlag={runningFlag}
+                                        ></FormStatus>
+                                    </Card>
+                                </Col>
+                            </Row>
                         </Card>
-                        <Card title="碰撞检测" bordered={false}>
-                            {/* 碰撞检测内容 */}
-                        </Card>
+
                         <Card title="控制器时间" bordered={false}>
                             {/* 控制器时间内容 */}
                         </Card>
                         <Card title="机器运行时间" bordered={false}>
                             {/* 机器运行时间内容 */}
                         </Card>
-                        <Card title="伺服运行时间" bordered={false}>
-                            {/* 伺服运行时间内容 */}
-                        </Card>
                     </Col>
-                    <Col span={12}>
+                    {/* <Col span={12}>
                         <Row gutter={16}>
                             <Col span={12}>
                                 <Card>
@@ -162,22 +191,18 @@ const App = (props) => {
                                 </Card>
                             </Col>
                         </Row>
-                        <Row gutter={16}>
-                            {Array.from({ length: 6 }).map((_, index) => (
-                                <Col span={12} key={index}>
-                                    <Card title={`关节${index + 1}`}>
-                                        <p>电流: 0.0000A</p>
-                                        <p>电压: 0.0000V</p>
-                                        <p>温度: 0.0000°C</p>
-                                    </Card>
-                                </Col>
-                            ))}
-                        </Row>
-                    </Col>
+                       
+                    </Col> */}
                 </Row>
             ),
         },
     ];
+
+    const handleStatus = (type, status) => {
+        console.log("handleStatus type :", type);
+        console.log("handleStatus status :", status);
+        props.callback(type, status);
+    };
     useEffect(() => {
         if (props.warningCode !== warningCode) {
             setWarningCode(props.warningCode);
@@ -193,25 +218,42 @@ const App = (props) => {
             ]);
             console.log("warningCode", warningCode);
         }
+
+        setSpray(props.pumpStatus.spray);
+        setPeristalic(props.pumpStatus.peristaltic);
+        console.log("props peristaltic :", peristaltic);
+        console.log("props spray :", spray);
     }, [props]);
     return (
         <>
             <FloatButton.Group shape="circle" className="fButton">
-                <FloatButton
-                    badge={{
-                        count: 12,
-                    }}
-                    icon={<QuestionCircleOutlined />}
-                    onClick={showDrawerNotice}
-                />
-                <FloatButton
-                    badge={{
-                        count: 123,
-                        overflowCount: 999,
-                    }}
-                    onClick={showDrawerWarning}
-                />
-                <FloatButton icon={<SyncOutlined />} />
+                <Tooltip placement="left" title="帮助">
+                    <FloatButton
+                        badge={{
+                            count: 12,
+                        }}
+                        icon={<QuestionCircleOutlined />}
+                        onClick={showDrawerNotice}
+                    />
+                </Tooltip>
+                <Tooltip placement="left" title="警报">
+                    <FloatButton
+                        badge={{
+                            count: 123,
+                            overflowCount: 999,
+                        }}
+                        onClick={showDrawerWarning}
+                    />
+                </Tooltip>
+                <Tooltip placement="left" title="设置">
+                    <FloatButton
+                        icon={<SlidersOutlined />}
+                        onClick={showDrawerSetting}
+                    />
+                </Tooltip>
+                <Tooltip placement="left" title="刷新">
+                    <FloatButton icon={<SyncOutlined />} />
+                </Tooltip>
 
                 {/* <FloatButton.BackTop visibilityHeight={0} /> */}
             </FloatButton.Group>
@@ -232,6 +274,49 @@ const App = (props) => {
                 size={size}
             >
                 <Tabs defaultActiveKey="1" items={items} onChange={onChange} />
+            </Drawer>
+            <Drawer
+                title="设置"
+                onClose={onCloseSetting}
+                open={openSetting}
+                loading={loading}
+                size={size}
+            >
+                <Row>
+                    <Col span={24}>
+                        <Card title="设备状态参数" bordered={false}>
+                            <Row gutter={16}>
+                                <Col span={12}>
+                                    <Card title="喷淋泵">
+                                        <FormStatus
+                                            type={"spray"}
+                                            data={spray}
+                                            runningFlag={runningFlag}
+                                            callback={handleStatus}
+                                        ></FormStatus>
+                                    </Card>
+                                </Col>
+                                <Col span={12}>
+                                    <Card title="蠕动泵">
+                                        <FormStatus
+                                            type={"peristaltic"}
+                                            data={peristaltic}
+                                            runningFlag={runningFlag}
+                                            callback={handleStatus}
+                                        ></FormStatus>
+                                    </Card>
+                                </Col>
+                            </Row>
+                        </Card>
+
+                        <Card title="梯度曲线设置" bordered={false}>
+                            {/* 控制器时间内容 */}
+                        </Card>
+                        <Card title="机器运行时间" bordered={false}>
+                            {/* 机器运行时间内容 */}
+                        </Card>
+                    </Col>
+                </Row>
             </Drawer>
         </>
     );

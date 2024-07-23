@@ -304,12 +304,15 @@ const renderLine = (
         .on("mouseover", function (event, d) {
             d3.select(this).style("opacity", 1); // 鼠标移入时显示圆点
             const [time, value] = d3.pointer(event, svgRef.current);
+            console.log("time :", d.time);
+            const dateObj = new Date(d.time);
+            const timeStr = dateObj.toTimeString().split(" ")[0];
             // 获取鼠标位置
             svg.append("text")
                 .attr("class", "coordinate-text")
                 .attr("x", time + 10)
                 .attr("y", value - 10)
-                .text(`(${d.time}, ${d.value})`)
+                .text(`(${timeStr}, ${d.value})`)
                 .attr("font-size", "12px")
                 .attr("fill", "black")
                 .attr("pointer-events", "none"); // 防止文字影响鼠标事件
@@ -320,8 +323,8 @@ const renderLine = (
         .on("click", function (event, d) {
             handleClick(event, d);
         })
-        .on("mousedown", prepareDrag)
-        .call(drag); // 应用拖拽行为
+        .on("mousedown", prepareDrag);
+    // .call(drag); // 应用拖拽行为
     const handleClick = (event, d) => {
         // console.log("lineFlag", lineFlag);
         if (lineFlag == 1) {
@@ -430,10 +433,6 @@ const renderLine = (
     }
 };
 
-const handleReceiveFlags = (inputNumber) => {
-    // inputNumber
-    // console.log("inputNumber :", inputNumber);
-};
 const LineChart = (props) => {
     const svgRef = useRef(null);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -526,7 +525,33 @@ const LineChart = (props) => {
     const handleInputChange = (e) => {
         let time = e.$d ? e.$d : inputValues.time;
         let value = e.$d ? inputValues.value : e;
-        setInputValues({ time: time, value: value });
+        console.log("inputNumber value :", value);
+
+        setInputValues({ time: time, value: inputValues.value });
+    };
+    const inputRef = useRef(null);
+    const timeRef = useRef(null);
+
+    const handleReceiveFlags = (inputNumber) => {
+        // inputNumber
+        console.log("inputRef.current :", inputRef.current);
+        console.log("inputRef.timeRef :", timeRef.current);
+        if (inputRef.current) {
+            inputRef.current.focus();
+            let result = NaN;
+            if (typeof inputNumber !== "number") {
+                const concatenatedStr = inputNumber.join(""); // 拼接数组中的字符串
+                result = concatenatedStr; // 将拼接后的字符串转换为数字
+            } else {
+                result = inputNumber;
+            }
+            setInputValues({ time: inputValues.time, value: result });
+        }
+        // if (timeRef.current) {
+        //     timeRef.current.focus();
+        // }
+
+        // setInputValues({ value: result });
     };
 
     return (
@@ -542,41 +567,37 @@ const LineChart = (props) => {
         >
             <svg ref={svgRef} width="100%" height="100%"></svg>
             <Modal
-                title="Edit Point"
+                title="梯度曲线"
                 open={isModalVisible}
                 onOk={handleOk}
                 onCancel={handleCancel}
+                width={400}
             >
-                {/* <Input
-                    name="time"
-                    value={inputValues.time}
-                    onChange={handleInputChange}
-                    placeholder="time"
-                /> */}
                 <TimePicker
+                    className="input-time"
+                    ref={timeRef}
                     value={dayjs(parseTimeString(inputValues.time), "HH:mm:ss")}
                     onChange={handleInputChange}
+                    allowClear={false}
+                    showNow={false}
                 />
-                {/* <Input
-                    name="value"
-                    value={inputValues.value}
-                    onChange={handleInputChange}
-                    placeholder="value"
-                /> */}
-                <InputNumber
+
+                <Input
+                    ref={inputRef}
                     className="input-number"
                     value={inputValues.value}
                     min={0}
                     max={100}
-                    formatter={(value) => `${value}%`}
-                    parser={(value) => value?.replace("%", "")}
-                    onChange={handleInputChange}
-                    controls={{
-                        upIcon: <PlusOutlined />,
-                        downIcon: <MinusOutlined />,
-                    }}
+                    // formatter={(value) => `${value}%`}
+                    // parser={(value) => value?.replace("%", "")}
+                    // onChange={handleInputChange}
+                    controls={false}
                 />
-                <KeyboardNumber callback={handleReceiveFlags}></KeyboardNumber>
+                <KeyboardNumber
+                    className="input-keyboard"
+                    value={inputValues.value}
+                    callback={handleReceiveFlags}
+                ></KeyboardNumber>
             </Modal>
         </div>
     );

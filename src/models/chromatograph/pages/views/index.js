@@ -25,6 +25,7 @@ import {
     startEluentLine,
     terminateEluentLine,
 } from "../../api/eluent_curve";
+import { getDeviceStatus, postDeviceStatus } from "../../api/status";
 import { timeout } from "d3";
 import moment from "moment";
 
@@ -37,14 +38,6 @@ let num = [
     // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 2 },
     // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 3 },
     // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 4 },
-    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 5 },
-    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 6 },
-    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 7 },
-    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 8 },
-    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 9 },
-    // { time: "17:48:37", value: 88.51848125394666 },
-    // { time: "17:48:40", value: 88.51848125394666 },
-    // { time: "17:48:60", value: 20.51848125394666 },
 ];
 
 let data = [
@@ -52,35 +45,6 @@ let data = [
     // { time: "17:48:37", value: 88.51848125394666 },
     // { time: "17:48:40", value: 88.51848125394666 },
     // { time: "17:48:60", value: 20.51848125394666 },
-    // { x: 0, y: 62 },
-    // { x: 1, y: 62 },
-    // { x: 3, y: 87 },
-    // { x: 4, y: 57 },
-    // { x: 5, y: 33 },
-    // { x: 7, y: 20 },
-    // { x: 8, y: 71 },
-    // { x: 9, y: 19 },
-    // { x: 10, y: 53 },
-    // { x: 11, y: 89 },
-    // { x: 12, y: 49 },
-    // { x: 13, y: 82 },
-    // { x: 14, y: 79 },
-    // { x: 15, y: 17 },
-    // { x: 16, y: 13 },
-    // { x: 17, y: 29 },
-    // { x: 18, y: 16 },
-    // { x: 19, y: 72 },
-    // { x: 20, y: 97 },
-    // { x: 21, y: 97 },
-    // { x: 22, y: 85 },
-    // { x: 23, y: 45 },
-    // { x: 24, y: 34 },
-    // { x: 25, y: 66 },
-    // { x: 26, y: 59 },
-    // { x: 27, y: 73 },
-    // { x: 28, y: 54 },
-    // { x: 29, y: 38 },
-    // { x: 30, y: 81 },
 ];
 
 let linePoint = [];
@@ -123,6 +87,9 @@ const App = () => {
     const [messageApi, contextHolder] = message.useMessage();
 
     const [warningCode, setWaringCode] = useState(0);
+
+    const [pumpStatus, setPumpStatus] = useState({});
+
     useEffect(() => {
         const socket = io("http://localhost:5000"); // 确保 URL 正确
         socket.on("connect", () => {
@@ -163,14 +130,30 @@ const App = () => {
         selected_tube = select_tubes;
         setNum(numss);
     };
+    // 把梯度曲线的value值转换成数字
+    const convertNonNumericValues = (data) => {
+        const updatedData = { ...data };
+
+        Object.keys(updatedData).forEach((key) => {
+            const entry = updatedData[key];
+            console.log("entry :", entry);
+            if (typeof entry.value === "string") {
+                entry.value = Number(entry.value);
+            }
+        });
+
+        return updatedData;
+    };
 
     // flag  ： undefined  没被选中   true  保留  false  废弃
     const handleUpdatePoint = (linePointChange) => {
-        // console.log(
-        //     "-------------------------------------------------linePointChange",
-        //     linePointChange
-        // );
-        newPoints = linePointChange;
+        console.log(
+            "-------------------------------------------------linePointChange",
+            linePointChange
+        );
+        newPoints = convertNonNumericValues(linePointChange);
+        console.log("linePointChange  newPoints :", newPoints);
+        // newPoints = linePointChange;
     };
     const process_data_flag = (selected_tube, flag, color) => {
         let nums = num.map((item) => {
@@ -185,10 +168,8 @@ const App = () => {
     };
     const splitConsecutive = (selected_tube) => {
         selected_tube = selected_tube.sort((a, b) => a - b);
-
         let result = [];
         let tempArray = [selected_tube[0]];
-
         for (let i = 1; i < selected_tube.length; i++) {
             if (selected_tube[i] === selected_tube[i - 1] + 1) {
                 tempArray.push(selected_tube[i]);
@@ -203,7 +184,9 @@ const App = () => {
 
     const retainFlags = () => {
         if (selected_tube.length > 0) {
-            let consecutiveArrays = splitConsecutive(selected_tube);
+            // let consecutiveArrays = splitConsecutive(selected_tube);
+            let consecutiveArrays = [selected_tube];
+
             consecutiveArrays.forEach((arr) => {
                 let new_tube = { tube_list: arr, status: "retain" };
                 selected_tubes.push(new_tube);
@@ -222,7 +205,9 @@ const App = () => {
     };
     const abandonFlags = () => {
         if (selected_tube.length > 0) {
-            let consecutiveArrays = splitConsecutive(selected_tube);
+            // let consecutiveArrays = splitConsecutive(selected_tube);
+            let consecutiveArrays = [selected_tube];
+
             consecutiveArrays.forEach((arr) => {
                 let new_tube = { tube_list: arr, status: "discard" };
                 selected_tubes.push(new_tube);
@@ -304,39 +289,19 @@ const App = () => {
             //     console.log(error);
             // });
         } else {
-            console.log("startTime --------------2------:", startTime);
+            // console.log("startTime --------------2------:", startTime);
 
             startEluentLine().then((responsedata) => {
                 // console.log("responsedata :", responsedata);
             });
-            // getEluentVertical({ start_time: startTime })
-            // .then((responseData) => {
-            //     // setNum((prevNum) => [...prevNum, responseData.data.point]);
-            // })
-            // .catch((error) => {
-            //     console.log(error);
-            // });
         }
-        // setTimeout(() => {
-        // intervalId1 = setInterval(() => {
-        console.log("--------------------9-------------------------");
+
+        // console.log("--------------------9-------------------------");
         getEluentCurve({ start_time: startTime })
-            .then((responseData) => {
-                // setData((prevData) => [
-                //     ...prevData,
-                //     responseData.data.point,
-                // ]);
-            })
+            .then((responseData) => {})
             .catch((error) => {
                 console.log(error);
             });
-        // }, 1000);
-        // }, 7000);
-
-        // intervalId2 = setInterval(() => {
-        console.log("---------------getEluentVertical----------------------");
-
-        // }, 10000);
     };
 
     const terminate = () => {
@@ -380,7 +345,10 @@ const App = () => {
         setCleanFlag(1);
         console.log("clean_flag--- :", clean_flag);
         if (selected_tube.length > 0) {
-            let consecutiveArrays = splitConsecutive(selected_tube);
+            // let consecutiveArrays = splitConsecutive(selected_tube);
+            let consecutiveArrays = [selected_tube];
+            console.log("clean_flag selected_tube :", selected_tube);
+            console.log("clean_flag consecutiveArrays :", consecutiveArrays);
             consecutiveArrays.forEach((arr) => {
                 let new_tube = { tube_list: arr, status: "clean" };
                 selected_tubes.push(new_tube);
@@ -398,11 +366,27 @@ const App = () => {
         //     error();
         // }
     };
+    const getStatus = () => {
+        getDeviceStatus().then((responseData) => {
+            // console.log("getStatus   responseData :", responseData.data);
+            let status = JSON.parse(responseData.data.pump_status);
+            // console.log("getStatus status :", status);
+            setPumpStatus(status);
+            // console.log("getStatus pumpStatus :", pumpStatus);
+        });
+    };
+
+    const handleStatus = (type, status) => {
+        console.log("handleStatus ---status :", status);
+        console.log("handleStatus ---type :", type);
+        postDeviceStatus({ type: type, status: JSON.stringify(status) }).then();
+    };
     useEffect(() => {
         getEluentLine().then((responseData) => {
             setLine(responseData.data.point);
             newPoints = responseData.data.point;
         });
+        getStatus();
 
         // let rubePoint = [];
         // for (let i = 1; i < 41; i++) {
@@ -414,7 +398,12 @@ const App = () => {
     return (
         <Flex gap="middle" wrap>
             {contextHolder}
-            <FloatB warningCode={warningCode} />
+            <FloatB
+                warningCode={warningCode}
+                pumpStatus={pumpStatus}
+                callback={handleStatus}
+                newPoints={newPoints}
+            />
             <Layout>
                 <div
                     style={{
@@ -424,7 +413,7 @@ const App = () => {
                     }}
                 >
                     <Row>
-                        <Col span={4}>
+                        <Col span={2}>
                             <Row>
                                 <Col span={24}>
                                     <div className="buttonStyle">
@@ -432,8 +421,11 @@ const App = () => {
                                             type="primary"
                                             size="large"
                                             danger
-                                            className={`button button1`} // 使用模板字符串
+                                            className={`button`} // 使用模板字符串
                                             onClick={() => start()}
+                                            disabled={
+                                                clean_flag === 1 ? true : false
+                                            }
                                         >
                                             开始
                                         </Button>
@@ -442,6 +434,9 @@ const App = () => {
                                             size="large"
                                             className={`button button2`}
                                             onClick={() => pause()}
+                                            disabled={
+                                                clean_flag === 1 ? true : false
+                                            }
                                         >
                                             暂停
                                         </Button>
@@ -449,62 +444,27 @@ const App = () => {
                                         <Button
                                             type="primary  "
                                             size="large"
-                                            className="button"
+                                            className={`button button1`}
                                             onClick={() => terminate()}
+                                            disabled={
+                                                clean_flag === 1 ? true : false
+                                            }
                                         >
                                             终止
                                         </Button>
                                         <Button
                                             type="primary  "
                                             size="large"
-                                            className="button"
+                                            className={`button button4`}
                                             onClick={() => reset()}
                                         >
                                             复位
                                         </Button>
                                     </div>
                                 </Col>
-                                {/* <Col span={12}>
-                                    <div className="buttonStyle">
-                                        <Button
-                                            type="primary"
-                                            size="large"
-                                            danger
-                                            className={`button button1`} // 使用模板字符串
-                                            onClick={() => start()}
-                                        >
-                                            开始
-                                        </Button>
-                                        <Button
-                                            type="primary"
-                                            size="large"
-                                            className={`button button2`}
-                                            onClick={() => pause()}
-                                        >
-                                            暂停
-                                        </Button>
-
-                                        <Button
-                                            type="primary  "
-                                            size="large"
-                                            className="button"
-                                            onClick={() => terminate()}
-                                        >
-                                            终止
-                                        </Button>
-                                        <Button
-                                            type="primary  "
-                                            size="large"
-                                            className="button"
-                                            onClick={() => reset()}
-                                        >
-                                            复位
-                                        </Button>
-                                    </div>
-                                </Col> */}
                             </Row>
                         </Col>
-                        <Col span={19}>
+                        <Col span={21}>
                             <div className={`lineStyle overlayBox`}>
                                 <div className={`line_line overlayBox1`}>
                                     <Line
@@ -568,6 +528,9 @@ const App = () => {
                                             type="primary"
                                             className={`button button1`} // 使用模板字符串
                                             onClick={() => retainFlags()}
+                                            disabled={
+                                                clean_flag === 1 ? true : false
+                                            }
                                         >
                                             保留
                                         </Button>
@@ -575,6 +538,9 @@ const App = () => {
                                             type="primary"
                                             className={`button button2`}
                                             onClick={() => abandonFlags()}
+                                            disabled={
+                                                clean_flag === 1 ? true : false
+                                            }
                                         >
                                             废弃
                                         </Button>
@@ -594,38 +560,6 @@ const App = () => {
                                         </Button>
                                     </div>
                                 </Col>
-                                {/* <Col span={12}>
-                                    <div className="buttonStyle">
-                                        <Button
-                                            type="primary"
-                                            className={`button button1`} // 使用模板字符串
-                                            onClick={() => retainFlags()}
-                                        >
-                                            保留
-                                        </Button>
-                                        <Button
-                                            type="primary"
-                                            className={`button button2`}
-                                            onClick={() => abandonFlags()}
-                                        >
-                                            废弃
-                                        </Button>
-                                        <Button
-                                            type="primary"
-                                            onClick={() => reverseFlags()}
-                                            className={`button button3`}
-                                        >
-                                            反转
-                                        </Button>
-                                        <Button
-                                            type="primary"
-                                            onClick={() => clean()}
-                                            className={`button button4`}
-                                        >
-                                            清洗
-                                        </Button>
-                                    </div>
-                                </Col> */}
                             </Row>
                         </Sider>
                         <Content className="taskStyle">

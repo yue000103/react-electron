@@ -1,9 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { TextDeletionOutline } from "antd-mobile-icons";
 import "./index.css";
-
-export default (callback) => {
+const numberToStringArray = (num) => {
+    return num.toString().split("");
+};
+export default (props) => {
     const [inputNumber, setinputNumber] = useState([]);
+
+    useEffect(() => {
+        console.log("e props.value :", props.value);
+
+        const result = numberToStringArray(props.value);
+        setinputNumber(result);
+    }, [props.value]);
+
     function addNumber(a) {
         if (a.target.innerText === ".") {
             if (!inputNumber.length) return;
@@ -14,12 +24,12 @@ export default (callback) => {
         }
         inputNumber.push(a.target.innerText);
         setinputNumber([...inputNumber]);
-        callback(inputNumber);
+        props.callback(inputNumber);
     }
     function deleteNumber() {
         inputNumber.pop();
         setinputNumber([...inputNumber]);
-        callback(inputNumber);
+        props.callback(inputNumber);
     }
     return (
         <div>
