@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import logo from "./logo.svg";
 import "./App.css";
 import Choramatograph from "./views/index";
+import Method from "./method/index";
 import Test from "./views/test";
 import { Radio, Space, Tabs, Row, Col, Flex, Layout } from "antd";
 import Clock from "@components/clock/index";
@@ -11,9 +12,26 @@ import pkuImage from "@/assets/image/pku.png";
 import "@components/css/overlay.css";
 
 function App() {
-    const [showExperiment, setShowExperiment] = useState(true);
+    const [showExperiment, setShowExperiment] = useState(false);
     const [showMethod, setShowMethod] = useState(false);
     const [showHistorical, setShowHistorical] = useState(false);
+
+    const experiment = () => {
+        console.log("experiment :");
+        if (!showExperiment) {
+            setShowExperiment(true);
+            setShowMethod(false);
+        }
+    };
+
+    const method = () => {
+        console.log("method :", showMethod);
+
+        if (!showMethod) {
+            setShowMethod(true);
+            setShowExperiment(false);
+        }
+    };
 
     return (
         <Flex gap="middle" wrap className="container">
@@ -35,20 +53,18 @@ function App() {
                         <div className="tag">
                             <div
                                 className="tag_experiment"
-                                // onClick={() =>
-                                //     setShowExperiment(!showExperiment)
-                                // }
+                                onClick={() => method()}
+                            >
+                                方&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;法
+                            </div>
+                            <div
+                                className="tag_experiment"
+                                onClick={() => experiment()}
                             >
                                 实&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;验
                             </div>
 
                             {/* <div
-                                className="tag_method"
-                                onClick={() => setShowMethod(!showMethod)}
-                            >
-                                方法
-                            </div>
-                            <div
                                 className="tag_historical"
                                 onClick={() =>
                                     setShowHistorical(!showHistorical)
@@ -60,7 +76,7 @@ function App() {
                     </Col>
                     <Col span={22}>
                         {showExperiment ? <Choramatograph /> : null}{" "}
-                        {showMethod ? <div /> : null}{" "}
+                        {showMethod ? <Method /> : null}{" "}
                         {showHistorical ? <div /> : null}{" "}
                     </Col>
                 </Row>

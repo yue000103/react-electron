@@ -30,7 +30,7 @@ let lineFlag;
 const _ = require("lodash");
 
 now = new Date();
-now.setHours(0, 0, 1);
+now.setHours(0, 0, 0);
 endTime = new Date(now.getTime() + 5 * 60 * 1000);
 
 // let now = new Date();
@@ -48,7 +48,11 @@ const renderCurve = (svg, width, height, margin, cleanFlag) => {
     console.log("data--------------------", parsedData);
     const xScale = d3.scaleTime().domain([now, endTime]).range([0, width]);
     const yScale = d3.scaleLinear().domain([0, 0.5]).range([height, 0]);
-    const xAxis = d3.axisTop(xScale);
+    const xAxis = d3.axisTop(xScale).tickFormat((d) => {
+        const dateObj = new Date(d);
+        const timeStr = dateObj.toTimeString().split(" ")[0];
+        return timeStr;
+    });
     const yAxis = d3
         .axisRight(yScale)
         .tickFormat((d) => (d === 0 || d === 0.5 ? "" : d));

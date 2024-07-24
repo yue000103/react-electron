@@ -16,24 +16,18 @@ let data = [
 // };
 
 const DynamicLine = (props) => {
-    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+    console.log("propsline------------ :", props);
+    const [widthLine, setWidthLine] = useState(props.widthLine);
+    const [heightLine, setHeightLine] = useState(props.heightLine);
+    const [dimensions, setDimensions] = useState({
+        width: widthLine,
+        height: heightLine,
+    });
     const svgRef = useRef(null);
 
     // lineData(props);
     console.log("i am here");
     // 监听 headerStyle 的大小变化
-    useEffect(() => {
-        const headerDiv = document.querySelector(".headerStyle");
-        const resizeObserver = new ResizeObserver((entries) => {
-            const { width, height } = entries[0].contentRect;
-            setDimensions({ width, height });
-        });
-        resizeObserver.observe(headerDiv);
-
-        return () => {
-            resizeObserver.disconnect();
-        };
-    }, []);
     useEffect(() => {
         if (!data || dimensions.width === 0 || dimensions.height === 0) return;
         d3.select(svgRef.current).selectAll("*").remove();
@@ -47,8 +41,25 @@ const DynamicLine = (props) => {
         const xScale = d3.scaleLinear().domain([0, 10]).range([0, width]);
         const yScale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
         // 坐标轴
-        const xAxis = d3.axisTop(xScale);
-        const yAxis = d3.axisRight(yScale);
+        const xAxis = d3.axisTop(xScale).tickFormat("").tickSize(0);
+        const yAxis = d3.axisRight(yScale).tickFormat("").tickSize(0);
+
+        svg.append("g")
+            .attr("transform", `translate(0, ${height - 1})`)
+            .style("color", "gray")
+            .call(xAxis);
+        svg.append("g")
+            .attr("transform", `translate(${height - 1}), 0)`)
+            .style("color", "gray")
+            .call(xAxis);
+        svg.append("g")
+            .attr("transform", `translate(0, 0)`)
+            .style("color", "gray")
+            .call(yAxis);
+        svg.append("g")
+            .attr("transform", `translate(${width},0 )`)
+            .style("color", "gray")
+            .call(yAxis);
 
         // 绘制数据点
         svg.selectAll("circle")
@@ -86,7 +97,7 @@ const DynamicLine = (props) => {
         svg.append("path")
             .datum(data)
             .attr("fill", "none")
-            .attr("stroke", "blue")
+            .attr("stroke", "black")
             .attr("stroke-width", 2)
             .attr("d", line);
     });

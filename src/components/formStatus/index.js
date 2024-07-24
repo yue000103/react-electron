@@ -18,6 +18,7 @@ const labelTranslations = {
 };
 
 const CustomForm = ({ type, data, flag, callback }) => {
+    console.log("data----------- :", data);
     const [form] = Form.useForm();
 
     // 表单提交处理函数
@@ -46,6 +47,8 @@ const CustomForm = ({ type, data, flag, callback }) => {
         return Object.keys(data).map((key) => {
             const label = labelTranslations[key] || key;
             const value = data[key];
+            console.log("value :", value);
+            console.log("data :", data);
             if (value === 0 || value === 1) {
                 return (
                     <Form.Item
@@ -84,13 +87,13 @@ const CustomForm = ({ type, data, flag, callback }) => {
                 <Row>
                     <Col span={10}></Col>
                     <Col span={4}>
-                        <Button
+                        {/* <Button
                             type="primary"
                             htmlType="submit"
                             disabled={flag === 1}
                         >
                             上传
-                        </Button>
+                        </Button> */}
                     </Col>
                 </Row>
             </Form.Item>
@@ -99,19 +102,20 @@ const CustomForm = ({ type, data, flag, callback }) => {
 };
 
 // 示例数据和 flag
-// const data = {
-//     spray_output: 0,
-//     spray_ready_time: 1000,
-//     spray_start_time: 2000,
-//     spray_stop_time: 1000,
-//     spray_switch: 0,
-// };
-// const flag = 0; // 可以修改，设为1时禁用
+const data = {
+    spray_output: 0,
+    spray_ready_time: 1000,
+    spray_start_time: 2000,
+    spray_stop_time: 1000,
+    spray_switch: 0,
+};
+const flag = 0; // 可以修改，设为1时禁用
 
 const App = (props, callback) => {
-    console.log("props :", props);
-    const [data, setData] = useState(props.data);
-    const [flag, setFlag] = useState(props.runningFlag);
+    console.log("props--------- :", props);
+    // const [data, setData] = useState(props.data);
+    console.log("data -------4--------:", data);
+    // const [flag, setFlag] = useState(props.runningFlag);
     const [type, setType] = useState(props.type);
     return (
         <div>
