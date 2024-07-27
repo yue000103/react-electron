@@ -1,22 +1,22 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import "./dynamicLine.css";
-let data = [
-    { x: 0, y: 20 },
-    { x: 1, y: 20 },
-    { x: 3, y: 20 },
-    { x: 4, y: 71 },
-    { x: 5, y: 71 },
-    { x: 7, y: 71 },
-    { x: 8, y: 71 },
-    { x: 9, y: 71 },
-];
+// let data = [
+//     { x: 0, y: 20 },
+//     { x: 1, y: 20 },
+//     { x: 3, y: 20 },
+//     { x: 4, y: 71 },
+//     { x: 5, y: 71 },
+//     { x: 7, y: 71 },
+//     { x: 8, y: 71 },
+//     { x: 9, y: 71 },
+// ];
 // const lineData = (props) => {
 //     data = props.data;
 // };
 
 const DynamicLine = (props) => {
-    console.log("propsline------------ :", props);
+    const [xTime, setXTime] = useState(props.samplingTime);
     const [widthLine, setWidthLine] = useState(props.widthLine);
     const [heightLine, setHeightLine] = useState(props.heightLine);
     const [dimensions, setDimensions] = useState({
@@ -24,42 +24,85 @@ const DynamicLine = (props) => {
         height: heightLine,
     });
     const svgRef = useRef(null);
+    const transformAndSortData = (data) => {
+        return data
+            .filter((d) => d.time !== undefined || d.pumpB !== undefined)
+            .map((d) => ({ x: d.time, y: d.pumpB }))
+            .sort((a, b) => a.x - b.x);
+    };
 
-    // lineData(props);
-    console.log("i am here");
-    // 监听 headerStyle 的大小变化
     useEffect(() => {
+        console.log("8672 propsline------------ :", props);
+        setXTime(props.samplingTime);
+        const data = transformAndSortData(props.pressure);
+
         if (!data || dimensions.width === 0 || dimensions.height === 0) return;
         d3.select(svgRef.current).selectAll("*").remove();
+        const margin = { top: 0, right: 0, bottom: 30, left: 40 };
 
-        const svg = d3.select(svgRef.current);
+        const width = dimensions.width - margin.left - margin.right;
+        const height = dimensions.height - margin.top - margin.bottom;
+        const svg = d3
+            .select(svgRef.current)
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
 
-        const width = dimensions.width;
-        const height = dimensions.height;
-        const margin = { top: 0, right: 0, bottom: 30, left: 0 };
         // 比例尺
-        const xScale = d3.scaleLinear().domain([0, 10]).range([0, width]);
+        const xScale = d3.scaleLinear().domain([0, xTime]).range([0, width]);
         const yScale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
-        // 坐标轴
-        const xAxis = d3.axisTop(xScale).tickFormat("").tickSize(0);
-        const yAxis = d3.axisRight(yScale).tickFormat("").tickSize(0);
+        // 上边的横坐标轴（隐藏刻度）
+        const xAxisTop = d3.axisTop(xScale).tickSize(0).tickFormat("");
+        svg.append("g")
+            .attr("transform", `translate(0,0)`)
+            .style("color", "gray")
+            .call(xAxisTop);
+
+        // 下边的横坐标轴（刻度在下面）
+        const xAxisBottom = d3
+            .axisBottom(xScale)
+            .tickFormat((d) => (d === props.samplingTime ? "" : d));
+        svg.append("g")
+            .attr("transform", `translate(0,${height})`)
+            .style("color", "gray")
+            .call(xAxisBottom);
+
+        // 左边的纵坐标轴（刻度在左侧）
+        const yAxisLeft = d3
+            .axisLeft(yScale)
+            .tickFormat((d) => (d === 100 ? "" : d));
+        svg.append("g")
+            .attr("transform", `translate(0,0)`)
+            .style("color", "gray")
+            .call(yAxisLeft);
+
+        // 右边的纵坐标轴（隐藏刻度）
+        const yAxisRight = d3.axisRight(yScale).tickSize(0).tickFormat("");
+        svg.append("g")
+            .attr("transform", `translate(${width - 2},0)`)
+            .style("color", "gray")
+            .call(yAxisRight);
+
+        // 添加网格线
+        const xGrid = d3
+            .axisBottom(xScale)
+            .tickSize(-height)
+            .tickFormat("")
+            .ticks(10);
+
+        const yGrid = d3
+            .axisLeft(yScale)
+            .tickSize(-width)
+            .tickFormat("")
+            .ticks(10);
 
         svg.append("g")
-            .attr("transform", `translate(0, ${height - 1})`)
-            .style("color", "gray")
-            .call(xAxis);
-        svg.append("g")
-            .attr("transform", `translate(${height - 1}), 0)`)
-            .style("color", "gray")
-            .call(xAxis);
-        svg.append("g")
-            .attr("transform", `translate(0, 0)`)
-            .style("color", "gray")
-            .call(yAxis);
-        svg.append("g")
-            .attr("transform", `translate(${width},0 )`)
-            .style("color", "gray")
-            .call(yAxis);
+            .attr("class", "x grid")
+            .attr("transform", `translate(0,${height})`)
+            .call(xGrid);
+
+        svg.append("g").attr("class", "y grid").call(yGrid);
 
         // 绘制数据点
         svg.selectAll("circle")
@@ -68,7 +111,7 @@ const DynamicLine = (props) => {
             .append("circle")
             .attr("cx", (d) => xScale(d.x))
             .attr("cy", (d) => yScale(d.y))
-            .attr("r", 5) // 设置圆点半径
+            .attr("r", 3) // 设置圆点半径
             .attr("fill", "blue")
             .on("mouseover", function (event, d) {
                 d3.select(this).style("opacity", 1); // 鼠标移入时显示圆点
@@ -76,8 +119,8 @@ const DynamicLine = (props) => {
                 // 获取鼠标位置
                 svg.append("text")
                     .attr("class", "coordinate-text")
-                    .attr("x", x + 10)
-                    .attr("y", y - 10)
+                    .attr("x", x)
+                    .attr("y", y - 3)
                     .text(`(${d.x}, ${d.y})`)
                     .attr("font-size", "12px")
                     .attr("fill", "black")
@@ -86,6 +129,7 @@ const DynamicLine = (props) => {
             .on("mouseout", function () {
                 svg.selectAll(".coordinate-text").remove(); // 移除显示的坐标信息
             });
+
         // 折线生成器
         const line = d3
             .line()
@@ -100,7 +144,7 @@ const DynamicLine = (props) => {
             .attr("stroke", "black")
             .attr("stroke-width", 2)
             .attr("d", line);
-    });
+    }, [props, dimensions, xTime]);
 
     return (
         <div className="lineChart">

@@ -32,6 +32,7 @@ const App = (props) => {
     const [peristaltic, setPeristalic] = useState({});
     const [spray, setSpray] = useState({});
     const [runningFlag, setRunningFlag] = useState(0);
+    const [dynamicHeight, setDynamicHeight] = useState();
 
     const showDrawerNotice = () => {
         setSize("large");
@@ -218,15 +219,22 @@ const App = (props) => {
             ]);
             console.log("warningCode", warningCode);
         }
-
+        setDynamicHeight(props.dynamicHeight);
         setSpray(props.pumpStatus.spray);
         setPeristalic(props.pumpStatus.peristaltic);
+        // console.log("8672 -----------   dynamicHeight :", dynamicHeight);
+
         console.log("props peristaltic :", peristaltic);
         console.log("props spray :", spray);
     }, [props]);
     return (
         <>
-            <FloatButton.Group shape="circle" className="fButton">
+            <FloatButton.Group
+                shape="circle"
+                style={{
+                    top: 24,
+                }}
+            >
                 <Tooltip placement="left" title="帮助">
                     <FloatButton
                         badge={{

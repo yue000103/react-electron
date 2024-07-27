@@ -90,6 +90,11 @@ const App = () => {
 
     const [pumpStatus, setPumpStatus] = useState({});
 
+    const [dimensions, setDimensions] = useState({
+        width: window.innerWidth,
+        height: window.innerHeight,
+    });
+
     useEffect(() => {
         const socket = io("http://localhost:5000"); // 确保 URL 正确
         socket.on("connect", () => {
@@ -381,13 +386,33 @@ const App = () => {
         console.log("handleStatus ---type :", type);
         postDeviceStatus({ type: type, status: JSON.stringify(status) }).then();
     };
+
     useEffect(() => {
         getEluentLine().then((responseData) => {
             setLine(responseData.data.point);
             newPoints = responseData.data.point;
         });
         getStatus();
+        const handleResize = () => {
+            setDimensions({
+                width: window.innerWidth,
+                height: window.innerHeight,
+            });
+        };
 
+        window.addEventListener("resize", handleResize);
+
+        const resizeObserver = new ResizeObserver((entries) => {
+            const { width, height } = entries[0].contentRect;
+            setDimensions({ width, height });
+        });
+
+        resizeObserver.observe(document.documentElement);
+
+        return () => {
+            window.removeEventListener("resize", handleResize);
+            resizeObserver.disconnect();
+        };
         // let rubePoint = [];
         // for (let i = 1; i < 41; i++) {
         //     rubePoint.push({ timeStart: "", timeEnd: "", tube: i });
@@ -396,13 +421,14 @@ const App = () => {
     }, []);
 
     return (
-        <Flex gap="middle" wrap>
+        <Flex gap="middle" wrap className="flex">
             {contextHolder}
             <FloatB
                 warningCode={warningCode}
                 pumpStatus={pumpStatus}
                 callback={handleStatus}
                 newPoints={newPoints}
+                dynamicHeight={dimensions.height}
             />
             <Layout>
                 <div

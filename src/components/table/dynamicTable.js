@@ -4,6 +4,10 @@ import { Table, Input } from "antd";
 const EditableTable = ({ columnsConfig }) => {
     const [dataSource, setDataSource] = useState([
         { key: "1", time: "", pumpA: "", pumpB: "" },
+        { key: "2", time: "", pumpA: "", pumpB: "" },
+        { key: "3", time: "", pumpA: "", pumpB: "" },
+        { key: "4", time: "", pumpA: "", pumpB: "" },
+        { key: "5", time: "", pumpA: "", pumpB: "" },
     ]);
     const [count, setCount] = useState(2);
 
@@ -36,7 +40,7 @@ const EditableTable = ({ columnsConfig }) => {
     };
 
     const columns = columnsConfig.map((column) => ({
-        title: column.title,
+        // title: column.title,
         dataIndex: column.dataIndex,
         key: column.dataIndex,
         render: (text, record) => (
@@ -57,6 +61,9 @@ const EditableTable = ({ columnsConfig }) => {
             pagination={false}
             bordered
             size="small"
+            scroll={{
+                y: 250,
+            }}
         />
     );
 };
