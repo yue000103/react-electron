@@ -8,7 +8,7 @@ export function getAllMethodOperate() {
     return axiosInstance.get("/method/all/operate");
 }
 
-export function uploadMethod() {
+export function uploadMethodOperate() {
     return axiosInstance.get("/method/only/operate");
 }
 

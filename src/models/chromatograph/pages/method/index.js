@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import io from "socket.io-client";
 
 import {
     Form,
@@ -29,9 +30,11 @@ import { getDeviceStatus, postDeviceStatus } from "../../api/status";
 import {
     postMethodOperate,
     getAllMethodOperate,
-    uploadMethod,
+    uploadMethodOperate,
     startEquilibration,
 } from "../../api/methods";
+
+
 
 let num = [
     // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 1 },
@@ -55,10 +58,12 @@ let linePoint = [
     // { time: "00:01:40", value: 20.51848125394666 },
 ];
 let lineFlag = 1;
-let data = [];
+// let data = [];
 const handleUpdatePoint = () => {};
 
 const Method = () => {
+    const [data, setData] = useState([]);
+
     const [value, setValue] = useState(1);
     const onChange = (e) => {
         console.log("radio checked", e.target.value);
@@ -94,6 +99,27 @@ const Method = () => {
         { title: "泵A浓度", dataIndex: "pumpA" },
         { title: "泵B浓度", dataIndex: "pumpB" },
     ];
+    useEffect(() => {
+        const socket = io("http://localhost:5000"); // 确保 URL 正确
+        socket.on("connect", () => {
+            // console.log("Connected to WebSocket server");
+        });
+
+        socket.on("new_curve_point", (responseData) => {
+            console.log("responseData", responseData);
+                setData((prevData) => [...prevData, responseData.point]);
+            
+        });
+      
+        socket.on("disconnect", () => {
+            console.log("Disconnected from WebSocket server");
+        });
+
+        // Clean up the connection on component unmount
+        return () => {
+            socket.disconnect();
+        };
+    }, []);
     const getStatus = () => {
         getDeviceStatus().then((responseData) => {
             console.log("getStatus   responseData :", responseData.data);
@@ -116,6 +142,7 @@ const Method = () => {
         }
     };
     const startWashing = () => {
+        setData([])
         startEquilibration().then((response) => {});
     };
     const saveMethod = () => {
@@ -128,7 +155,7 @@ const Method = () => {
         setOpen(true);
     };
     const uploadMethod = () => {
-        uploadMethod().then((response) => {});
+        uploadMethodOperate().then((response) => {});
     };
 
     const allMethod = () => {
