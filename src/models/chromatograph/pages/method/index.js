@@ -34,8 +34,6 @@ import {
     startEquilibration,
 } from "../../api/methods";
 
-
-
 let num = [
     // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 1 },
     // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 2 },
@@ -107,10 +105,9 @@ const Method = () => {
 
         socket.on("new_curve_point", (responseData) => {
             console.log("responseData", responseData);
-                setData((prevData) => [...prevData, responseData.point]);
-            
+            setData((prevData) => [...prevData, responseData.point]);
         });
-      
+
         socket.on("disconnect", () => {
             console.log("Disconnected from WebSocket server");
         });
@@ -142,7 +139,7 @@ const Method = () => {
         }
     };
     const startWashing = () => {
-        setData([])
+        setData([]);
         startEquilibration().then((response) => {});
     };
     const saveMethod = () => {
@@ -244,7 +241,30 @@ const Method = () => {
 
     const handleValuesChange = (values) => {
         console.log("isRowComplete Form values:", values);
-        setPressure(values.users);
+        let newPoints = [];
+        if (values.users.length === 0) {
+            newPoints = [
+                { time: 0, pumpB: 0, pumpA: 100 },
+                {
+                    time: samplingTime,
+                    pumpB: 0,
+                    pumpA: 100,
+                },
+            ];
+        } else {
+            const lastPoint = values.users[values.users.length - 1];
+            console.log("lastPoint :", lastPoint);
+
+            newPoints = [
+                { time: 0, pumpB: 0, pumpA: 100 },
+                {
+                    time: samplingTime,
+                    pumpB: lastPoint.pumpB,
+                    pumpA: lastPoint.pumpA,
+                },
+            ];
+        }
+        setPressure([...newPoints, ...values.users]);
     };
     const handleOk = () => {
         setIsMethodName(true);
@@ -330,6 +350,7 @@ const Method = () => {
                             linePoint={linePoint}
                             lineFlag={lineFlag}
                             callback={handleUpdatePoint}
+                            samplingTime={samplingTime}
                         ></Line>
                     </div>
                 </Col>

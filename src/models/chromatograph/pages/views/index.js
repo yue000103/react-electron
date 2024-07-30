@@ -89,6 +89,7 @@ const App = () => {
     const [warningCode, setWaringCode] = useState(0);
 
     const [pumpStatus, setPumpStatus] = useState({});
+    const [samplingTime, setSamplingTime] = useState(10);
 
     const [dimensions, setDimensions] = useState({
         width: window.innerWidth,
@@ -391,6 +392,13 @@ const App = () => {
         getEluentLine().then((responseData) => {
             setLine(responseData.data.point);
             newPoints = responseData.data.point;
+            console.log("samplingTime  responseData.data :", responseData.data);
+            setSamplingTime(responseData.data.sampling_time);
+            console.log(
+                "samplingTime responseData.data.sampling_time :",
+                responseData.data.sampling_time
+            );
+            console.log("samplingTime ------------:", samplingTime);
         });
         getStatus();
         const handleResize = () => {
@@ -418,7 +426,7 @@ const App = () => {
         //     rubePoint.push({ timeStart: "", timeEnd: "", tube: i });
         // }
         // setNum((prevNum) => rubePoint); // 更新状态
-    }, []);
+    }, [samplingTime]);
 
     return (
         <Flex gap="middle" wrap className="flex">
@@ -501,6 +509,7 @@ const App = () => {
                                         linePoint={linePoint}
                                         lineFlag={lineFlag}
                                         callback={handleUpdatePoint}
+                                        samplingTime={samplingTime}
                                     ></Line>
                                 </div>
 

@@ -31,13 +31,12 @@ const _ = require("lodash");
 
 now = new Date();
 now.setHours(0, 0, 0);
-endTime = new Date(now.getTime() + 5 * 60 * 1000);
 
 // let now = new Date();
 // now.setHours(1, 0, 0);
 // const endTime = new Date(now.getTime() + 5 * 60 * 1000);
 
-const renderCurve = (svg, width, height, margin, cleanFlag) => {
+const renderCurve = (svg, width, height, margin, cleanFlag, samplingTime) => {
     // console.log("data", data);
     //data{time: '17:46:47', value: 81.41712213857508}
 
@@ -46,6 +45,9 @@ const renderCurve = (svg, width, height, margin, cleanFlag) => {
         time: parseTime(d.time),
     }));
     console.log("data--------------------", parsedData);
+
+    endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
+
     const xScale = d3.scaleTime().domain([now, endTime]).range([0, width]);
     const yScale = d3.scaleLinear().domain([0, 0.5]).range([height, 0]);
     const xAxis = d3.axisTop(xScale).tickFormat((d) => {
@@ -260,14 +262,15 @@ const renderLine = (
     setIsModalVisible,
     linePointChange,
     setlinePointChange,
-    callback
+    callback,
+    samplingTime
 ) => {
-    console.log("linePointChange :", linePointChange);
+    console.log("8672 linePointChange :", linePointChange);
     const parsedData = linePointChange?.map((d) => ({
         ...d,
         time: parseTime(d.time),
     }));
-    console.log("parseLine", parsedData);
+    console.log("8672 parseLine", parsedData);
     //洗脱液的折线图
     // 定义拖拽行为
     const drag = d3
@@ -279,6 +282,7 @@ const renderLine = (
     let delD = [];
     let newD = [];
     let ifMove = [];
+    endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
 
     const x2Scale = d3.scaleLinear().domain([now, endTime]).range([0, width]);
     const y2Scale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
@@ -346,7 +350,7 @@ const renderLine = (
         .x((d) => x2Scale(d.time))
         .y((d) => y2Scale(d.value))
         .curve(d3.curveLinear); // 使用 Cardinal 曲线插值
-    // console.log("parsedData", parsedData);
+    console.log("8672 parsedData", parsedData);
     // 绘制折线路径
     svg.append("path")
         .datum(parsedData)
@@ -444,6 +448,7 @@ const LineChart = (props) => {
     const [selectedPoint, setSelectedPoint] = useState(null);
     const [inputValues, setInputValues] = useState({ time: "", value: "" });
     const [linePointChange, setlinePointChange] = useState([]);
+    const [samplingTime, setSamplingTime] = useState(props.samplingTime);
 
     data = props.data;
     // console.log("data.props", props.data);
@@ -456,6 +461,11 @@ const LineChart = (props) => {
     //     setlinePointChange(linePoint);
     // }
     selected = props.selected_tubes;
+
+    useEffect(() => {
+        setSamplingTime(props.samplingTime);
+    }, [props.samplingTime]);
+
     // 在组件挂载时设置linePointChange的初始值
     useEffect(() => {
         if (linePointChange.length === 0) {
@@ -489,7 +499,7 @@ const LineChart = (props) => {
         const height = dimensions.height;
         const margin = { top: 20, right: width, bottom: 10, left: 0 };
 
-        renderCurve(svg, width, height, margin, cleanFlag);
+        renderCurve(svg, width, height, margin, cleanFlag, samplingTime);
         renderLine(
             width,
             height,
@@ -502,9 +512,17 @@ const LineChart = (props) => {
             linePointChange,
             setlinePointChange,
             props.callback,
-            cleanFlag
+            samplingTime
         );
-    }, [data, dimensions, num, selected, linePoint, linePointChange]);
+    }, [
+        data,
+        dimensions,
+        num,
+        selected,
+        linePoint,
+        linePointChange,
+        props.samplingTime,
+    ]);
     const handleOk = () => {
         const newX = parseTimeString(inputValues.time);
         // console.log("newX :", newX);
