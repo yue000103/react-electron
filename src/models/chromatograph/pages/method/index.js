@@ -82,6 +82,7 @@ const Method = () => {
 
     const [pumps, setPumps] = useState([]);
     const [samplingTime, setSamplingTime] = useState(10);
+    const [time,setTime] = useState(10);
     const [pressure, setPressure] = useState([]);
     const [open, setOpen] = useState(false);
     const [openAllMethod, setOpenAllMethod] = useState(false);
@@ -234,6 +235,8 @@ const Method = () => {
     const basisValuesChange = (changedValues, allValues) => {
         console.log("8672  allValues :", allValues);
         setSamplingTime(Number(allValues.samplingTime));
+        setTime(Number(allValues.time) / 60)
+        console.log("Number(allValues.time) / 60",Number(allValues.time) / 60);
         console.log("8672 samplingTime :", samplingTime);
     };
 
@@ -350,7 +353,7 @@ const Method = () => {
                             linePoint={linePoint}
                             lineFlag={lineFlag}
                             callback={handleUpdatePoint}
-                            samplingTime={samplingTime}
+                            samplingTime={time}
                         ></Line>
                     </div>
                 </Col>
@@ -457,10 +460,10 @@ const Method = () => {
                         >
                             <Switch onChange={handleSwitchChange} />
                         </Form.Item>
-                        <Form.Item label="时间" name="time">
+                        <Form.Item label="时间/s" name="time">
                             <Input disabled={!isEquilibration} />
                         </Form.Item>
-                        <Form.Item label="速度" name="speed">
+                        <Form.Item label="速度/%" name="speed">
                             <Input disabled={!isEquilibration} />
                         </Form.Item>
                         <Form.Item label="总流速" name="totalFlowRate">
@@ -468,7 +471,7 @@ const Method = () => {
                         </Form.Item>
                     </Form>
                 </Col>
-                <Col span={12}>
+                <Col span={11}>
                     {"模式： "}
                     <Radio.Group onChange={onChange} value={value}>
                         <Radio value={1}>等度洗脱</Radio>
@@ -527,7 +530,7 @@ const Method = () => {
                         </div>
                     )}
                 </Col>
-                <Col span={5}>
+                <Col span={6}>
                     <Form
                         form={formPump}
                         labelCol={{

@@ -573,9 +573,9 @@ const App = () => {
                                             type="primary"
                                             className={`button button2`}
                                             onClick={() => abandonFlags()}
-                                            disabled={
-                                                clean_flag === 1 ? true : false
-                                            }
+                                            // disabled={
+                                            //     clean_flag === 1 ? true : false
+                                            // }
                                         >
                                             废弃
                                         </Button>
