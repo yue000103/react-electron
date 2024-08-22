@@ -2,6 +2,9 @@
   padding:2rem
 }
 
+.method{
+  height: 2rem;
+}
 .button{
   /* margin-left: 1.5rem;
   margin-top: 0.5rem;

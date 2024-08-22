@@ -161,6 +161,7 @@ const App = () => {
         console.log("linePointChange  newPoints :", newPoints);
         // newPoints = linePointChange;
     };
+
     const process_data_flag = (selected_tube, flag, color) => {
         let nums = num.map((item) => {
             if (selected_tube.includes(item.tube)) {
@@ -172,6 +173,7 @@ const App = () => {
         setNum(nums);
         // console.log(nums);
     };
+
     const splitConsecutive = (selected_tube) => {
         selected_tube = selected_tube.sort((a, b) => a - b);
         let result = [];
@@ -209,6 +211,7 @@ const App = () => {
             error();
         }
     };
+
     const abandonFlags = () => {
         if (selected_tube.length > 0) {
             // let consecutiveArrays = splitConsecutive(selected_tube);
@@ -229,6 +232,7 @@ const App = () => {
             error();
         }
     };
+
     const reverseFlags = () => {
         console.log("selected_tubes :", selected_tubes);
         console.log("num :", num);
@@ -249,6 +253,7 @@ const App = () => {
             error();
         }
     };
+
     const undoReceiveFlags = (index) => {
         const tubeList = selected_tubes[index].tube_list;
         selected_tubes = selected_tubes.filter((_, idx) => idx !== index);
@@ -320,6 +325,7 @@ const App = () => {
             // console.log("responseData :", responseData);
         });
     };
+
     const pause = () => {
         clearInterval(intervalId1);
 
@@ -328,6 +334,7 @@ const App = () => {
             // console.log("responseData :", responseData);
         });
     };
+
     const reset = () => {
         setCleanFlag(0);
         flagStartTime = 1;
@@ -343,6 +350,7 @@ const App = () => {
         setNum(() => []);
         selected_tubes = [];
     };
+
     const clean = () => {
         setData(() => []);
 
@@ -372,6 +380,7 @@ const App = () => {
         //     error();
         // }
     };
+
     const getStatus = () => {
         getDeviceStatus().then((responseData) => {
             // console.log("getStatus   responseData :", responseData.data);

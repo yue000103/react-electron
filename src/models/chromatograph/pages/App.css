@@ -68,23 +68,57 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  writing-mode: vertical-rl; /* 文字垂直排列 */
-  text-orientation: mixed;   /* 保持文字正常方向 */
-  /* cursor: pointer; */
-   border-bottom: 2px solid #680303ea;    
-  /* transition: background-color 0.3s; */
+  /* writing-mode: vertical-rl; 文字垂直排列 */
+  /* text-orientation: mixed;   保持文字正常方向 */
+  cursor: pointer;
+  border-bottom: 2px solid #680303ea;    
+  transition: background-color 0.3s;
+  font-weight: 1000;
+  font-size: large;
+  color: #e6f7ff;
+}
+
+.custom-anchor {
+  
+}
+
+.custom-anchor .ant-anchor-ink {
+  display: none !important; /* 隐藏默认的锚点滑动条 */
+  background-color:#9b0000 !important;
+}
+
+.anchor-item {
+  width: 2.5rem;
+  height: 22rem; /* 设置每个锚点的高度 */
+  background-color: #f0f0f0; /* 设置背景颜色 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  writing-mode: vertical-rl; /* 垂直文字模式 */
+    text-orientation: mixed; /* 文字方向 */
+}
+.custom-anchor .ant-anchor-link{
+  padding-inline:0 !important
+}
+
+.anchor-item:hover {
+  background-color: #9b0000; /* 鼠标悬停时的背景颜色 */
+  color: white;
+}
+
+.custom-anchor .ant-anchor-link-active .anchor-item {
+  background-color: #9b0000; /* 激活时的背景颜色 */
+  color: white;
 }
 
 .tag_experiment {
   background-color: #9b0000;
-  font-weight: 1000;
-  font-size: large;
-  color: #e6f7ff;
- 
 }
 
 .tag_method {
-  background-color: #f6ffed;
+  background-color: #9b0000;
 }
 
 .tag_historical {
@@ -92,7 +126,7 @@
 }
 
 .tag > div:hover {
-  /* background-color: #ddd; 鼠标悬停时的背景色 */
+  /* background-color: #460101;  鼠标悬停时的颜色*/
 }
 
 

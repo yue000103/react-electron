@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     MinusCircleOutlined,
     PlusOutlined,
@@ -6,11 +6,16 @@ import {
 } from "@ant-design/icons";
 import { Button, Form, Input, Space, Row, Col } from "antd";
 
-const App = ({ onValuesChange }) => {
+const App = (props) => {
     const [form] = Form.useForm();
     const onFinish = (values) => {
-        onValuesChange(values);
+        props.onValuesChange(values);
     };
+    useEffect(() => {
+        console.log("props.pressure :", props);
+
+        form.setFieldsValue({ users: props.pressure });
+    }, [props.pressure, form]);
 
     const handleValuesChange = (changedValues, allValues) => {
         if (changedValues.users) {
@@ -67,7 +72,7 @@ const App = ({ onValuesChange }) => {
                                     top: 0,
                                     background: "#fff",
                                     zIndex: 1,
-                                    paddingBottom: "8px",
+                                    paddingBottom: "10px",
                                 }}
                             >
                                 <Row gutter={0}>
@@ -100,7 +105,10 @@ const App = ({ onValuesChange }) => {
                             {fields.map(({ key, name, ...restField }) => (
                                 <Space
                                     key={key}
-                                    style={{ display: "flex", marginBottom: 1 }}
+                                    style={{
+                                        display: "flex",
+                                        marginBottom: -10,
+                                    }}
                                     align="baseline"
                                 >
                                     <Form.Item

@@ -5,31 +5,28 @@ import "./App.css";
 import Choramatograph from "./views/index";
 import Method from "./method/index";
 import Test from "./views/test";
-import { Radio, Space, Tabs, Row, Col, Flex, Layout } from "antd";
+import { Radio, Space, Tabs, Row, Col, Flex, Layout, Anchor } from "antd";
 import Clock from "@components/clock/index";
 
 import pkuImage from "@/assets/image/pku.png";
 import "@components/css/overlay.css";
 
 function App() {
+    const { Link } = Anchor;
+
     const [showExperiment, setShowExperiment] = useState(false);
     const [showMethod, setShowMethod] = useState(false);
     const [showHistorical, setShowHistorical] = useState(false);
 
-    const experiment = () => {
-        console.log("experiment :");
-        if (!showExperiment) {
-            setShowExperiment(true);
-            setShowMethod(false);
-        }
-    };
-
-    const method = () => {
-        console.log("method :", showMethod);
-
-        if (!showMethod) {
+    const handleClick = (e, link) => {
+        e.preventDefault();
+        console.log(link);
+        if (Number(link["href"].substring(1)) === 1) {
             setShowMethod(true);
             setShowExperiment(false);
+        } else {
+            setShowExperiment(true);
+            setShowMethod(false);
         }
     };
 
@@ -50,29 +47,33 @@ function App() {
                 </Row>
                 <Row>
                     <Col span={1}>
-                        <div className="tag">
-                            <div
-                                className="tag_experiment"
-                                onClick={() => method()}
-                            >
-                                方&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;法
-                            </div>
-                            <div
-                                className="tag_experiment"
-                                onClick={() => experiment()}
-                            >
-                                实&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;验
-                            </div>
-
-                            {/* <div
-                                className="tag_historical"
-                                onClick={() =>
-                                    setShowHistorical(!showHistorical)
-                                }
-                            >
-                                历史数据
-                            </div> */}
-                        </div>
+                        <Anchor
+                            affix={true}
+                            onClick={handleClick}
+                            getCurrentAnchor="red"
+                            className="custom-anchor"
+                            defaultActiveKey="1" // 设置初始高亮的锚点
+                            items={[
+                                {
+                                    key: "1",
+                                    href: "#1",
+                                    title: (
+                                        <div className="anchor-item">
+                                            方&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;法
+                                        </div>
+                                    ),
+                                },
+                                {
+                                    key: "2",
+                                    href: "#2",
+                                    title: (
+                                        <div className="anchor-item">
+                                            实&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;验
+                                        </div>
+                                    ),
+                                },
+                            ]}
+                        />
                     </Col>
                     <Col span={22}>
                         {showExperiment ? <Choramatograph /> : null}{" "}

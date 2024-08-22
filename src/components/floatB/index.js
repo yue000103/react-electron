@@ -232,7 +232,7 @@ const App = (props) => {
             <FloatButton.Group
                 shape="circle"
                 style={{
-                    top: 54,
+                    top: "7rem",
                 }}
             >
                 <Tooltip placement="left" title="帮助">

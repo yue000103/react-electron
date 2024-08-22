@@ -17,8 +17,17 @@ import {
     Card,
     Modal,
     Collapse,
+    Popconfirm,
+    Spin,
+    Flex,
+    message,
 } from "antd";
-import { SettingOutlined } from "@ant-design/icons";
+import {
+    SettingOutlined,
+    DeleteFilled,
+    DeleteOutlined,
+    SelectOutlined,
+} from "@ant-design/icons";
 
 import "./index.css";
 import Line from "@components/d3/line";
@@ -32,21 +41,17 @@ import {
     getAllMethodOperate,
     uploadMethodOperate,
     startEquilibration,
+    deleteMethodOperate,
+    setCurrentMethodOperate,
+    updateMethodOperate,
 } from "../../api/methods";
-
+const text = "您确定要删除这个方法？";
 let num = [
     // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 1 },
     // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 2 },
     // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 3 },
     // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 4 },
 ];
-
-// let data = [
-//     // { time: "00:01:20", value: 81.41712213857508 },
-//     // { time: "00:01:20", value: 88.51848125394666 },
-//     // { time: "00:01:30", value: 88.51848125394666 },
-//     // { time: "00:01:40", value: 20.51848125394666 },
-// ];
 let selected_tubes = [];
 let clean_flag = 1;
 let linePoint = [
@@ -56,11 +61,13 @@ let linePoint = [
     // { time: "00:01:40", value: 20.51848125394666 },
 ];
 let lineFlag = 1;
-// let data = [];
 const handleUpdatePoint = () => {};
 
 const Method = () => {
     const [data, setData] = useState([]);
+    const [spinning, setSpinning] = React.useState(false);
+    const [percent, setPercent] = React.useState(0);
+    const [messageApi, contextHolder] = message.useMessage();
 
     const [value, setValue] = useState(1);
     const onChange = (e) => {
@@ -82,13 +89,16 @@ const Method = () => {
 
     const [pumps, setPumps] = useState([]);
     const [samplingTime, setSamplingTime] = useState(10);
-    const [time,setTime] = useState(10);
+    const [time, setTime] = useState(10);
     const [pressure, setPressure] = useState([]);
     const [open, setOpen] = useState(false);
+    const [openMethod, setOpenMethod] = useState(false);
     const [openAllMethod, setOpenAllMethod] = useState(false);
     const [confirmLoading, setConfirmLoading] = useState(false);
     const [isMethodName, setIsMethodName] = useState(false);
     const [inputValue, setInputValue] = useState("");
+    const [methodName, setMethodName] = useState("");
+    const [methodDatas, setMethodDatas] = useState([]);
 
     console.log("basisData :", basisData);
     console.log("elutionData :", elutionData);
@@ -139,65 +149,316 @@ const Method = () => {
             });
         }
     };
+
     const startWashing = () => {
         setData([]);
         startEquilibration().then((response) => {});
     };
     const saveMethod = () => {
-        formBasis.submit();
-        formElution.submit();
-        formPump.submit();
-        showModal();
+        const methodId = localStorage.getItem("methodId");
+        if (methodId) {
+            formBasis.submit();
+            formElution.submit();
+            formPump.submit();
+            setOpenMethod(true);
+        } else {
+            formBasis.submit();
+            formElution.submit();
+            formPump.submit();
+            showModal();
+        }
+    };
+    const handleOkMethod = () => {
+        const methodId = localStorage.getItem("methodId");
+        let check = [];
+        if (value === 1) {
+            check = [{ isocratic: 1 }, { pressure: 0 }];
+        } else {
+            check = [{ isocratic: 0 }, { pressure: 1 }];
+        }
+        let methodata = [
+            ...basisData,
+            ...elutionData,
+            ...pumps,
+            { pumpList: pressure },
+            { methodName: methodName },
+            ...check,
+        ];
+        const transformedData = transformData(methodata);
+        updateMethodOperate({
+            method_id: methodId,
+            method: transformedData,
+        }).then((response) => {
+            console.log("response :", response);
+        });
+        setTimeout(() => {
+            setOpenMethod(false);
+        }, 2000);
     };
     const showModal = () => {
         setOpen(true);
     };
+    const showLoader = () => {
+        setSpinning(true);
+        let ptg = -10;
+        const interval = setInterval(() => {
+            ptg += 5;
+            setPercent(ptg);
+            if (ptg > 120) {
+                clearInterval(interval);
+                setSpinning(false);
+                setPercent(0);
+                messageApi.open({
+                    type: "success",
+                    content: "上传成功！",
+                });
+            }
+        }, 100);
+    };
     const uploadMethod = () => {
-        uploadMethodOperate().then((response) => {});
+        showLoader();
+
+        // uploadMethodOperate().then((response) => {});
     };
 
-    const allMethod = () => {
-        getAllMethodOperate().then((response) => {
-            console.log("response :", response);
-        });
-        setOpenAllMethod(true);
-    };
     const handleMethodOk = () => {
         setConfirmLoading(true);
         setTimeout(() => {
             setConfirmLoading(false);
         }, 2000);
     };
-    const genExtra = () => (
-        <SettingOutlined
-            onClick={(event) => {
-                // If you don't want click extra trigger collapse, you can prevent this:
-                event.stopPropagation();
-            }}
-        />
-    );
-    const text = ``;
-    const items = [
-        {
-            key: "1",
-            label: "This is panel header 1",
-            children: <p>{text}</p>,
-            extra: genExtra(),
-        },
-        {
-            key: "2",
-            label: "This is panel header 2",
-            children: <p>{text}</p>,
-            extra: genExtra(),
-        },
-        {
-            key: "3",
-            label: "This is panel header 3",
-            children: <p>{text}</p>,
-            extra: genExtra(),
-        },
-    ];
+    const allMethod = () => {
+        getAllMethodOperate().then((response) => {
+            console.log("response :", response.data);
+            setMethodDatas(response.data.methods);
+        });
+        setOpenAllMethod(true);
+    };
 
+    const genExtra = (item) => (
+        <div>
+            <Popconfirm
+                placement="topLeft"
+                title="您确定要使用这个方法？"
+                okText="是"
+                cancelText="否"
+                onConfirm={(event) => {
+                    event.stopPropagation(); // 阻止事件传播，防止折叠面板展开
+                    applyMethod(item);
+                }}
+                onCancel={(event) => {
+                    event.stopPropagation();
+                }}
+            >
+                <SelectOutlined
+                    style={{ paddingRight: "10px" }}
+                    onClick={(event) => {
+                        event.stopPropagation();
+                    }}
+                />
+            </Popconfirm>
+            <Popconfirm
+                placement="topLeft"
+                title="您确定要删除这个方法？"
+                okText="是"
+                cancelText="否"
+                onConfirm={(event) => {
+                    event.stopPropagation(); // 阻止事件传播，防止折叠面板展开
+                    deleteMethod(item.methodId);
+                }}
+                onCancel={(event) => {
+                    event.stopPropagation();
+                }}
+            >
+                <DeleteOutlined
+                    onClick={(event) => {
+                        event.stopPropagation();
+                    }}
+                />
+            </Popconfirm>
+        </div>
+    );
+    const deleteMethod = (methodId) => {
+        deleteMethodOperate({ method_id: methodId }).then((response) => {
+            allMethod();
+        });
+    };
+    const applyMethod = (item) => {
+        localStorage.setItem("methodId", item.methodId);
+        setOpenAllMethod(false);
+        setMethodName(item.methodName);
+
+        const basisDatas = {
+            methodName: item.methodName,
+            samplingTime: item.samplingTime,
+            tubeVolume: item.tubeVolume,
+            detectorWavelength: item.detectorWavelength,
+            equilibrationColumn: item.equilibrationColumn === 1 ? true : false,
+            time: item.time,
+            speed: item.speed,
+            totalFlowRate: item.totalFlowRate,
+        };
+        formBasis.setFieldsValue(basisDatas);
+
+        setIsEquilibration(item.equilibrationColumn);
+        if (item.isocratic === 1) {
+            setValue(1);
+            const elutionDatas = {
+                pumpA: item.pumpA,
+                pumpB: item.pumpB,
+            };
+            formElution.setFieldsValue(elutionDatas);
+        } else {
+            setValue(2);
+            setPressure(JSON.parse(item.pumpList));
+        }
+        const pumpDatas = {
+            spray_ready_time: item.spray_ready_time,
+            spray_start_time: item.spray_start_time,
+            spray_stop_time: item.spray_stop_time,
+            peristaltic_velocity: item.peristaltic_velocity,
+            peristaltic_acceleration: item.peristaltic_acceleration,
+            peristaltic_deceleration: item.peristaltic_deceleration,
+        };
+        formPump.setFieldsValue(pumpDatas);
+    };
+    const methodItems = methodDatas.map((item) => ({
+        key: item.methodId.toString(),
+        label: item.methodName,
+        children: (
+            <div>
+                <table
+                    border={"1"}
+                    align="center"
+                    style={{
+                        borderCollapse: "collapse",
+                        border: "1px solid #f0f0f0",
+                        width: "100%",
+                        textAlign: "center",
+                    }}
+                >
+                    {" "}
+                    <tbody>
+                        <tr>
+                            <td>采集时间:</td>
+                            <td>{item.samplingTime}</td>
+                        </tr>
+                        <tr>
+                            <td>检测器波长:</td>
+                            <td>{item.detectorWavelength}</td>
+                        </tr>
+                        <tr>
+                            <td>试管容积:</td>
+                            <td>{item.tubeVolume}</td>
+                        </tr>
+                        <tr>
+                            <td>平衡柱子:</td>
+                            <td>
+                                {item.equilibrationColumn == 1 ? "是" : "否"}
+                            </td>
+                        </tr>
+                        {item.equilibrationColumn == 1 ? (
+                            <>
+                                <tr>
+                                    <td>速度:</td>
+                                    <td>{item.speed}</td>
+                                </tr>
+                                <tr>
+                                    <td>时间:</td>
+                                    <td>{item.time}</td>
+                                </tr>
+                                <tr>
+                                    <td>总流速:</td>
+                                    <td>{item.totalFlowRate}</td>
+                                </tr>
+                            </>
+                        ) : (
+                            <></>
+                        )}
+                        <tr>
+                            <td>模式:</td>
+                            <td>
+                                {item.isocratic == 1
+                                    ? "等度洗脱"
+                                    : "二元高压洗脱"}
+                            </td>
+                        </tr>
+                        {item.isocratic == 1 ? (
+                            <>
+                                <tr>
+                                    <td>泵A:</td>
+                                    <td>{item.pumpA}</td>
+                                </tr>
+                                <tr>
+                                    <td>泵B:</td>
+                                    <td>{item.pumpB}</td>
+                                </tr>
+                            </>
+                        ) : (
+                            <tr>
+                                <td>泵速度:</td>
+                                <td>
+                                    <table
+                                        style={{
+                                            borderCollapse: "collapse",
+                                            border: "1px solid #f0f0f0",
+                                            width: "100%",
+                                            textAlign: "center",
+                                        }}
+                                    >
+                                        <thead>
+                                            <tr>
+                                                <th>时间</th>
+                                                <th>泵A</th>
+                                                <th>泵B</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {JSON.parse(item.pumpList).map(
+                                                (entry, index) => (
+                                                    <tr key={index}>
+                                                        <td>{entry.time}</td>
+                                                        <td>{entry.pumpA}</td>
+                                                        <td>{entry.pumpB}</td>
+                                                    </tr>
+                                                )
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        )}
+                        <tr>
+                            <td>蠕动泵速度:</td>
+                            <td>{item.peristaltic_velocity}</td>
+                        </tr>
+                        <tr>
+                            <td>蠕动泵加速度:</td>
+                            <td>{item.peristaltic_acceleration}</td>
+                        </tr>
+                        <tr>
+                            <td>蠕动泵减速度:</td>
+                            <td>{item.peristaltic_deceleration}</td>
+                        </tr>
+
+                        <tr>
+                            <td>喷淋准备时间:</td>
+                            <td>{item.spray_ready_time}</td>
+                        </tr>
+                        <tr>
+                            <td>喷淋开始时间:</td>
+                            <td>{item.spray_start_time}</td>
+                        </tr>
+                        <tr>
+                            <td>喷淋停止时间:</td>
+                            <td>{item.spray_stop_time}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        ),
+        extra: genExtra(item),
+    }));
     const onFinishBasis = (values) => {
         const data = Object.keys(values)
             .map((key) => {
@@ -208,7 +469,6 @@ const Method = () => {
             })
             .filter((item) => item !== null);
         setBasisData(data);
-        console.log("8672----11-----data :", data);
     };
     const onFinishElution = (values) => {
         const data = Object.keys(values)
@@ -217,7 +477,6 @@ const Method = () => {
             })
             .filter((item) => item !== null);
         setElutionData(data);
-        console.log("8672----22-----data :", data);
     };
     const onFinishPump = (values) => {
         const data = Object.keys(values)
@@ -230,20 +489,15 @@ const Method = () => {
             .filter((item) => item !== null);
 
         setPumps(data);
-        console.log("8672----11-----pumps :", pumps);
     };
     const basisValuesChange = (changedValues, allValues) => {
-        console.log("8672  allValues :", allValues);
         setSamplingTime(Number(allValues.samplingTime));
-        setTime(Number(allValues.time) / 60)
-        console.log("Number(allValues.time) / 60",Number(allValues.time) / 60);
-        console.log("8672 samplingTime :", samplingTime);
+        setTime(Number(allValues.time) / 60);
     };
 
     const getPressurreData = () => {};
 
     const handleValuesChange = (values) => {
-        console.log("isRowComplete Form values:", values);
         let newPoints = [];
         if (values.users.length === 0) {
             newPoints = [
@@ -255,9 +509,8 @@ const Method = () => {
                 },
             ];
         } else {
+            // if()
             const lastPoint = values.users[values.users.length - 1];
-            console.log("lastPoint :", lastPoint);
-
             newPoints = [
                 { time: 0, pumpB: 0, pumpA: 100 },
                 {
@@ -300,6 +553,7 @@ const Method = () => {
 
     const handleCancel = () => {
         setOpen(false);
+        setOpenMethod(false);
         setOpenAllMethod(false);
     };
     const handleInputChange = (e) => {
@@ -332,155 +586,150 @@ const Method = () => {
 
         return result;
     };
-
+    const clearMethod = () => {
+        console.log();
+        localStorage.clear();
+        formBasis.resetFields();
+        formPump.resetFields();
+        formElution.resetFields();
+        setPressure([]);
+        setCurrentMethodOperate({ method_id: 0 }).then((response) => {});
+    };
     useEffect(() => {
-        getStatus();
-        console.log("spray -----11--------:", spray);
-
-        console.log("peristaltic ------22--------:", peristaltic);
+        const methodId = localStorage.getItem("methodId");
+        console.log("methodId :", methodId);
+        if (methodId) {
+            setCurrentMethodOperate({ method_id: Number(methodId) }).then(
+                (response) => {
+                    console.log("response :", response.data.methods);
+                    applyMethod(response.data.methods[0]);
+                }
+            );
+        }
     }, []);
 
     return (
-        <div>
-            <Row>
-                <Col span={20}>
-                    <div className="line">
-                        <Line
-                            data={data}
-                            num={num}
-                            selected_tubes={selected_tubes}
-                            clean_flag={clean_flag}
-                            linePoint={linePoint}
-                            lineFlag={lineFlag}
-                            callback={handleUpdatePoint}
-                            samplingTime={time}
-                        ></Line>
-                    </div>
-                </Col>
-                <Col span={4}>
-                    <div className="button-div">
-                        <Col>
-                            <Row>
-                                <Button
-                                    type="primary  "
-                                    size="large"
-                                    className={`button`}
-                                    onClick={() => startWashing()}
-                                >
-                                    启动
-                                </Button>
-                            </Row>
-                            <Row>
-                                <Button
-                                    type="primary  "
-                                    size="large"
-                                    className={`button button4`}
-                                    onClick={() => saveMethod()}
-                                >
-                                    保存
-                                </Button>
-                            </Row>
-                            <Row>
-                                <Button
-                                    type="primary  "
-                                    size="large"
-                                    className={`button button2`}
-                                    onClick={() => uploadMethod()}
-                                >
-                                    上传
-                                </Button>
-                            </Row>
-                            <Row>
-                                <Button
-                                    type="primary  "
-                                    size="large"
-                                    className={`button button2`}
-                                    onClick={() => allMethod()}
-                                >
-                                    方法
-                                </Button>
-                            </Row>
+        <Flex gap="middle" vertical>
+            {" "}
+            {contextHolder}
+            <div className="method">
+                <>
+                    <Row>
+                        <Col span={20}>
+                            <div className="line">
+                                <Line
+                                    data={data}
+                                    num={num}
+                                    selected_tubes={selected_tubes}
+                                    clean_flag={clean_flag}
+                                    linePoint={linePoint}
+                                    lineFlag={lineFlag}
+                                    callback={handleUpdatePoint}
+                                    samplingTime={time}
+                                ></Line>
+                            </div>
                         </Col>
-                        <Modal
-                            open={open}
-                            onOk={handleOk}
-                            confirmLoading={confirmLoading}
-                            onCancel={handleCancel}
-                        >
-                            {/* <p>{modalText}</p> */}
-                            <p>方法名称：</p>
-                            <Input
-                                disabled={isMethodName}
-                                value={inputValue}
-                                onChange={handleInputChange}
-                            />
-                        </Modal>
-                        <Modal
-                            open={openAllMethod}
-                            onOk={handleMethodOk}
-                            confirmLoading={confirmLoading}
-                            onCancel={handleCancel}
-                        >
-                            {/* <p>{modalText}</p> */}
-                            <p>方法：</p>
-                            <Collapse accordion items={items} size="small" />
-                        </Modal>
-                    </div>
-                </Col>
-            </Row>
-            <Row gutter={50}>
-                <Col span={7}>
-                    <Form
-                        form={formBasis}
-                        labelCol={{
-                            span: 8,
-                        }}
-                        wrapperCol={{
-                            span: 14,
-                        }}
-                        layout="horizontal"
-                        initialValues={{
-                            equilibrationColumn: false,
-                        }}
-                        size="lager"
-                        onFinish={onFinishBasis}
-                        onValuesChange={basisValuesChange}
-                    >
-                        <Form.Item label="采集时间/min" name="samplingTime">
-                            <Input />
-                        </Form.Item>
-                        <Form.Item label="检测器波长" name="detectorWavelength">
-                            <Input />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="平衡柱子"
-                            name="equilibrationColumn"
-                            valuePropName="checked"
-                        >
-                            <Switch onChange={handleSwitchChange} />
-                        </Form.Item>
-                        <Form.Item label="时间/s" name="time">
-                            <Input disabled={!isEquilibration} />
-                        </Form.Item>
-                        <Form.Item label="速度/%" name="speed">
-                            <Input disabled={!isEquilibration} />
-                        </Form.Item>
-                        <Form.Item label="总流速" name="totalFlowRate">
-                            <Input disabled={!isEquilibration} />
-                        </Form.Item>
-                    </Form>
-                </Col>
-                <Col span={11}>
-                    {"模式： "}
-                    <Radio.Group onChange={onChange} value={value}>
-                        <Radio value={1}>等度洗脱</Radio>
-                        <Radio value={2}>二元高压梯度</Radio>
-                    </Radio.Group>
-                    {value === 1 && (
-                        <div className="isocratic">
-                            {" "}
+                        <Col span={4}>
+                            <div className="button-div">
+                                <Col>
+                                    <Row>
+                                        <Button
+                                            type="primary  "
+                                            size="large"
+                                            className={`button`}
+                                            onClick={() => startWashing()}
+                                        >
+                                            启动
+                                        </Button>
+                                    </Row>
+                                    <Row>
+                                        <Button
+                                            type="primary  "
+                                            size="large"
+                                            className={`button button4`}
+                                            onClick={() => saveMethod()}
+                                        >
+                                            保存
+                                        </Button>
+                                    </Row>
+                                    <Row>
+                                        <Button
+                                            type="primary  "
+                                            size="large"
+                                            className={`button button2`}
+                                            onClick={() => uploadMethod()}
+                                        >
+                                            上传
+                                        </Button>
+                                    </Row>
+                                    <Row>
+                                        <Button
+                                            type="primary  "
+                                            size="large"
+                                            className={`button button3`}
+                                            onClick={() => allMethod()}
+                                        >
+                                            方法
+                                        </Button>
+                                    </Row>
+                                    <Row>
+                                        <Button
+                                            type="primary  "
+                                            size="large"
+                                            className={`button button5`}
+                                            onClick={() => clearMethod()}
+                                        >
+                                            清空
+                                        </Button>
+                                    </Row>
+                                </Col>
+                                <Modal
+                                    open={open}
+                                    onOk={handleOk}
+                                    confirmLoading={confirmLoading}
+                                    onCancel={handleCancel}
+                                >
+                                    {/* <p>{modalText}</p> */}
+                                    <p>方法名称：</p>
+                                    <Input
+                                        disabled={isMethodName}
+                                        value={inputValue}
+                                        onChange={handleInputChange}
+                                    />
+                                </Modal>
+                                <Modal
+                                    open={openMethod}
+                                    onOk={handleOkMethod}
+                                    confirmLoading={confirmLoading}
+                                    onCancel={handleCancel}
+                                >
+                                    <p>是否覆盖---{methodName}---此方法？</p>
+                                </Modal>
+                                <Modal
+                                    open={openAllMethod}
+                                    onOk={handleMethodOk}
+                                    confirmLoading={confirmLoading}
+                                    onCancel={handleCancel}
+                                    bodyStyle={{
+                                        maxHeight: "40rem",
+                                        overflowY: "auto",
+                                    }} // 设置内容区域的最大高度和滚动
+                                >
+                                    {/* <p>{modalText}</p> */}
+                                    <p>方法：</p>
+                                    <Collapse
+                                        accordion
+                                        items={methodItems}
+                                        size="small"
+                                    />
+                                </Modal>
+                            </div>
+                        </Col>
+                    </Row>
+                    <Row gutter={50}>
+                        <Col span={6}>
                             <Form
+                                form={formBasis}
                                 labelCol={{
                                     span: 8,
                                 }}
@@ -489,94 +738,173 @@ const Method = () => {
                                 }}
                                 layout="horizontal"
                                 initialValues={{
-                                    size: "lager",
+                                    equilibrationColumn: false,
                                 }}
-                                size="lager"
-                                form={formElution}
-                                onFinish={onFinishElution}
+                                size="small"
+                                onFinish={onFinishBasis}
+                                onValuesChange={basisValuesChange}
                             >
-                                <Form.Item label="泵A流速" name="pumpA">
+                                <Form.Item label="方法名称" name="methodName">
+                                    <Input disabled={true} />
+                                </Form.Item>
+                                <Form.Item
+                                    label="采集时间/min"
+                                    name="samplingTime"
+                                >
                                     <Input />
                                 </Form.Item>
-                                <Form.Item label="泵B流速" name="pumpB">
+                                <Form.Item
+                                    label="检测器波长"
+                                    name="detectorWavelength"
+                                >
+                                    <Input />
+                                </Form.Item>
+                                <Form.Item
+                                    label="试管容积/ml"
+                                    name="tubeVolume"
+                                >
+                                    <Input />
+                                </Form.Item>
+                                <Form.Item
+                                    label="平衡柱子"
+                                    name="equilibrationColumn"
+                                    valuePropName="checked"
+                                >
+                                    <Switch onChange={handleSwitchChange} />
+                                </Form.Item>
+                                <Form.Item label="时间/s" name="time">
+                                    <Input disabled={!isEquilibration} />
+                                </Form.Item>
+                                <Form.Item label="速度/%" name="speed">
+                                    <Input disabled={!isEquilibration} />
+                                </Form.Item>
+                                <Form.Item label="总流速" name="totalFlowRate">
+                                    <Input disabled={!isEquilibration} />
+                                </Form.Item>
+                            </Form>
+                        </Col>
+                        <Col span={12}>
+                            {"模式： "}
+                            <Radio.Group onChange={onChange} value={value}>
+                                <Radio value={1}>等度洗脱</Radio>
+                                <Radio value={2}>二元高压梯度</Radio>
+                            </Radio.Group>
+                            {value === 1 && (
+                                <div className="isocratic">
+                                    {" "}
+                                    <Form
+                                        labelCol={{
+                                            span: 8,
+                                        }}
+                                        wrapperCol={{
+                                            span: 14,
+                                        }}
+                                        layout="horizontal"
+                                        initialValues={{
+                                            size: "small",
+                                        }}
+                                        size="small"
+                                        form={formElution}
+                                        onFinish={onFinishElution}
+                                    >
+                                        <Form.Item label="泵A流速" name="pumpA">
+                                            <Input />
+                                        </Form.Item>
+                                        <Form.Item label="泵B流速" name="pumpB">
+                                            <Input />
+                                        </Form.Item>
+                                    </Form>
+                                </div>
+                            )}
+                            {value === 2 && (
+                                <div className="pressure">
+                                    <Row>
+                                        <Col span={12}>
+                                            <div className="dynamic-line">
+                                                <DynamicLine
+                                                    widthLine={widthLine}
+                                                    heightLine={heightLine}
+                                                    samplingTime={samplingTime}
+                                                    pressure={pressure}
+                                                ></DynamicLine>
+                                            </div>
+                                        </Col>
+                                        <Col span={12}>
+                                            <DynamicForm
+                                                pressure={pressure}
+                                                onValuesChange={
+                                                    handleValuesChange
+                                                }
+                                            ></DynamicForm>
+                                        </Col>
+                                    </Row>
+                                </div>
+                            )}
+                        </Col>
+                        <Col span={6}>
+                            <Form
+                                form={formPump}
+                                labelCol={{
+                                    span: 10,
+                                }}
+                                wrapperCol={{
+                                    span: 20,
+                                }}
+                                layout="horizontal"
+                                initialValues={{
+                                    size: "lager",
+                                }}
+                                size="small"
+                                onFinish={onFinishPump}
+                            >
+                                <Form.Item
+                                    label="喷雾准备时间"
+                                    name="spray_ready_time"
+                                >
+                                    <Input />
+                                </Form.Item>
+                                <Form.Item
+                                    label="喷雾开始时间"
+                                    name="spray_start_time"
+                                >
+                                    <Input />
+                                </Form.Item>
+                                <Form.Item
+                                    label="喷雾停止时间"
+                                    name="spray_stop_time"
+                                >
+                                    <Input />
+                                </Form.Item>
+                                <Form.Item
+                                    label="蠕动泵速度"
+                                    name="peristaltic_velocity"
+                                >
+                                    <Input />
+                                </Form.Item>
+                                <Form.Item
+                                    label="蠕动泵加速度"
+                                    name="peristaltic_acceleration"
+                                >
+                                    <Input />
+                                </Form.Item>
+                                <Form.Item
+                                    label="蠕动泵减速度"
+                                    name="peristaltic_deceleration"
+                                >
                                     <Input />
                                 </Form.Item>
                             </Form>
-                        </div>
-                    )}
-                    {value === 2 && (
-                        <div className="pressure">
-                            <Row>
-                                <Col span={12}>
-                                    <div className="dynamic-line">
-                                        <DynamicLine
-                                            widthLine={widthLine}
-                                            heightLine={heightLine}
-                                            samplingTime={samplingTime}
-                                            pressure={pressure}
-                                        ></DynamicLine>
-                                    </div>
-                                </Col>
-                                <Col span={12}>
-                                    {/* <DynamicTable
-                                        columnsConfig={columnsConfig}
-                                        callback={getPressurreData}
-                                    ></DynamicTable> */}
-                                    <DynamicForm
-                                        onValuesChange={handleValuesChange}
-                                    ></DynamicForm>
-                                </Col>
-                            </Row>
-                        </div>
-                    )}
-                </Col>
-                <Col span={6}>
-                    <Form
-                        form={formPump}
-                        labelCol={{
-                            span: 10,
-                        }}
-                        wrapperCol={{
-                            span: 20,
-                        }}
-                        layout="horizontal"
-                        initialValues={{
-                            size: "lager",
-                        }}
-                        size="lager"
-                        onFinish={onFinishPump}
-                    >
-                        <Form.Item label="喷雾准备时间" name="spray_ready_time">
-                            <Input />
-                        </Form.Item>
-                        <Form.Item label="喷雾开始时间" name="spray_start_time">
-                            <Input />
-                        </Form.Item>
-                        <Form.Item label="喷雾停止时间" name="spray_stop_time">
-                            <Input />
-                        </Form.Item>
-                        <Form.Item
-                            label="蠕动泵速度"
-                            name="peristaltic_velocity"
-                        >
-                            <Input />
-                        </Form.Item>
-                        <Form.Item
-                            label="蠕动泵加速度"
-                            name="peristaltic_acceleration"
-                        >
-                            <Input />
-                        </Form.Item>
-                        <Form.Item
-                            label="蠕动泵减速度"
-                            name="peristaltic_deceleration"
-                        >
-                            <Input />
-                        </Form.Item>
-                    </Form>
-                </Col>
-            </Row>
-        </div>
+                        </Col>
+                    </Row>
+                </>
+            </div>{" "}
+            <Spin
+                spinning={spinning}
+                percent={percent}
+                fullscreen
+                tip="正在上传......"
+            />
+        </Flex>
     );
 };
 
