@@ -99,6 +99,7 @@ const Method = () => {
     const [inputValue, setInputValue] = useState("");
     const [methodName, setMethodName] = useState("");
     const [methodDatas, setMethodDatas] = useState([]);
+    const [methodID, setMethodID] = useState();
 
     console.log("basisData :", basisData);
     console.log("elutionData :", elutionData);
@@ -128,6 +129,7 @@ const Method = () => {
             socket.disconnect();
         };
     }, []);
+
     const getStatus = () => {
         getDeviceStatus().then((responseData) => {
             console.log("getStatus   responseData :", responseData.data);
@@ -139,6 +141,7 @@ const Method = () => {
             setPeristalic(status.peristaltic);
         });
     };
+
     const handleSwitchChange = (checked) => {
         setIsEquilibration(checked);
         if (!checked) {
@@ -216,9 +219,9 @@ const Method = () => {
         }, 100);
     };
     const uploadMethod = () => {
+        // localStorage.setItem("methodId", methodID);
         showLoader();
-
-        // uploadMethodOperate().then((response) => {});
+        uploadMethodOperate().then((response) => {});
     };
 
     const handleMethodOk = () => {
@@ -285,9 +288,14 @@ const Method = () => {
     };
     const applyMethod = (item) => {
         localStorage.setItem("methodId", item.methodId);
+        setCurrentMethodOperate({ method_id: Number(item.methodId) }).then(
+            (response) => {
+                console.log("response :", response.data.methods);
+                // applyMethod(response.data.methods[0]);
+            }
+        );
         setOpenAllMethod(false);
         setMethodName(item.methodName);
-
         const basisDatas = {
             methodName: item.methodName,
             samplingTime: item.samplingTime,
@@ -299,7 +307,6 @@ const Method = () => {
             totalFlowRate: item.totalFlowRate,
         };
         formBasis.setFieldsValue(basisDatas);
-
         setIsEquilibration(item.equilibrationColumn);
         if (item.isocratic === 1) {
             setValue(1);
@@ -322,6 +329,7 @@ const Method = () => {
         };
         formPump.setFieldsValue(pumpDatas);
     };
+
     const methodItems = methodDatas.map((item) => ({
         key: item.methodId.toString(),
         label: item.methodName,
