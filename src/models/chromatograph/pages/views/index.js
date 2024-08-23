@@ -398,6 +398,7 @@ const App = () => {
     };
 
     useEffect(() => {
+        setData([])
         getEluentLine().then((responseData) => {
             setLine(responseData.data.point);
             newPoints = responseData.data.point;
