@@ -26,7 +26,7 @@ let linePoint = [];
 let selected = [];
 let now;
 let endTime;
-let lineFlag;
+// let lineFlag;
 const _ = require("lodash");
 
 now = new Date();
@@ -251,6 +251,10 @@ const parseTimeString = (time) => {
     });
     return parseTimeString;
 };
+//格式化为一致的格式（如'00:06:00'），然后再比较
+const normalizeTime = (time) => time.padStart(8, "0");
+const isEqual = (p1, p2) =>
+    normalizeTime(p1.time) === normalizeTime(p2.time) && p1.value === p2.value;
 const renderLine = (
     width,
     height,
@@ -263,7 +267,8 @@ const renderLine = (
     linePointChange,
     setlinePointChange,
     callback,
-    samplingTime
+    samplingTime,
+    lineFlag
 ) => {
     // console.log("8672 linePointChange :", linePointChange);
     const parsedData = linePointChange?.map((d) => ({
@@ -282,8 +287,8 @@ const renderLine = (
     let delD = [];
     let newD = [];
     let ifMove = [];
-    console.log("8672   ----samplingTime ---- ",samplingTime);
-    
+    console.log("8672   ----samplingTime ---- ", samplingTime);
+
     endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
 
     const x2Scale = d3.scaleLinear().domain([now, endTime]).range([0, width]);
@@ -337,14 +342,18 @@ const renderLine = (
     // .call(drag); // 应用拖拽行为
     const handleClick = (event, d) => {
         // console.log("lineFlag", lineFlag);
-        if (lineFlag == 1) {
-            setSelectedPoint({
-                time: parseTimeString(d.time),
-                value: d.value,
-            });
-            setInputValues({ time: d.time, value: d.value });
-            setIsModalVisible(true);
-        }
+        // if (lineFlag == 1) {
+        setSelectedPoint({
+            time: parseTimeString(d.time),
+            value: d.value,
+        });
+        setInputValues({
+            flow_rate: d.flow_rate,
+            time: d.time,
+            value: d.value,
+        });
+        setIsModalVisible(true);
+        // }
     };
     // 折线生成器
     const line2 = d3
@@ -448,18 +457,23 @@ const LineChart = (props) => {
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedPoint, setSelectedPoint] = useState(null);
-    const [inputValues, setInputValues] = useState({ time: "", value: "" });
+    const [inputValues, setInputValues] = useState({
+        flow_rate: "",
+        time: "",
+        value: "",
+    });
     const [linePointChange, setlinePointChange] = useState([]);
     const [samplingTime, setSamplingTime] = useState(props.samplingTime);
-    console.log("8672  samplingTime",samplingTime);
-    
+    const [lineFlag, setLineFlag] = useState(1);
+    // console.log("8672  samplingTime", samplingTime);
+    // console.log("lineFlag   lineFlag", lineFlag);
+
     data = props.data;
     // console.log("data.props", props.data);
     num = props.num;
     let cleanFlag = props.clean_flag;
     linePoint = props.linePoint;
     // console.log("props :", props);
-    lineFlag = props.lineFlag;
     // if (linePointChange.length == 0) {
     //     setlinePointChange(linePoint);
     // }
@@ -468,6 +482,10 @@ const LineChart = (props) => {
     useEffect(() => {
         setSamplingTime(props.samplingTime);
     }, [props.samplingTime]);
+    useEffect(() => {
+        setLineFlag(props.lineFlag);
+    }, [props.lineFlag]);
+    // console.log("lineFlag   lineFlag   2---", props.lineFlag);
 
     // 在组件挂载时设置linePointChange的初始值
     useEffect(() => {
@@ -501,6 +519,8 @@ const LineChart = (props) => {
         const width = dimensions.width;
         const height = dimensions.height;
         const margin = { top: 20, right: width, bottom: 10, left: 0 };
+        // console.log("lineFlag  selectedPoint", selectedPoint);
+        // console.log("lineFlag  inputValues", inputValues);
 
         renderCurve(svg, width, height, margin, cleanFlag, samplingTime);
         renderLine(
@@ -515,7 +535,8 @@ const LineChart = (props) => {
             linePointChange,
             setlinePointChange,
             props.callback,
-            samplingTime
+            samplingTime,
+            lineFlag
         );
     }, [
         data,
@@ -528,18 +549,20 @@ const LineChart = (props) => {
     ]);
     const handleOk = () => {
         const newX = parseTimeString(inputValues.time);
-        // console.log("newX :", newX);
+        console.log("lineFlag  newX :", typeof newX);
 
-        const newY = inputValues.value;
+        const newY = Number(inputValues.value);
         let newData = linePointChange.map((point) =>
-            _.isEqual(selectedPoint, point)
-                ? { time: newX, value: newY }
+            isEqual(selectedPoint, point)
+                ? { flow_rate: inputValues.flow_rate, time: newX, value: newY }
                 : point
         );
         newData = newData.sort((a, b) => parseTime(a.time) - parseTime(b.time));
         setlinePointChange(newData);
+        // console.log("lineFlag    newData :", newData);
         props.callback(newData); // 确保调用了回调函数
-        // console.log("linePoint----------- :", linePoint);
+        // console.log("lineFlag  linePoint----------- :", linePoint);
+        // console.log("lineFlag  linePointChange----------- :", linePointChange);
         setIsModalVisible(false);
     };
 
@@ -552,7 +575,11 @@ const LineChart = (props) => {
         let value = e.$d ? inputValues.value : e;
         console.log("inputNumber value :", value);
 
-        setInputValues({ time: time, value: inputValues.value });
+        setInputValues({
+            flow_rate: inputValues.flow_rate,
+            time: time,
+            value: inputValues.value,
+        });
     };
     const inputRef = useRef(null);
     const timeRef = useRef(null);
@@ -570,7 +597,11 @@ const LineChart = (props) => {
             } else {
                 result = inputNumber;
             }
-            setInputValues({ time: inputValues.time, value: result });
+            setInputValues({
+                flow_rate: inputValues.flow_rate,
+                time: inputValues.time,
+                value: result,
+            });
         }
         // if (timeRef.current) {
         //     timeRef.current.focus();

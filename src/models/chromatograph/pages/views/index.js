@@ -69,7 +69,6 @@ let intervalId1;
 let intervalId2;
 let startTime;
 let flagStartTime = 1; //  1 实验从头开始  0 实验继续
-let lineFlag = 1; //  1 可以修改折线 0 不可以修改折线
 let newPoints = [];
 
 const App = () => {
@@ -79,6 +78,8 @@ const App = () => {
     const [num, setNum] = useState([]);
     //清洗标志，当0时，所有试管禁用，当1时，所有试管可以选择。
     const [clean_flag, setCleanFlag] = useState(0);
+    //  1 可以修改折线 0 不可以修改折线
+    const [lineFlag, setLineFlag] = useState(1);
 
     const [selected_reverse, setSelectedReverse] = useState([]);
 
@@ -270,35 +271,16 @@ const App = () => {
 
     const start = () => {
         setCleanFlag(0);
+        // console.log("Starting");
 
-        console.log("Starting");
-        lineFlag = 0;
         setLoading(true);
-
         console.log("flagStartTime", flagStartTime);
 
         if (flagStartTime == 1) {
             reset();
             startTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
-            console.log("startTime --------------------:", startTime);
-
-            // 或者使用适当的时间格式
+            // console.log("startTime --------------------:", startTime);
             flagStartTime = 0;
-            console.log("-------------------7----------------------");
-            updateEluentLine({ point: newPoints, start_time: startTime })
-                .then((responseData) => {
-                    console.log("responseData :", responseData);
-                })
-                .catch((error) => {
-                    console.log(error);
-                });
-            // getEluentVertical({ start_time: startTime })
-            // .then((responseData) => {
-            //     // setNum((prevNum) => [...prevNum, responseData.data.point]);
-            // })
-            // .catch((error) => {
-            //     console.log(error);
-            // });
         } else {
             // console.log("startTime --------------2------:", startTime);
 
@@ -306,8 +288,16 @@ const App = () => {
                 // console.log("responsedata :", responsedata);
             });
         }
-
-        // console.log("--------------------9-------------------------");
+        updateEluentLine({
+            point: Object.values(newPoints),
+            start_time: startTime,
+        })
+            .then((responseData) => {
+                console.log("responseData :", responseData);
+            })
+            .catch((error) => {
+                console.log(error);
+            });
         getEluentCurve({ start_time: startTime })
             .then((responseData) => {})
             .catch((error) => {
@@ -317,9 +307,6 @@ const App = () => {
 
     const terminate = () => {
         flagStartTime = 1;
-
-        clearInterval(intervalId1);
-        // clearInterval(intervalId2);
         setLoading(false);
         terminateEluentLine().then((responseData) => {
             // console.log("responseData :", responseData);
@@ -327,9 +314,6 @@ const App = () => {
     };
 
     const pause = () => {
-        clearInterval(intervalId1);
-
-        // clearInterval(intervalId2);
         pauseEluentLine().then((responseData) => {
             // console.log("responseData :", responseData);
         });
@@ -340,12 +324,9 @@ const App = () => {
         flagStartTime = 1;
         let newnum = [];
         setNum(newnum);
-
-        lineFlag = 1;
         getEluentLine().then((responseData) => {
             setLine(responseData.data.point);
         });
-
         setData(() => []);
         setNum(() => []);
         selected_tubes = [];
@@ -398,7 +379,7 @@ const App = () => {
     };
 
     useEffect(() => {
-        reset()
+        reset();
         // setData([])
         getEluentLine().then((responseData) => {
             setLine(responseData.data.point);
