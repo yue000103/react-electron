@@ -265,12 +265,12 @@ const renderLine = (
     callback,
     samplingTime
 ) => {
-    console.log("8672 linePointChange :", linePointChange);
+    // console.log("8672 linePointChange :", linePointChange);
     const parsedData = linePointChange?.map((d) => ({
         ...d,
         time: parseTime(d.time),
     }));
-    console.log("8672 parseLine", parsedData);
+    // console.log("8672 parseLine", parsedData);
     //洗脱液的折线图
     // 定义拖拽行为
     const drag = d3
@@ -282,6 +282,8 @@ const renderLine = (
     let delD = [];
     let newD = [];
     let ifMove = [];
+    console.log("8672   ----samplingTime ---- ",samplingTime);
+    
     endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
 
     const x2Scale = d3.scaleLinear().domain([now, endTime]).range([0, width]);
@@ -449,7 +451,8 @@ const LineChart = (props) => {
     const [inputValues, setInputValues] = useState({ time: "", value: "" });
     const [linePointChange, setlinePointChange] = useState([]);
     const [samplingTime, setSamplingTime] = useState(props.samplingTime);
-
+    console.log("8672  samplingTime",samplingTime);
+    
     data = props.data;
     // console.log("data.props", props.data);
     num = props.num;
@@ -521,7 +524,7 @@ const LineChart = (props) => {
         selected,
         linePoint,
         linePointChange,
-        props.samplingTime,
+        samplingTime,
     ]);
     const handleOk = () => {
         const newX = parseTimeString(inputValues.time);

@@ -8,39 +8,97 @@ import { Button, Form, Input, Space, Row, Col } from "antd";
 
 const App = (props) => {
     const [form] = Form.useForm();
+    const [flowRateDefault,setFlowRateDefault] = useState(0)
+    const [lastData,setLastData] = useState([])
+
     const onFinish = (values) => {
         props.onValuesChange(values);
     };
     useEffect(() => {
-        console.log("props.pressure :", props);
+        console.log("7890  props.pressure :", props);
+        console.log("7890  props.lastData :", lastData);
+        setFlowRateDefault(props.flowRateDefault)
+        if (lastData.length !== 0){
+            form.setFieldsValue({ users: lastData });
+        }
+        else{
+            setLastData(props.pressure)
 
-        form.setFieldsValue({ users: props.pressure });
-    }, [props.pressure, form]);
+        }
+    }, [props, form]);
 
     const handleValuesChange = (changedValues, allValues) => {
+        console.log("7890 -----5---");
+        console.log("7890 -----6---");
+        console.log("7890  allValues", allValues);
+        console.log("7890 -----3---");
+        console.log("7890 -----4---");
+        setLastData(allValues.users)
+        console.log("7890 -----1---");
+        console.log("7890 -----2---");
+
+        console.log("7890  changedValues.users", changedValues.users);
+
         if (changedValues.users) {
+
+
             const index = changedValues.users.findIndex((item) => item);
+            console.log("7890-----------index",index);
+
             const field = changedValues.users[index];
+           
+            const key = Object.keys(field)[0]
+            if (field) {
+                allValues.users[index][key] = Number(allValues.users[index][key])
+            }
             if (field && field.pumpB !== undefined) {
                 const pumpBValue = parseFloat(field.pumpB);
-                if (!isNaN(pumpBValue)) {
-                    const pumpAValue = 100 - pumpBValue;
+                const pumpAValue = 100 - pumpBValue;
 
-                    form.setFieldsValue({
-                        users: allValues.users.map((item, i) =>
-                            i === index
-                                ? {
-                                      time: Number(item.time),
-                                      pumpB: Number(item.pumpB),
-                                      pumpA: pumpAValue,
-                                  }
-                                : item
-                        ),
-                    });
-                }
+                allValues.users[index].pumpA = pumpAValue
             }
+            // if (field && field.pumpB !== undefined) {
+            //     const pumpBValue = parseFloat(field.pumpB);
+            //     if (!isNaN(pumpBValue)) {
+            //         console.log("7890-------------------------------------------------------------");
+                    
+            //         const pumpAValue = 100 - pumpBValue;
+            //         allValues.users[index].time = Number(allValues.users[index].time)
+            //         allValues.users[index].pumpB = Number(allValues.users[index].pumpB)
+            //         allValues.users[index].flowRate = Number(allValues.users[index].flowRate)
+            //         allValues.users[index].pumpA = pumpAValue
+
+            //         form.setFieldsValue({
+            //             allValues
+            //             // users: allValues.users.map((item, i) =>
+            //                 // i === index
+            //                 //     ? {
+            //                 //           time: Number(item.time),
+            //                 //           pumpB: Number(item.pumpB),
+            //                 //           flowRate: Number(item.flowRate),
+            //                 //           pumpA: pumpAValue,
+                                      
+            //                 //       }
+            //                 //     : item
+                          
+
+
+
+            //             // ),
+            //         });
+
+            //     }
+            // }
+
         }
+        console.log("7890 -----10---");
+        console.log("7890 -----20---");
+
+        console.log("7890  lastData", lastData);
+        console.log("7890   allValues.users",allValues.users);
+        
     };
+
 
     const submit = () => {
         form.submit();
@@ -134,7 +192,7 @@ const App = (props) => {
                                             },
                                         ]}
                                     >
-                                        <Input placeholder="泵A流速" disabled />
+                                        <Input placeholder="泵A比例" disabled />
                                     </Form.Item>
                                     <Form.Item
                                         {...restField}
@@ -147,7 +205,20 @@ const App = (props) => {
                                             },
                                         ]}
                                     >
-                                        <Input placeholder="泵B流速" />
+                                        <Input placeholder="泵B比例" />
+                                    </Form.Item>
+                                    <Form.Item
+                                        {...restField}
+                                        name={[name, "flowRate"]}
+                                        rules={[
+                                            {
+                                                required: false,
+                                                message:
+                                                    "Missing pumpB flow rate",
+                                            },
+                                        ]}
+                                    >
+                                        <Input placeholder = {flowRateDefault} />
                                     </Form.Item>
                                     <MinusCircleOutlined
                                         onClick={() => remove(name)}

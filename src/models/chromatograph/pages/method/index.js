@@ -100,6 +100,7 @@ const Method = () => {
     const [methodName, setMethodName] = useState("");
     const [methodDatas, setMethodDatas] = useState([]);
     const [methodID, setMethodID] = useState();
+    const [flowRateDefault,setFlowRateDefault] = useState(0)
 
     console.log("basisData :", basisData);
     console.log("elutionData :", elutionData);
@@ -499,8 +500,11 @@ const Method = () => {
         setPumps(data);
     };
     const basisValuesChange = (changedValues, allValues) => {
+        setFlowRateDefault(allValues.totalFlowRate)
         setSamplingTime(Number(allValues.samplingTime));
-        setTime(Number(allValues.time) / 60);
+        console.log("7890-----totalFlowRate",allValues.totalFlowRate);
+        
+        setTime((Number(allValues.time) / 60).toFixed(2));
     };
 
     const getPressurreData = () => {};
@@ -509,24 +513,30 @@ const Method = () => {
         let newPoints = [];
         if (values.users.length === 0) {
             newPoints = [
-                { time: 0, pumpB: 0, pumpA: 100 },
+                { time: 0, pumpB: 0, pumpA: 100,flowRate:100, },
                 {
                     time: samplingTime,
                     pumpB: 0,
                     pumpA: 100,
+                    flowRate:100,
                 },
             ];
         } else {
+            for(var i = 0; i < values.users.length ; i++) {
+                if(!values.users[i].flowRate) {
+                    values.users[i].flowRate = Number(flowRateDefault)
+                }
+            }
             // if()
-            const lastPoint = values.users[values.users.length - 1];
-            newPoints = [
-                { time: 0, pumpB: 0, pumpA: 100 },
-                {
-                    time: samplingTime,
-                    pumpB: lastPoint.pumpB,
-                    pumpA: lastPoint.pumpA,
-                },
-            ];
+            // const lastPoint = values.users[values.users.length - 1];
+            // newPoints = [
+            //     { time: 0, pumpB: 0, pumpA: 100 },
+            //     {
+            //         time: samplingTime,
+            //         pumpB: lastPoint.pumpB,
+            //         pumpA: lastPoint.pumpA,
+            //     },
+            // ];
         }
         setPressure([...newPoints, ...values.users]);
     };
@@ -783,7 +793,7 @@ const Method = () => {
                                 <Form.Item label="时间/s" name="time">
                                     <Input disabled={!isEquilibration} />
                                 </Form.Item>
-                                <Form.Item label="速度/%" name="speed">
+                                <Form.Item label="泵A速度/%" name="speed">
                                     <Input disabled={!isEquilibration} />
                                 </Form.Item>
                                 <Form.Item label="总流速" name="totalFlowRate">
@@ -839,6 +849,7 @@ const Method = () => {
                                         </Col>
                                         <Col span={12}>
                                             <DynamicForm
+                                                flowRateDefault = {flowRateDefault}
                                                 pressure={pressure}
                                                 onValuesChange={
                                                     handleValuesChange
