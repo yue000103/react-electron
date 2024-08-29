@@ -32,7 +32,7 @@ const DynamicLine = (props) => {
     };
 
     useEffect(() => {
-        console.log("8672 propsline------------ :", props);
+        console.log("9999 propsline------------ :", props);
         setXTime(props.samplingTime);
         const data = transformAndSortData(props.pressure);
 

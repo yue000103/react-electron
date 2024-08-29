@@ -109,11 +109,16 @@ const App = () => {
         });
 
         socket.on("new_curve_point", (responseData) => {
-            console.log("responseData", responseData);
-
+            // console.log("responseData", responseData);
             if (responseData.point["value"] == 0) {
-                setLoading(false);
-                flagStartTime = 1;
+                // messageApi.open({
+                //     type: "error",
+                //     content: "检测器异常！暂停实验",
+                // });
+                // pause()
+
+                // setLoading(false);
+                // flagStartTime = 1;
             } else {
                 setData((prevData) => [...prevData, responseData.point]);
             }

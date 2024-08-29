@@ -98,7 +98,7 @@ const renderCurve = (svg, width, height, margin, cleanFlag, samplingTime) => {
 };
 
 const renderVertical = (svg, xScale, height) => {
-    // console.log("num-----------", num);
+    console.log("9090--------num-", num);
 
     const parsedData = num?.map((d) => ({
         ...d,

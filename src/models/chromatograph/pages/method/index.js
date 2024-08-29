@@ -54,12 +54,12 @@ let num = [
 ];
 let selected_tubes = [];
 let clean_flag = 1;
-let linePoint = [
+// let linePoint = [
     // { time: "00:01:20", value: 81.41712213857508 },
     // { time: "00:01:20", value: 88.51848125394666 },
     // { time: "00:01:30", value: 88.51848125394666 },
     // { time: "00:01:40", value: 20.51848125394666 },
-];
+// ];
 let lineFlag = 1;
 const handleUpdatePoint = () => {};
 
@@ -68,6 +68,7 @@ const Method = () => {
     const [spinning, setSpinning] = React.useState(false);
     const [percent, setPercent] = React.useState(0);
     const [messageApi, contextHolder] = message.useMessage();
+    const [linePoint,setLinePoint] = useState([])
 
     const [value, setValue] = useState(1);
     const onChange = (e) => {
@@ -157,6 +158,13 @@ const Method = () => {
     const startWashing = () => {
         setData([]);
         startEquilibration().then((response) => {});
+        if(!isEquilibration){
+            messageApi.open({
+                type: "error",
+                content: "无需平衡柱子！",
+            });
+        }
+        
     };
     const saveMethod = () => {
         const methodId = localStorage.getItem("methodId");
@@ -308,6 +316,7 @@ const Method = () => {
             totalFlowRate: item.totalFlowRate,
         };
         formBasis.setFieldsValue(basisDatas);
+        setSamplingTime(item.samplingTime)
         setIsEquilibration(item.equilibrationColumn);
         if (item.isocratic === 1) {
             setValue(1);

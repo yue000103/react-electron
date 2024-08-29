@@ -15,38 +15,25 @@ const App = (props) => {
         props.onValuesChange(values);
     };
     useEffect(() => {
-        console.log("7890  props.pressure :", props);
-        console.log("7890  props.lastData :", lastData);
+        console.log("9999---------props",props);
+        
         setFlowRateDefault(props.flowRateDefault)
         if (lastData.length !== 0){
             form.setFieldsValue({ users: lastData });
+
         }
         else{
             setLastData(props.pressure)
+            form.setFieldsValue({ users: props.pressure });
+
 
         }
-    }, [props, form]);
+    }, [props.pressure, form]);
 
     const handleValuesChange = (changedValues, allValues) => {
-        console.log("7890 -----5---");
-        console.log("7890 -----6---");
-        console.log("7890  allValues", allValues);
-        console.log("7890 -----3---");
-        console.log("7890 -----4---");
-        setLastData(allValues.users)
-        console.log("7890 -----1---");
-        console.log("7890 -----2---");
-
-        console.log("7890  changedValues.users", changedValues.users);
-
         if (changedValues.users) {
-
-
             const index = changedValues.users.findIndex((item) => item);
-            console.log("7890-----------index",index);
-
             const field = changedValues.users[index];
-           
             const key = Object.keys(field)[0]
             if (field) {
                 allValues.users[index][key] = Number(allValues.users[index][key])
@@ -54,49 +41,11 @@ const App = (props) => {
             if (field && field.pumpB !== undefined) {
                 const pumpBValue = parseFloat(field.pumpB);
                 const pumpAValue = 100 - pumpBValue;
-
                 allValues.users[index].pumpA = pumpAValue
             }
-            // if (field && field.pumpB !== undefined) {
-            //     const pumpBValue = parseFloat(field.pumpB);
-            //     if (!isNaN(pumpBValue)) {
-            //         console.log("7890-------------------------------------------------------------");
-                    
-            //         const pumpAValue = 100 - pumpBValue;
-            //         allValues.users[index].time = Number(allValues.users[index].time)
-            //         allValues.users[index].pumpB = Number(allValues.users[index].pumpB)
-            //         allValues.users[index].flowRate = Number(allValues.users[index].flowRate)
-            //         allValues.users[index].pumpA = pumpAValue
-
-            //         form.setFieldsValue({
-            //             allValues
-            //             // users: allValues.users.map((item, i) =>
-            //                 // i === index
-            //                 //     ? {
-            //                 //           time: Number(item.time),
-            //                 //           pumpB: Number(item.pumpB),
-            //                 //           flowRate: Number(item.flowRate),
-            //                 //           pumpA: pumpAValue,
-                                      
-            //                 //       }
-            //                 //     : item
-                          
-
-
-
-            //             // ),
-            //         });
-
-            //     }
-            // }
-
         }
-        console.log("7890 -----10---");
-        console.log("7890 -----20---");
+        setLastData(allValues.users)
 
-        console.log("7890  lastData", lastData);
-        console.log("7890   allValues.users",allValues.users);
-        
     };
 
 
