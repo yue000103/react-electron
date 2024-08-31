@@ -105,7 +105,7 @@ const App = () => {
 
         socket.on("new_point", (data) => {
             console.log("data", data);
-            setNum((prevNum) => [...prevNum, data.   ]);
+            setNum((prevNum) => [...prevNum, data.point]);
         });
 
         socket.on("new_curve_point", (responseData) => {

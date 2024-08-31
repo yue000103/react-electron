@@ -5,7 +5,7 @@ import color from "@components/color/index"; // 引入样式对象
 import { convertLegacyProps } from "antd/es/button";
 
 let select_tube = [];
-let groups = [
+const groupsOrigin = [
     [
         { time_start: "00:00:00", time_end: "00:00:00", tube: 1 },
         { time_start: "00:00:00", time_end: "00:00:00", tube: 2 },
@@ -59,23 +59,28 @@ const App = ({ num, callback, selected, clean_flag }) => {
     const [selectedFlag, setSelectedFlags] = useState([]);
     const [cleanFlag, setCleanFlag] = useState(0);
     const [forceUpdate, setForceUpdate] = useState(0);
-    const [groupsOfTen, setGroupsOfTen] = useState(groups);
+    const [groupsOfTen, setGroupsOfTen] = useState(groupsOrigin);
 
     useEffect(() => {
-        console.log("selected",selected);
+        // console.log("0831  groupsOrigin", groupsOrigin);
         setCleanFlag(clean_flag);
-        if (num.length == 0) {
-            const groups_flag = generateGroups(4, 10); // 生成4组，每组10个管子的数组
+        // console.log("0831   num", num);
+        // console.log("0831  cleanFlag:", cleanFlag);
+        // console.log("0831  groupsOfTen :", groupsOfTen);
 
-            setGroupsOfTen(groups_flag);
+        if (num.length == 0) {
+            console.log("0831  ----------------------------");
+
+            // const groups_flag = generateGroups(4, 10); // 生成4组，每组10个管子的数组
+
+            setGroupsOfTen(groupsOrigin);
         }
         if (selected) {
-            console.log("---------------------------------------",selected);
+            console.log("---------------------------------------", selected);
             setSelectedFlags(selected);
-            console.log("---------------------------------------",select_tube);
+            console.log("---------------------------------------", select_tube);
 
             callback(selected, num);
-
         } else {
             setSelectedFlags([]);
         }
@@ -89,6 +94,9 @@ const App = ({ num, callback, selected, clean_flag }) => {
     // }, [groupsOfTen]);
     // 处理按钮点击事件
     const generateGroups = (groupCount, tubesPerGroup) => {
+        console.log("0831  tubesPerGroup :", tubesPerGroup);
+        console.log("0831  groupCount :", groupCount);
+
         const groups = [];
         let tubeNumber = 1;
 
@@ -103,6 +111,7 @@ const App = ({ num, callback, selected, clean_flag }) => {
             }
             groups.push(group);
         }
+        console.log("0831  groups :", groups);
 
         return groups;
     };
@@ -150,7 +159,6 @@ const App = ({ num, callback, selected, clean_flag }) => {
 
     // let last_num = { time_start: "", time_end: "", tube: num.length + 1 };
     // num = num.push(last_num);
-    console.log("num", num);
     // const groupsOfTen = chunkArray(num, 10);
 
     // console.log("groupsOfTen ---------------------", groupsOfTen);
@@ -182,21 +190,29 @@ const App = ({ num, callback, selected, clean_flag }) => {
 
                                                 const isSelected =
                                                     selectedFlag.includes(tube);
-                                                groups = groupsOfTen;
+                                                let groupsFlag = groupsOfTen;
                                                 num.map((n) => {
-                                                    
                                                     let one = Math.floor(
-                                                        n["tube"] / 10
-                                                    );
+                                                        (n["tube"] - 1) / 10
+                                                    ); // 计算所在的组
                                                     let two =
-                                                        Math.floor(
-                                                            n["tube"] % 10
-                                                        ) - 1;
-                                                    if(n["tube"] % 10 === 0){
-                                                        one = one - 1
-                                                        two = n["tube"] - 1
+                                                        (n["tube"] - 1) % 10; // 计算组内的位置
+                                                    if (
+                                                        one >= 0 &&
+                                                        one <
+                                                            groupsOfTen.length &&
+                                                        two >= 0 &&
+                                                        two <
+                                                            groupsOfTen[one]
+                                                                .length
+                                                    ) {
+                                                        groupsOfTen[one][two] =
+                                                            n; // 更新对应位置的对象
+                                                    } else {
+                                                        console.warn(
+                                                            `Invalid index detected: group (${one}), position (${two})`
+                                                        );
                                                     }
-                                                    groups[one][two] = n;
                                                 });
                                                 const foundTube = num.find(
                                                     (t) => t.tube === tube
