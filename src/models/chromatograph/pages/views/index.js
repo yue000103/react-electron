@@ -105,7 +105,7 @@ const App = () => {
 
         socket.on("new_point", (data) => {
             console.log("data", data);
-            setNum((prevNum) => [...prevNum, data.point]);
+            setNum((prevNum) => [...prevNum, data.   ]);
         });
 
         socket.on("new_curve_point", (responseData) => {
@@ -116,7 +116,6 @@ const App = () => {
                 //     content: "检测器异常！暂停实验",
                 // });
                 // pause()
-
                 // setLoading(false);
                 // flagStartTime = 1;
             } else {
