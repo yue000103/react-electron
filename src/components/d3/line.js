@@ -649,6 +649,18 @@ const LineChart = (props) => {
                     // onChange={handleInputChange}
                     controls={false}
                 />
+                {/* <Input
+                    ref={inputRef}
+                    className="input-number"
+                    value={inputValues.flow_rate}
+                    min={0}
+                    max={100}
+                    // formatter={(value) => `${value}%`}
+                    // parser={(value) => value?.replace("%", "")}
+                    // onChange={handleInputChange}
+                    controls={false}
+                    disabled
+                /> */}
                 <KeyboardNumber
                     className="input-keyboard"
                     value={inputValues.value}

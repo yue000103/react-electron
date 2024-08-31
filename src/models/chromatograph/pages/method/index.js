@@ -55,10 +55,10 @@ let num = [
 let selected_tubes = [];
 let clean_flag = 1;
 // let linePoint = [
-    // { time: "00:01:20", value: 81.41712213857508 },
-    // { time: "00:01:20", value: 88.51848125394666 },
-    // { time: "00:01:30", value: 88.51848125394666 },
-    // { time: "00:01:40", value: 20.51848125394666 },
+// { time: "00:01:20", value: 81.41712213857508 },
+// { time: "00:01:20", value: 88.51848125394666 },
+// { time: "00:01:30", value: 88.51848125394666 },
+// { time: "00:01:40", value: 20.51848125394666 },
 // ];
 let lineFlag = 1;
 const handleUpdatePoint = () => {};
@@ -68,7 +68,7 @@ const Method = () => {
     const [spinning, setSpinning] = React.useState(false);
     const [percent, setPercent] = React.useState(0);
     const [messageApi, contextHolder] = message.useMessage();
-    const [linePoint,setLinePoint] = useState([])
+    const [linePoint, setLinePoint] = useState([]);
 
     const [value, setValue] = useState(1);
     const onChange = (e) => {
@@ -101,7 +101,7 @@ const Method = () => {
     const [methodName, setMethodName] = useState("");
     const [methodDatas, setMethodDatas] = useState([]);
     const [methodID, setMethodID] = useState();
-    const [flowRateDefault,setFlowRateDefault] = useState(0)
+    const [flowRateDefault, setFlowRateDefault] = useState(0);
 
     console.log("basisData :", basisData);
     console.log("elutionData :", elutionData);
@@ -158,13 +158,12 @@ const Method = () => {
     const startWashing = () => {
         setData([]);
         startEquilibration().then((response) => {});
-        if(!isEquilibration){
+        if (!isEquilibration) {
             messageApi.open({
                 type: "error",
                 content: "无需平衡柱子！",
             });
         }
-        
     };
     const saveMethod = () => {
         const methodId = localStorage.getItem("methodId");
@@ -316,7 +315,7 @@ const Method = () => {
             totalFlowRate: item.totalFlowRate,
         };
         formBasis.setFieldsValue(basisDatas);
-        setSamplingTime(item.samplingTime)
+        setSamplingTime(item.samplingTime);
         setIsEquilibration(item.equilibrationColumn);
         if (item.isocratic === 1) {
             setValue(1);
@@ -509,10 +508,10 @@ const Method = () => {
         setPumps(data);
     };
     const basisValuesChange = (changedValues, allValues) => {
-        setFlowRateDefault(allValues.totalFlowRate)
+        setFlowRateDefault(allValues.totalFlowRate);
         setSamplingTime(Number(allValues.samplingTime));
-        console.log("7890-----totalFlowRate",allValues.totalFlowRate);
-        
+        console.log("7890-----totalFlowRate", allValues.totalFlowRate);
+
         setTime((Number(allValues.time) / 60).toFixed(2));
     };
 
@@ -522,18 +521,18 @@ const Method = () => {
         let newPoints = [];
         if (values.users.length === 0) {
             newPoints = [
-                { time: 0, pumpB: 0, pumpA: 100,flowRate:100, },
+                { time: 0, pumpB: 0, pumpA: 100, flowRate: 100 },
                 {
                     time: samplingTime,
                     pumpB: 0,
                     pumpA: 100,
-                    flowRate:100,
+                    flowRate: 100,
                 },
             ];
         } else {
-            for(var i = 0; i < values.users.length ; i++) {
-                if(!values.users[i].flowRate) {
-                    values.users[i].flowRate = Number(flowRateDefault)
+            for (var i = 0; i < values.users.length; i++) {
+                if (!values.users[i].flowRate) {
+                    values.users[i].flowRate = Number(flowRateDefault);
                 }
             }
             // if()
@@ -811,11 +810,37 @@ const Method = () => {
                             </Form>
                         </Col>
                         <Col span={12}>
-                            {"模式： "}
-                            <Radio.Group onChange={onChange} value={value}>
-                                <Radio value={1}>等度洗脱</Radio>
-                                <Radio value={2}>二元高压梯度</Radio>
-                            </Radio.Group>
+                            <Row>
+                                <Col span={2}>
+                                    <p>{"模式： "}</p>
+                                </Col>
+                                <Col span={11}>
+                                    <div style={{ marginTop: 13 }}>
+                                        <Radio.Group
+                                            onChange={onChange}
+                                            value={value}
+                                        >
+                                            <Radio value={1}>等度洗脱</Radio>
+                                            <Radio value={2}>
+                                                二元高压梯度
+                                            </Radio>
+                                        </Radio.Group>
+                                    </div>
+                                </Col>
+
+                                <Col span={4}>
+                                    <pre
+                                        style={{
+                                            fontSize: "15px",
+                                            fontWeight: "550",
+                                        }}
+                                    >
+                                        {
+                                            "时间     泵A速度    泵B速度    总流速 "
+                                        }
+                                    </pre>
+                                </Col>
+                            </Row>
                             {value === 1 && (
                                 <div className="isocratic">
                                     {" "}
@@ -858,7 +883,9 @@ const Method = () => {
                                         </Col>
                                         <Col span={12}>
                                             <DynamicForm
-                                                flowRateDefault = {flowRateDefault}
+                                                flowRateDefault={
+                                                    flowRateDefault
+                                                }
                                                 pressure={pressure}
                                                 onValuesChange={
                                                     handleValuesChange
