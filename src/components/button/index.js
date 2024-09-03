@@ -67,9 +67,11 @@ const App = ({ num, callback, selected, clean_flag }) => {
         // console.log("0831   num", num);
         // console.log("0831  cleanFlag:", cleanFlag);
         // console.log("0831  groupsOfTen :", groupsOfTen);
+        console.log("0831  ----------------------------selected",selected);
+        console.log("0831  ----------------------------clean_flag",clean_flag);
 
         if (num.length == 0) {
-            console.log("0831  ----------------------------");
+            // console.log("0831  ----------------------------",selected);
 
             // const groups_flag = generateGroups(4, 10); // 生成4组，每组10个管子的数组
 

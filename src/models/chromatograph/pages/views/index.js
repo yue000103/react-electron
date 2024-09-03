@@ -326,20 +326,20 @@ const App = () => {
     const reset = () => {
         setCleanFlag(0);
         flagStartTime = 1;
-        let newnum = [];
-        setNum(newnum);
         getEluentLine().then((responseData) => {
             setLine(responseData.data.point);
         });
         setData(() => []);
         setNum(() => []);
+        setSelectedReverse([])
         selected_tubes = [];
     };
 
     const clean = () => {
         setData(() => []);
+        setSelectedReverse([])
 
-        setNum(() => []);
+        setNum([]);
 
         setCleanFlag(1);
         console.log("clean_flag--- :", clean_flag);
@@ -545,9 +545,10 @@ const App = () => {
                                 )} */}
                                 <Buttons
                                     num={num}
+                                    callback={handleReceiveFlags}
+
                                     selected={selected_reverse}
                                     clean_flag={clean_flag}
-                                    callback={handleReceiveFlags}
                                 ></Buttons>
                             </div>
                         </Sider>
