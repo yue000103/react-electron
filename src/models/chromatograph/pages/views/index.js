@@ -78,6 +78,9 @@ const App = () => {
     const [num, setNum] = useState([]);
     //清洗标志，当0时，所有试管禁用，当1时，所有试管可以选择。
     const [clean_flag, setCleanFlag] = useState(0);
+        //方法，当0时，所有按钮禁用，当1时，所有按钮可以正常使用。
+
+    const [methodFlag, setMethodFlag] = useState(0);
     //  1 可以修改折线 0 不可以修改折线
     const [lineFlag, setLineFlag] = useState(1);
 
@@ -118,6 +121,7 @@ const App = () => {
                 // pause()
                 // setLoading(false);
                 // flagStartTime = 1;
+                terminate()
             } else {
                 setData((prevData) => [...prevData, responseData.point]);
             }
@@ -386,15 +390,23 @@ const App = () => {
         reset();
         // setData([])
         getEluentLine().then((responseData) => {
-            setLine(responseData.data.point);
-            newPoints = responseData.data.point;
-            console.log("samplingTime  responseData.data :", responseData.data);
-            setSamplingTime(responseData.data.sampling_time);
-            console.log(
-                "samplingTime responseData.data.sampling_time :",
-                responseData.data.sampling_time
-            );
-            console.log("samplingTime ------------:", samplingTime);
+            if(responseData.data.point.length === 0){
+                console.log("0904---------------");
+                setMethodFlag(0)
+            }
+            else{
+                setMethodFlag(1)
+                setLine(responseData.data.point);
+                newPoints = responseData.data.point;
+                console.log("samplingTime  responseData.data :", responseData.data);
+                setSamplingTime(responseData.data.sampling_time);
+                console.log(
+                    "samplingTime responseData.data.sampling_time :",
+                    responseData.data.sampling_time
+                );
+                console.log("samplingTime ------------:", samplingTime);
+            }
+            
         });
         getStatus();
         const handleResize = () => {
@@ -454,7 +466,7 @@ const App = () => {
                                             className={`button`} // 使用模板字符串
                                             onClick={() => start()}
                                             disabled={
-                                                clean_flag === 1 ? true : false
+                                                clean_flag === 1 || methodFlag === 0 ? true : false
                                             }
                                         >
                                             开始
@@ -465,7 +477,7 @@ const App = () => {
                                             className={`button button2`}
                                             onClick={() => pause()}
                                             disabled={
-                                                clean_flag === 1 ? true : false
+                                                clean_flag === 1  || methodFlag === 0? true : false
                                             }
                                         >
                                             暂停
@@ -477,7 +489,7 @@ const App = () => {
                                             className={`button button1`}
                                             onClick={() => terminate()}
                                             disabled={
-                                                clean_flag === 1 ? true : false
+                                                clean_flag === 1  || methodFlag === 0? true : false
                                             }
                                         >
                                             终止
@@ -487,6 +499,9 @@ const App = () => {
                                             size="large"
                                             className={`button button4`}
                                             onClick={() => reset()}
+                                            disabled={
+                                                 methodFlag === 0 ? true : false
+                                            }
                                         >
                                             复位
                                         </Button>
@@ -561,7 +576,7 @@ const App = () => {
                                             className={`button button1`} // 使用模板字符串
                                             onClick={() => retainFlags()}
                                             disabled={
-                                                clean_flag === 1 ? true : false
+                                                clean_flag === 1 || methodFlag === 0 ? true : false
                                             }
                                         >
                                             保留
@@ -570,9 +585,9 @@ const App = () => {
                                             type="primary"
                                             className={`button button2`}
                                             onClick={() => abandonFlags()}
-                                            // disabled={
-                                            //     clean_flag === 1 ? true : false
-                                            // }
+                                            disabled={
+                                                methodFlag === 0 ? true : false
+                                            }
                                         >
                                             废弃
                                         </Button>
@@ -580,6 +595,9 @@ const App = () => {
                                             type="primary"
                                             onClick={() => reverseFlags()}
                                             className={`button button3`}
+                                            disabled={
+                                                methodFlag === 0 ? true : false
+                                            }
                                         >
                                             反转
                                         </Button>
@@ -587,6 +605,9 @@ const App = () => {
                                             type="primary"
                                             onClick={() => clean()}
                                             className={`button button4`}
+                                            disabled={
+                                                methodFlag === 0 ? true : false
+                                            }
                                         >
                                             清洗
                                         </Button>

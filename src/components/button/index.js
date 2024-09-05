@@ -56,26 +56,34 @@ const groupsOrigin = [
     ],
 ];
 const App = ({ num, callback, selected, clean_flag }) => {
+    const _ = require('lodash');
+
+    
     const [selectedFlag, setSelectedFlags] = useState([]);
     const [cleanFlag, setCleanFlag] = useState(0);
     const [forceUpdate, setForceUpdate] = useState(0);
-    const [groupsOfTen, setGroupsOfTen] = useState(groupsOrigin);
+    const [groupsOfTen, setGroupsOfTen] = useState(_.cloneDeep(groupsOrigin));
 
     useEffect(() => {
         // console.log("0831  groupsOrigin", groupsOrigin);
         setCleanFlag(clean_flag);
         // console.log("0831   num", num);
         // console.log("0831  cleanFlag:", cleanFlag);
-        // console.log("0831  groupsOfTen :", groupsOfTen);
         console.log("0831  ----------------------------selected",selected);
         console.log("0831  ----------------------------clean_flag",clean_flag);
 
         if (num.length == 0) {
+            console.log("0831  -------  groupsOfTen :", groupsOfTen);
+            console.log("0831  groupsOrigin :", groupsOrigin);
+
+
             // console.log("0831  ----------------------------",selected);
 
             // const groups_flag = generateGroups(4, 10); // 生成4组，每组10个管子的数组
 
-            setGroupsOfTen(groupsOrigin);
+            setGroupsOfTen(_.cloneDeep(groupsOrigin));
+            console.log("0831  groupsOfTen :", groupsOfTen);
+
         }
         if (selected) {
             console.log("---------------------------------------", selected);
