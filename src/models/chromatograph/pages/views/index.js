@@ -25,12 +25,12 @@ import {
     startEluentLine,
     terminateEluentLine,
 } from "../../api/eluent_curve";
+import { startEquilibration, setCurrentMethodOperate } from "../../api/methods";
 import { getDeviceStatus, postDeviceStatus } from "../../api/status";
 import { uploadMethodFlag } from "../../api/methods";
 import { timeout } from "d3";
 import moment from "moment";
 import { getTube } from "@/models/chromatograph/api/tube";
-
 
 import io from "socket.io-client";
 
@@ -81,7 +81,7 @@ const App = () => {
     const [num, setNum] = useState([]);
     //清洗标志，当0时，所有试管禁用，当1时，所有试管可以选择。
     const [clean_flag, setCleanFlag] = useState(0);
-        //方法，当0时，所有按钮禁用，当1时，所有按钮可以正常使用。
+    //方法，当0时，所有按钮禁用，当1时，所有按钮可以正常使用。
 
     const [methodFlag, setMethodFlag] = useState(0);
     //  1 可以修改折线 0 不可以修改折线
@@ -98,11 +98,15 @@ const App = () => {
     const [pumpStatus, setPumpStatus] = useState({});
     const [samplingTime, setSamplingTime] = useState(10);
 
-    const [ uploadFlag,setUploadFlag] = useState(0);
+    const [uploadFlag, setUploadFlag] = useState(0);
+    const [equilibrationFlag, setEquilibrationFlag] = useState(0);
+
     const [dimensions, setDimensions] = useState({
         width: window.innerWidth,
         height: window.innerHeight,
     });
+
+    const [currentMethod, setCurrentMethod] = useState({});
 
     useEffect(() => {
         const socket = io("http://localhost:5000"); // 确保 URL 正确
@@ -116,7 +120,7 @@ const App = () => {
         });
 
         socket.on("new_curve_point", (responseData) => {
-            // console.log("responseData", responseData);
+            console.log("9090   responseData", responseData);
             if (responseData.point["value"] == 0) {
                 // messageApi.open({
                 //     type: "error",
@@ -125,7 +129,7 @@ const App = () => {
                 // pause()
                 // setLoading(false);
                 // flagStartTime = 1;
-                terminate()
+                terminate();
             } else {
                 setData((prevData) => [...prevData, responseData.point]);
             }
@@ -136,7 +140,10 @@ const App = () => {
             console.log("warningCode :", warningCode);
         });
         socket.on("current_tube", (responseData) => {
-            console.log("0909   responseData---------------------", responseData.id);
+            console.log(
+                "0909   responseData---------------------",
+                responseData.id
+            );
         });
         socket.on("disconnect", () => {
             console.log("Disconnected from WebSocket server");
@@ -270,26 +277,21 @@ const App = () => {
         }
     };
 
-    const undoReceiveFlags = (index,flag) => {
+    const undoReceiveFlags = (index, flag) => {
         const tubeList = selected_tubes[index].tube_list;
         // console.log("0909----flag",flag);
 
-
-        
-
-        if(flag === "run"){
-            getTube({ tube_list: selected_tubes[index].tube_list, operate: selected_tubes[index].status }).then(
-                        (responseData) => {}
-                    );
-                    console.log("0909----selected_tubes",selected_tubes);
-
-        }
-        else{
+        if (flag === "run") {
+            getTube({
+                tube_list: selected_tubes[index].tube_list,
+                operate: selected_tubes[index].status,
+            }).then((responseData) => {});
+            console.log("0909----selected_tubes", selected_tubes);
+        } else {
             selected_tubes = selected_tubes.filter((_, idx) => idx !== index);
 
             process_data_flag(tubeList, undefined);
-            console.log("0909----tubeList",tubeList);
-
+            console.log("0909----tubeList", tubeList);
         }
     };
 
@@ -302,48 +304,63 @@ const App = () => {
     };
 
     const start = () => {
-        
-        if(uploadFlag === 0){
+        if (uploadFlag === 0) {
             messageApi.open({
                 type: "error",
                 content: "没有上传方法 !",
                 duration: 2,
             });
-        }else{
-
-        
-        setCleanFlag(0);
-        // console.log("Starting");
-
-        setLoading(true);
-        console.log("flagStartTime", flagStartTime);
-
-        if (flagStartTime == 1) {
-            reset();
-            startTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
-            // console.log("startTime --------------------:", startTime);
-            flagStartTime = 0;
         } else {
-            // console.log("startTime --------------2------:", startTime);
-            startEluentLine().then((responsedata) => {
-                // console.log("responsedata :", responsedata);
+            uploadMethodFlag().then((responsedata) => {
+                setEquilibrationFlag(responsedata.data.equilibration_flag);
             });
-        }
-        updateEluentLine({
-            point: Object.values(newPoints),
-            start_time: startTime,
-        })
-            .then((responseData) => {
-                console.log("responseData :", responseData);
+            if (
+                currentMethod.equilibrationColumn === 1 &&
+                equilibrationFlag === 1
+            ) {
+                messageApi.open({
+                    type: "success",
+                    content: "已经平衡过柱子了，再次开始实验",
+                });
+            }
+            //  else {
+            //   messageApi.open({
+            //       type: "success",
+            //       content: "开始实验",
+            //   });
+            // }
+            setCleanFlag(0);
+            // console.log("Starting");
+
+            setLoading(true);
+            console.log("flagStartTime", flagStartTime);
+
+            if (flagStartTime == 1) {
+                reset();
+                startTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+                // console.log("startTime --------------------:", startTime);
+                flagStartTime = 0;
+            } else {
+                // console.log("startTime --------------2------:", startTime);
+                startEluentLine().then((responsedata) => {
+                    // console.log("responsedata :", responsedata);
+                });
+            }
+            updateEluentLine({
+                point: Object.values(newPoints),
+                start_time: startTime,
             })
-            .catch((error) => {
-                console.log(error);
-            });
-        getEluentCurve({ start_time: startTime })
-            .then((responseData) => {})
-            .catch((error) => {
-                console.log(error);
-            });
+                .then((responseData) => {
+                    console.log("responseData :", responseData);
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
+            getEluentCurve({ start_time: startTime })
+                .then((responseData) => {})
+                .catch((error) => {
+                    console.log(error);
+                });
         }
     };
 
@@ -369,13 +386,13 @@ const App = () => {
         });
         setData(() => []);
         setNum(() => []);
-        setSelectedReverse([])
+        setSelectedReverse([]);
         selected_tubes = [];
     };
 
     const clean = () => {
         setData(() => []);
-        setSelectedReverse([])
+        setSelectedReverse([]);
 
         setNum([]);
 
@@ -422,28 +439,41 @@ const App = () => {
 
     useEffect(() => {
         uploadMethodFlag().then((responsedata) => {
-            setUploadFlag(responsedata.data.flag)
-        })
+            setUploadFlag(responsedata.data.upload_flag);
+            setEquilibrationFlag(responsedata.data.equilibration_flag);
+        });
         reset();
         // setData([])
         getEluentLine().then((responseData) => {
-            if(responseData.data.point.length === 0){
-                console.log("0904---------------");
-                setMethodFlag(0)
-            }
-            else{
-                setMethodFlag(1)
+            if (responseData.data.point.length === 0) {
+                setMethodFlag(0);
+            } else {
+                const methodId = localStorage.getItem("methodId");
+                if (methodId) {
+                    setCurrentMethodOperate({
+                        method_id: Number(methodId),
+                    }).then((response) => {
+                        console.log(
+                            "0909 ------response :",
+                            response.data.methods
+                        );
+                        setCurrentMethod(response.data.methods[0]);
+                    });
+                }
+                setMethodFlag(1);
                 setLine(responseData.data.point);
                 newPoints = responseData.data.point;
-                console.log("samplingTime  responseData.data :", responseData.data);
+                // console.log(
+                //     "samplingTime  responseData.data :",
+                //     responseData.data
+                // );
                 setSamplingTime(responseData.data.sampling_time);
-                console.log(
-                    "samplingTime responseData.data.sampling_time :",
-                    responseData.data.sampling_time
-                );
-                console.log("samplingTime ------------:", samplingTime);
+                // console.log(
+                //     "samplingTime responseData.data.sampling_time :",
+                //     responseData.data.sampling_time
+                // );
+                // console.log("samplingTime ------------:", samplingTime);
             }
-            
         });
         getStatus();
         const handleResize = () => {
@@ -471,7 +501,7 @@ const App = () => {
         //     rubePoint.push({ timeStart: "", timeEnd: "", tube: i });
         // }
         // setNum((prevNum) => rubePoint); // 更新状态
-    }, [samplingTime,uploadFlag]);
+    }, [samplingTime, uploadFlag]);
 
     return (
         <Flex gap="middle" wrap className="flex">
@@ -503,7 +533,10 @@ const App = () => {
                                             className={`button`} // 使用模板字符串
                                             onClick={() => start()}
                                             disabled={
-                                                clean_flag === 1 || methodFlag === 0 ? true : false
+                                                clean_flag === 1 ||
+                                                methodFlag === 0
+                                                    ? true
+                                                    : false
                                             }
                                         >
                                             开始
@@ -514,7 +547,10 @@ const App = () => {
                                             className={`button button2`}
                                             onClick={() => pause()}
                                             disabled={
-                                                clean_flag === 1  || methodFlag === 0? true : false
+                                                clean_flag === 1 ||
+                                                methodFlag === 0
+                                                    ? true
+                                                    : false
                                             }
                                         >
                                             暂停
@@ -526,7 +562,10 @@ const App = () => {
                                             className={`button button1`}
                                             onClick={() => terminate()}
                                             disabled={
-                                                clean_flag === 1  || methodFlag === 0? true : false
+                                                clean_flag === 1 ||
+                                                methodFlag === 0
+                                                    ? true
+                                                    : false
                                             }
                                         >
                                             终止
@@ -537,7 +576,7 @@ const App = () => {
                                             className={`button button4`}
                                             onClick={() => reset()}
                                             disabled={
-                                                 methodFlag === 0 ? true : false
+                                                methodFlag === 0 ? true : false
                                             }
                                         >
                                             复位
@@ -598,7 +637,6 @@ const App = () => {
                                 <Buttons
                                     num={num}
                                     callback={handleReceiveFlags}
-
                                     selected={selected_reverse}
                                     clean_flag={clean_flag}
                                 ></Buttons>
@@ -613,7 +651,10 @@ const App = () => {
                                             className={`button button1`} // 使用模板字符串
                                             onClick={() => retainFlags()}
                                             disabled={
-                                                clean_flag === 1 || methodFlag === 0 ? true : false
+                                                clean_flag === 1 ||
+                                                methodFlag === 0
+                                                    ? true
+                                                    : false
                                             }
                                         >
                                             保留
@@ -659,7 +700,6 @@ const App = () => {
                                     <TaskList
                                         selected_tubes={selected_tubes}
                                         callback={undoReceiveFlags}
-
                                     />
                                 ) : (
                                     <Empty
