@@ -135,6 +135,9 @@ const App = () => {
             console.log("responseData---------------------", responseData.code);
             console.log("warningCode :", warningCode);
         });
+        socket.on("current_tube", (responseData) => {
+            console.log("0909   responseData---------------------", responseData.id);
+        });
         socket.on("disconnect", () => {
             console.log("Disconnected from WebSocket server");
         });
