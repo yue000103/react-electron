@@ -24,17 +24,18 @@ const App = (props) => {
     };
 
     const runs = (index, tubeObj, status) => {
-        console.log("status :", status);
-        console.log("index: ", index);
-        console.log("tubeObj", tubeObj.tube_list[0]);
-        getTube({ tube_list: tubeObj.tube_list, operate: status }).then(
-            (responseData) => {}
-        );
-        // callback(index);
+        // console.log("0909--------status :", status);
+        // console.log("0909--------index: ", index);
+        // console.log("0909--------tubeObj", tubeObj.tube_list[0]);
+        let flag = "run"
+        callback(index,flag);
+
     };
 
     const deletes = (index) => {
-        callback(index);
+        let flag = "delete"
+
+        callback(index,flag);
     };
     // 计算内容高度的示例函数（需要根据实际内容计算）
     const calculateHeightBasedOnContent = (tube) => {

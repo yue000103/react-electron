@@ -29,6 +29,8 @@ import { getDeviceStatus, postDeviceStatus } from "../../api/status";
 import { uploadMethodFlag } from "../../api/methods";
 import { timeout } from "d3";
 import moment from "moment";
+import { getTube } from "@/models/chromatograph/api/tube";
+
 
 import io from "socket.io-client";
 
@@ -265,10 +267,27 @@ const App = () => {
         }
     };
 
-    const undoReceiveFlags = (index) => {
+    const undoReceiveFlags = (index,flag) => {
         const tubeList = selected_tubes[index].tube_list;
-        selected_tubes = selected_tubes.filter((_, idx) => idx !== index);
-        process_data_flag(tubeList, undefined);
+        // console.log("0909----flag",flag);
+
+
+        
+
+        if(flag === "run"){
+            getTube({ tube_list: selected_tubes[index].tube_list, operate: selected_tubes[index].status }).then(
+                        (responseData) => {}
+                    );
+                    console.log("0909----selected_tubes",selected_tubes);
+
+        }
+        else{
+            selected_tubes = selected_tubes.filter((_, idx) => idx !== index);
+
+            process_data_flag(tubeList, undefined);
+            console.log("0909----tubeList",tubeList);
+
+        }
     };
 
     const error = () => {
@@ -637,6 +656,7 @@ const App = () => {
                                     <TaskList
                                         selected_tubes={selected_tubes}
                                         callback={undoReceiveFlags}
+
                                     />
                                 ) : (
                                     <Empty
