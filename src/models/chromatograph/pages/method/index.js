@@ -428,6 +428,7 @@ const Method = () => {
                                                 <th>时间</th>
                                                 <th>泵A</th>
                                                 <th>泵B</th>
+                                                <th>总流速</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -437,6 +438,7 @@ const Method = () => {
                                                         <td>{entry.time}</td>
                                                         <td>{entry.pumpA}</td>
                                                         <td>{entry.pumpB}</td>
+                                                        <td>{entry.flowRate}</td>
                                                     </tr>
                                                 )
                                             )}
@@ -827,6 +829,7 @@ const Method = () => {
                                         </Radio.Group>
                                     </div>
                                 </Col>
+                                { value === 2  && (
 
                                 <Col span={4}>
                                     <pre
@@ -834,12 +837,14 @@ const Method = () => {
                                             fontSize: "15px",
                                             fontWeight: "550",
                                         }}
+                                      
                                     >
                                         {
                                             "时间     泵A速度    泵B速度    总流速 "
                                         }
                                     </pre>
                                 </Col>
+                                    )}
                             </Row>
                             {value === 1 && (
                                 <div className="isocratic">

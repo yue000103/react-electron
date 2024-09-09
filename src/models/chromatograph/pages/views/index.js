@@ -26,6 +26,7 @@ import {
     terminateEluentLine,
 } from "../../api/eluent_curve";
 import { getDeviceStatus, postDeviceStatus } from "../../api/status";
+import { uploadMethodFlag } from "../../api/methods";
 import { timeout } from "d3";
 import moment from "moment";
 
@@ -95,6 +96,7 @@ const App = () => {
     const [pumpStatus, setPumpStatus] = useState({});
     const [samplingTime, setSamplingTime] = useState(10);
 
+    const [ uploadFlag,setUploadFlag] = useState(0);
     const [dimensions, setDimensions] = useState({
         width: window.innerWidth,
         height: window.innerHeight,
@@ -278,6 +280,16 @@ const App = () => {
     };
 
     const start = () => {
+        
+        if(uploadFlag === 0){
+            messageApi.open({
+                type: "error",
+                content: "没有上传方法 !",
+                duration: 2,
+            });
+        }else{
+
+        
         setCleanFlag(0);
         // console.log("Starting");
 
@@ -291,7 +303,6 @@ const App = () => {
             flagStartTime = 0;
         } else {
             // console.log("startTime --------------2------:", startTime);
-
             startEluentLine().then((responsedata) => {
                 // console.log("responsedata :", responsedata);
             });
@@ -311,6 +322,7 @@ const App = () => {
             .catch((error) => {
                 console.log(error);
             });
+        }
     };
 
     const terminate = () => {
@@ -387,6 +399,9 @@ const App = () => {
     };
 
     useEffect(() => {
+        uploadMethodFlag().then((responsedata) => {
+            setUploadFlag(responsedata.data.flag)
+        })
         reset();
         // setData([])
         getEluentLine().then((responseData) => {
@@ -434,7 +449,7 @@ const App = () => {
         //     rubePoint.push({ timeStart: "", timeEnd: "", tube: i });
         // }
         // setNum((prevNum) => rubePoint); // 更新状态
-    }, [samplingTime]);
+    }, [samplingTime,uploadFlag]);
 
     return (
         <Flex gap="middle" wrap className="flex">
