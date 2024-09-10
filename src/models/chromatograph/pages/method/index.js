@@ -668,6 +668,7 @@ const Method = () => {
                                             size="large"
                                             className={`button`}
                                             onClick={() => startWashing()}
+                                            disabled
                                         >
                                             启动
                                         </Button>
@@ -805,7 +806,7 @@ const Method = () => {
                                 <Form.Item label="时间/s" name="time">
                                     <Input disabled={!isEquilibration} />
                                 </Form.Item>
-                                <Form.Item label="泵B速度/%" name="speed">
+                                <Form.Item label="泵速度/%" name="speed">
                                     <Input disabled={!isEquilibration} />
                                 </Form.Item>
                                 <Form.Item label="总流速" name="totalFlowRate">

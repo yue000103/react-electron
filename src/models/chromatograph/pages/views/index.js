@@ -9,6 +9,7 @@ import {
     message,
     Divider,
     Spin,
+    List,
 } from "antd";
 import "./index.css";
 import Line from "@components/d3/line";
@@ -67,6 +68,8 @@ const colorMap = {
 let colorNum = 0;
 let selected_tube = []; // 接收到的试管列表
 let selected_tubes = []; //总的是试管列表
+let excuted_tubes = []; //执行的试管列表
+
 // let selected_reverse = [];
 let intervalId1;
 let intervalId2;
@@ -107,6 +110,7 @@ const App = () => {
     });
 
     const [currentMethod, setCurrentMethod] = useState({});
+    const [excutedTubes, setExcutedTubes] = useState([]);
 
     useEffect(() => {
         const socket = io("http://localhost:5000"); // 确保 URL 正确
@@ -141,8 +145,14 @@ const App = () => {
         });
         socket.on("current_tube", (responseData) => {
             console.log(
-                "0909   responseData---------------------",
+                "0910   current_tube---------------------",
                 responseData.id
+            );
+        });
+        socket.on("device_free", (responseData) => {
+            console.log(
+                "0910   device_free---------------------",
+                responseData.flag
             );
         });
         socket.on("disconnect", () => {
@@ -241,7 +251,7 @@ const App = () => {
             let consecutiveArrays = [selected_tube];
 
             consecutiveArrays.forEach((arr) => {
-                let new_tube = { tube_list: arr, status: "discard" };
+                let new_tube = { tube_list: arr, status: "abandon" };
                 selected_tubes.push(new_tube);
             });
             // let new_tube = { tube_list: selected_tube, status: "discard" };
@@ -279,17 +289,22 @@ const App = () => {
 
     const undoReceiveFlags = (index, flag) => {
         const tubeList = selected_tubes[index].tube_list;
-        // console.log("0909----flag",flag);
+
+        console.log("0910----flag", selected_tubes);
 
         if (flag === "run") {
-            getTube({
+            let task = {
                 tube_list: selected_tubes[index].tube_list,
-                operate: selected_tubes[index].status,
+                status: selected_tubes[index].status,
+            };
+            excuted_tubes.push(task);
+            setExcutedTubes(excuted_tubes);
+            getTube({
+                task_list: task,
             }).then((responseData) => {});
-            console.log("0909----selected_tubes", selected_tubes);
+            console.log("0910----excuted_tubes", excuted_tubes);
         } else {
             selected_tubes = selected_tubes.filter((_, idx) => idx !== index);
-
             process_data_flag(tubeList, undefined);
             console.log("0909----tubeList", tubeList);
         }
@@ -697,10 +712,27 @@ const App = () => {
                             <div className="buttonTitle">任务列表</div>
                             <div className="buttonTube">
                                 {selected_tubes.length > 0 ? (
-                                    <TaskList
-                                        selected_tubes={selected_tubes}
-                                        callback={undoReceiveFlags}
-                                    />
+                                    <div>
+                                        <Row>
+                                            <Col span={18}>
+                                                <TaskList
+                                                    selected_tubes={
+                                                        selected_tubes
+                                                    }
+                                                    button_flag={1}
+                                                    callback={undoReceiveFlags}
+                                                />
+                                            </Col>
+                                            <Col span={6}>
+                                                <TaskList
+                                                    selected_tubes={
+                                                        excutedTubes
+                                                    }
+                                                    button_flag={0}
+                                                />
+                                            </Col>
+                                        </Row>
+                                    </div>
                                 ) : (
                                     <Empty
                                         image={Empty.PRESENTED_IMAGE_SIMPLE}

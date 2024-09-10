@@ -10,13 +10,13 @@ import {
     PlayCircleOutlined,
 } from "@ant-design/icons";
 
-import { getTube } from "@/models/chromatograph/api/tube";
-
 const text = "Are you sure to delete this task?";
 const description = "Delete the task";
 
 const App = (props) => {
-    const { selected_tubes, callback } = props;
+    const { selected_tubes, button_flag, callback } = props;
+    console.log("9010       button_flag :", button_flag == 1);
+    console.log("9010       selected_tubes :", selected_tubes);
     const heightCache = useRef({}); // 缓存每项的高度
 
     const undo = (index) => {
@@ -27,15 +27,14 @@ const App = (props) => {
         // console.log("0909--------status :", status);
         // console.log("0909--------index: ", index);
         // console.log("0909--------tubeObj", tubeObj.tube_list[0]);
-        let flag = "run"
-        callback(index,flag);
-
+        let flag = "run";
+        callback(index, flag);
     };
 
     const deletes = (index) => {
-        let flag = "delete"
+        let flag = "delete";
 
-        callback(index,flag);
+        callback(index, flag);
     };
     // 计算内容高度的示例函数（需要根据实际内容计算）
     const calculateHeightBasedOnContent = (tube) => {
@@ -47,6 +46,8 @@ const App = (props) => {
 
     const getItemSize = (index) => {
         const tube = selected_tubes[index];
+        console.log("9010       button_flag :", button_flag == 1);
+        console.log("9010       selected_tubes :", selected_tubes);
         if (heightCache.current[index]) {
             return heightCache.current[index];
         }
@@ -57,24 +58,28 @@ const App = (props) => {
     };
     const Row = ({ index, style }) => {
         const tubeObj = selected_tubes[index];
-        console.log("tubeObj :", tubeObj);
+
         return (
             <List.Item key={index} style={style} className="listItem">
                 <div className="metaContent">
                     <List.Item.Meta
                         title={
                             <div className="content">
-                                <span className="statusClass">
-                                    {
-                                        tubeObj.status === "retain"
-                                            ? "保留："
-                                            : tubeObj.status === "discard"
-                                            ? "废弃："
-                                            : tubeObj.status === "clean"
-                                            ? "清洗："
-                                            : "未知状态：" // 默认情况，处理其他未预期的status值
-                                    }
-                                </span>
+                                {button_flag == 1 ? (
+                                    <span className="statusClass" disable>
+                                        {
+                                            tubeObj.status === "retain"
+                                                ? "保留："
+                                                : tubeObj.status === "abandon"
+                                                ? "废弃："
+                                                : tubeObj.status === "clean"
+                                                ? "清洗："
+                                                : "未知状态：" // 默认情况，处理其他未预期的status值
+                                        }
+                                    </span>
+                                ) : (
+                                    <div></div>
+                                )}
 
                                 <span className="listClass">
                                     {tubeObj.tube_list.join(", ")}
@@ -119,10 +124,13 @@ const App = (props) => {
         <div className="scrollable-list">
             <List>
                 <VirtualList
+                    header={<div>Header</div>}
+                    footer={<div>Footer</div>}
+                    bordered
                     height={280} // 容器高度
                     itemCount={selected_tubes.length}
                     itemSize={(index) => getItemSize(index)} // 每项的高度动态计算
-                    width="100%"
+                    // width="100%"
                 >
                     {({ index, style }) => <Row index={index} style={style} />}
                 </VirtualList>
