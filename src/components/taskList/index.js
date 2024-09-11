@@ -19,10 +19,6 @@ const App = (props) => {
     console.log("9010       selected_tubes :", selected_tubes);
     const heightCache = useRef({}); // 缓存每项的高度
 
-    const undo = (index) => {
-        callback(index);
-    };
-
     const runs = (index, tubeObj, status) => {
         // console.log("0909--------status :", status);
         // console.log("0909--------index: ", index);
@@ -30,10 +26,8 @@ const App = (props) => {
         let flag = "run";
         callback(index, flag);
     };
-
     const deletes = (index) => {
         let flag = "delete";
-
         callback(index, flag);
     };
     // 计算内容高度的示例函数（需要根据实际内容计算）

@@ -16,6 +16,9 @@ import Line from "@components/d3/line";
 import Buttons from "@components/button/index";
 import TaskList from "@components/taskList/index";
 import FloatB from "@components/floatB/index";
+import TaskTable from "@components/table/taskTable";
+import TaskSteps from "@components/steps/taskSteps";
+
 import { Empty } from "antd";
 import {
     getEluentCurve,
@@ -69,7 +72,7 @@ let colorNum = 0;
 let selected_tube = []; // 接收到的试管列表
 let selected_tubes = []; //总的是试管列表
 let excuted_tubes = []; //执行的试管列表
-
+let excute_status = 0;
 // let selected_reverse = [];
 let intervalId1;
 let intervalId2;
@@ -111,6 +114,17 @@ const App = () => {
 
     const [currentMethod, setCurrentMethod] = useState({});
     const [excutedTubes, setExcutedTubes] = useState([]);
+    // const [taskId, setTaskId] = useState();
+    let taskId = -1;
+    const [currentTubeId, setCurrentTubeId] = useState();
+    const [currentTaskId, setCurrentTaskId] = useState();
+    const [excuteTaskFlag, setExcuteTaskFlag] = useState();
+
+    const generateTaskId = () => {
+        const now = new Date();
+        console.log("0911  now :", now);
+        return now.getTime(); // 返回当前时间的毫秒数
+    };
 
     useEffect(() => {
         const socket = io("http://localhost:5000"); // 确保 URL 正确
@@ -145,15 +159,23 @@ const App = () => {
         });
         socket.on("current_tube", (responseData) => {
             console.log(
-                "0910   current_tube---------------------",
-                responseData.id
+                "0911   current_tube---------------------",
+                responseData.tube_id,
+                responseData.task_id
             );
+            setCurrentTubeId(responseData.tube_id);
+            setCurrentTaskId(responseData.task_id);
+            updateExcuteTask(responseData.tube_id, responseData.task_id);
         });
         socket.on("device_free", (responseData) => {
             console.log(
-                "0910   device_free---------------------",
+                "0911   device_free---------------------",
                 responseData.flag
             );
+            setExcuteTaskFlag(responseData.flag);
+            setCurrentTaskId(responseData.task_id);
+            excute_status = responseData.flag;
+            updateExcuteTask(currentTubeId, responseData.task_id);
         });
         socket.on("disconnect", () => {
             console.log("Disconnected from WebSocket server");
@@ -287,22 +309,62 @@ const App = () => {
         }
     };
 
+    const updateExcuteTask = (tubeId, taskId) => {
+        console.log("9011     taskId :", taskId);
+        console.log("9011     tubeId :", tubeId);
+        // excuted_tubes = excutedTubes;
+        excuted_tubes.forEach((task) => {
+            if (task.task_id === taskId) {
+                task.currentTubeId = tubeId;
+                task.flag = excute_status;
+            }
+        });
+        console.log("0911  3   excuted_tubes", excuted_tubes);
+        console.log("0911  4   excutedTubes", excutedTubes);
+
+        setExcutedTubes((prevExcutedTubes) => {
+            return [...excuted_tubes];
+        });
+        console.log("0911  2   excutedTubes", excutedTubes);
+    };
+
     const undoReceiveFlags = (index, flag) => {
+        console.log(
+            "0911   callback---------undoReceiveFlags-----------------------------------------"
+        );
+
+        const methodId = localStorage.getItem("methodId");
+
         const tubeList = selected_tubes[index].tube_list;
 
         console.log("0910----flag", selected_tubes);
 
         if (flag === "run") {
+            taskId = generateTaskId();
+            console.log("0911  taskid", taskId);
+            console.log("0911  generateTaskId()", generateTaskId());
+            if (taskId === undefined) {
+                taskId = generateTaskId();
+            }
+
             let task = {
                 tube_list: selected_tubes[index].tube_list,
                 status: selected_tubes[index].status,
+                method_id: Number(methodId),
+                task_id: taskId,
             };
-            excuted_tubes.push(task);
-            setExcutedTubes(excuted_tubes);
             getTube({
                 task_list: task,
             }).then((responseData) => {});
-            console.log("0910----excuted_tubes", excuted_tubes);
+            task.currentTubeId = 0;
+            task.flag = -1;
+            excuted_tubes.push(task);
+            setExcutedTubes((prevExcutedTubes) => {
+                // 这里我们返回一个新的数组，包含了旧的任务加上新的任务
+                return [...prevExcutedTubes, task];
+            });
+            // setExcutedTubes(excuted_tubes);
+            console.log("0911----excuted_tubes", excuted_tubes);
         } else {
             selected_tubes = selected_tubes.filter((_, idx) => idx !== index);
             process_data_flag(tubeList, undefined);
@@ -633,7 +695,7 @@ const App = () => {
                 </Divider>
                 <Spin spinning={loading} delay={500}>
                     <Layout className="bottomStyle">
-                        <Sider width="42%" className="siderStyle">
+                        <Sider width="34%" className="siderStyle">
                             <div className="buttonTitle">试管列表</div>
                             <div className="buttonTube">
                                 {/* {num.length > 0 ? (
@@ -657,7 +719,7 @@ const App = () => {
                                 ></Buttons>
                             </div>
                         </Sider>
-                        <Sider width="15%" className="siderStyle">
+                        <Sider width="8%" className="siderStyle">
                             <Row>
                                 <Col span={24}>
                                     <div className="buttonStyle">
@@ -711,35 +773,37 @@ const App = () => {
                         <Content className="taskStyle">
                             <div className="buttonTitle">任务列表</div>
                             <div className="buttonTube">
-                                {selected_tubes.length > 0 ? (
-                                    <div>
-                                        <Row>
-                                            <Col span={18}>
-                                                <TaskList
-                                                    selected_tubes={
-                                                        selected_tubes
-                                                    }
-                                                    button_flag={1}
-                                                    callback={undoReceiveFlags}
-                                                />
-                                            </Col>
-                                            <Col span={6}>
-                                                <TaskList
-                                                    selected_tubes={
-                                                        excutedTubes
-                                                    }
-                                                    button_flag={0}
-                                                />
-                                            </Col>
-                                        </Row>
-                                    </div>
-                                ) : (
-                                    <Empty
-                                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                        imageStyle={{ height: 0 }}
-                                        description={<span>暂无任务</span>}
-                                    />
-                                )}
+                                {/* {selected_tubes.length > 0 ||
+                                excuted_tubes.length > 0 ? ( */}
+                                <Row>
+                                    <Col span={10}>
+                                        <TaskList
+                                            selected_tubes={selected_tubes}
+                                            button_flag={1}
+                                            callback={undoReceiveFlags}
+                                        />
+                                    </Col>
+                                    <Col span={10}>
+                                        <TaskSteps
+                                            excuted_tubes={excutedTubes}
+                                        ></TaskSteps>
+                                    </Col>
+                                </Row>
+                                {/* ) : (
+                                    // <Empty
+                                    //     image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                    //     imageStyle={{ height: 0 }}
+                                    //     description={<span>暂无任务</span>}
+                                    // />
+                                    <Row>
+                                        <Col span={12}>
+                                            <TaskTable
+                                                title={""}
+                                                buttonFlag={1}
+                                            ></TaskTable>
+                                        </Col>
+                                    </Row>
+                                )} */}
                             </div>
                         </Content>
                     </Layout>
