@@ -23,14 +23,17 @@ const TaskSteps = (props) => {
                 "0911  task.currentTubeId === tubeId :",
                 task.currentTubeId === tubeId
             );
-
             if (task.flag === 1) {
                 stepStatus =
-                    task.currentTubeId === tubeId ? "process" : "await";
-                iconColor = task.currentTubeId === tubeId ? "#1890ff" : "#ccc";
+                    tubeId < task.currentTubeId
+                        ? "finish"
+                        : tubeId === task.currentTubeId
+                        ? "process"
+                        : "await";
+                iconColor = tubeId < task.currentTubeId ? "#ccc" : "#1890ff";
             } else if (task.flag === 0) {
                 stepStatus = "finish";
-                iconColor = "#1890ff"; // 红色
+                iconColor = "#ccc"; // 灰色
             }
             console.log("0911      stepStatus :", stepStatus);
 
@@ -43,6 +46,7 @@ const TaskSteps = (props) => {
                         status={stepStatus}
                         color={iconColor}
                         tubeId={tubeId}
+                        className={"steps-item"}
                     />
                 ),
             });
@@ -62,24 +66,27 @@ const TaskSteps = (props) => {
             {excuted_tubes.map((task, index) => {
                 let statusText;
                 if (task.status === "clean") {
-                    statusText = "清洗";
+                    statusText = "清洗：";
                 } else if (task.status === "abandon") {
-                    statusText = "废弃";
+                    statusText = "废弃：";
                 } else if (task.status === "retain") {
-                    statusText = "保留";
+                    statusText = "保留：";
                 } else {
                     statusText = task.status;
                 }
                 return (
                     <div className="task">
                         <Row>
-                            <Col span={3}>{statusText}</Col>
-                            <Col span={19}>
-                                <Steps
-                                    size="small"
-                                    key={index}
-                                    items={generateSteps(task)}
-                                />
+                            <Col span={4}>{statusText}</Col>
+                            <Col span={20}>
+                                <div class="steps-container">
+                                    <Steps
+                                        size="small"
+                                        key={index}
+                                        items={generateSteps(task)}
+                                        className="steps-container"
+                                    />
+                                </div>
                             </Col>
                         </Row>
                     </div>

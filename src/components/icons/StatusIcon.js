@@ -48,7 +48,7 @@ const StyledStatusIcon = styled.div`
 `;
 const TextWrapper = styled.span`
     font-size: 1.1rem;
-    color: ${(props) => (props.isLoading ? "white" : "black")};
+    color: ${(props) => (props.isLoading ? "black" : "white")};
 `;
 const StatusIcon = ({ status, color, tubeId }) => {
     const isLoading = status === "process";
@@ -56,7 +56,7 @@ const StatusIcon = ({ status, color, tubeId }) => {
 
     return (
         <StyledStatusIcon status={status} color={color} isLoading={isLoading}>
-            <TextWrapper>{tubeId}</TextWrapper>
+            <TextWrapper isLoading={isLoading}>{tubeId}</TextWrapper>
         </StyledStatusIcon>
     );
 };

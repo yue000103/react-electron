@@ -18,6 +18,7 @@ import TaskList from "@components/taskList/index";
 import FloatB from "@components/floatB/index";
 import TaskTable from "@components/table/taskTable";
 import TaskSteps from "@components/steps/taskSteps";
+import DynamicCard from "@components/cards/dynamicCard";
 
 import { Empty } from "antd";
 import {
@@ -719,7 +720,7 @@ const App = () => {
                                 ></Buttons>
                             </div>
                         </Sider>
-                        <Sider width="8%" className="siderStyle">
+                        <Sider width="10%" className="siderStyle">
                             <Row>
                                 <Col span={24}>
                                     <div className="buttonStyle">
@@ -771,22 +772,34 @@ const App = () => {
                             </Row>
                         </Sider>
                         <Content className="taskStyle">
-                            <div className="buttonTitle">任务列表</div>
+                            {/* <div className="buttonTitle">任务列表</div> */}
                             <div className="buttonTube">
-                                {/* {selected_tubes.length > 0 ||
-                                excuted_tubes.length > 0 ? ( */}
-                                <Row>
-                                    <Col span={10}>
-                                        <TaskList
-                                            selected_tubes={selected_tubes}
-                                            button_flag={1}
-                                            callback={undoReceiveFlags}
-                                        />
+                                {/* {selected_tubes.length > 0  ? ( */}
+
+                                <Row gutter={20}>
+                                    <Col span={14}>
+                                        <DynamicCard
+                                            position={"top"}
+                                            title={"任务列表"}
+                                            height={"300px"}
+                                        >
+                                            <TaskList
+                                                selected_tubes={selected_tubes}
+                                                button_flag={1}
+                                                callback={undoReceiveFlags}
+                                            />
+                                        </DynamicCard>
                                     </Col>
                                     <Col span={10}>
-                                        <TaskSteps
-                                            excuted_tubes={excutedTubes}
-                                        ></TaskSteps>
+                                        <DynamicCard
+                                            position={"top"}
+                                            title={"执行列表"}
+                                            height={"300px"}
+                                        >
+                                            <TaskSteps
+                                                excuted_tubes={excutedTubes}
+                                            ></TaskSteps>
+                                        </DynamicCard>
                                     </Col>
                                 </Row>
                                 {/* ) : (

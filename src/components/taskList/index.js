@@ -121,7 +121,7 @@ const App = (props) => {
                     header={<div>Header</div>}
                     footer={<div>Footer</div>}
                     bordered
-                    height={280} // 容器高度
+                    height={250} // 容器高度
                     itemCount={selected_tubes.length}
                     itemSize={(index) => getItemSize(index)} // 每项的高度动态计算
                     // width="100%"

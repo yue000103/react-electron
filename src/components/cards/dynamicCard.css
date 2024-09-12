@@ -1,0 +1,63 @@
+.dynamicCard{
+  width: 100%;
+  /* border-radius: 20% !important;
+  border: 20px !important; */
+}
+.ant-card-body{
+  padding:0 !important;
+    
+}
+.ant-card-bordered{
+  border-radius: 10% !important;
+  border-width: 2px !important;
+  box-shadow: 0 2px 4px rgba(129, 8, 8, 0.3); /* 阴影效果 */
+
+}
+.top{
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  
+}
+.top-title{
+  /* flex-direction:row; */
+  /* margin-top: -20px; */
+
+
+}
+.top-content{
+  width:100%
+}
+.grid-style{
+  /* border-radius: 50px 50px 50px 50px/90px 90px 60px 60px !important; */
+  /* background-color: #9b0000; */
+  
+}
+.top-title-text{
+  color: #9b0000;
+  /* margin-top: 10px; */
+  /* padding-bottom: 10px; */
+
+}
+.ant-card-grid{
+
+  width: 100% !important;
+  height: 50% !important;
+  /* border-bottom: 45px solid #9b0000 !important;
+  border-left: 45px solid transparent !important;
+  border-right: 45px solid transparent !important;
+  border-top: 45px solid #9b0000 !important; */
+  border: 5px solid !important;
+            /*边框颜色：上 右 下 左 （从上边框开始 顺时针方向）*/
+  border-color: transparent transparent #9b0000 transparent !important;
+  /*为了兼容IE6，所有设置为透明（transparent）的边，需要设置为dashed；有颜色的边设置为solid*/
+  border-style: dashed dashed solid dashed !important;
+  /* box-shadow: 0px 0 0 0 #c1212100, 0 0px 0 0 #f0f0f0, 0  #f0f0f0,  0 #f0f0f0 inset, 0  #f0f0f0 inset !important; */
+  box-shadow:none !important;
+  /* border-radius: 30% !important; */
+  padding:0px !important
+}
+
+
