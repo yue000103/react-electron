@@ -5,6 +5,9 @@
     "main": "main.js",
     "homepage": "./",
     "dependencies": {
+        "@mantine/core": "^7.12.2",
+        "@mantine/dates": "^7.12.2",
+        "@mantine/hooks": "^7.12.2",
         "@testing-library/jest-dom": "^5.17.0",
         "@testing-library/react": "^13.4.0",
         "@testing-library/user-event": "^13.5.0",
@@ -22,6 +25,7 @@
         "react-simple-keyboard": "^3.7.144",
         "react-window": "^1.8.10",
         "socket.io-client": "^4.7.5",
+        "styled-components": "^6.1.13",
         "web-vitals": "^2.1.4"
     },
     "scripts": {

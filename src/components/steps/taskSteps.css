@@ -22,3 +22,11 @@
 .steps-item {
   flex-shrink: 0; /* 防止步骤在缩小时被压缩 */
 }
+
+.ant-steps-item-icon{
+  font-size:0px !important
+
+}
+.ant-steps{
+  text-align: center;
+}

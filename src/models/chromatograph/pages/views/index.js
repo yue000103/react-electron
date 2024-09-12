@@ -18,6 +18,7 @@ import TaskList from "@components/taskList/index";
 import FloatB from "@components/floatB/index";
 import TaskTable from "@components/table/taskTable";
 import TaskSteps from "@components/steps/taskSteps";
+import TaskStep from "@components/steps/taskStep";
 import DynamicCard from "@components/cards/dynamicCard";
 
 import { Empty } from "antd";
@@ -330,6 +331,9 @@ const App = () => {
     };
 
     const undoReceiveFlags = (index, flag) => {
+        console.log("9012   index", index);
+        console.log("9012   flag", flag);
+        
         console.log(
             "0911   callback---------undoReceiveFlags-----------------------------------------"
         );
@@ -342,8 +346,8 @@ const App = () => {
 
         if (flag === "run") {
             taskId = generateTaskId();
-            console.log("0911  taskid", taskId);
-            console.log("0911  generateTaskId()", generateTaskId());
+            // console.log("9012  taskid", taskId);
+            // console.log("9012  generateTaskId()", generateTaskId());
             if (taskId === undefined) {
                 taskId = generateTaskId();
             }
@@ -796,12 +800,21 @@ const App = () => {
                                             title={"执行列表"}
                                             height={"300px"}
                                         >
-                                            <TaskSteps
+                                            {/* <TaskSteps
                                                 excuted_tubes={excutedTubes}
-                                            ></TaskSteps>
+                                            ></TaskSteps> */}
+                                            <TaskStep excuted_tubes={excutedTubes}></TaskStep>
                                         </DynamicCard>
                                     </Col>
                                 </Row>
+                                <TaskTable
+                                    selected_tubes={selected_tubes}
+
+                                    title={""}
+                                    buttonFlag={1}
+                                    callback={undoReceiveFlags}
+
+                                            ></TaskTable>
                                 {/* ) : (
                                     // <Empty
                                     //     image={Empty.PRESENTED_IMAGE_SIMPLE}

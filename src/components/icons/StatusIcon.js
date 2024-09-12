@@ -33,8 +33,8 @@ const StyledStatusIcon = styled.div`
         position: absolute;
         top: 0px;
         left: 0px;
-        width: 1.8rem;
-        height: 1.8rem;
+        width: 1.7rem;
+        height: 1.7rem;
         border-radius: 50%;
         border: 2px solid ${(props) => props.color};
         border-top-color: transparent;
@@ -47,7 +47,8 @@ const StyledStatusIcon = styled.div`
     }
 `;
 const TextWrapper = styled.span`
-    font-size: 1.1rem;
+    font-size: 1rem;
+    margin-bottom:4px;
     color: ${(props) => (props.isLoading ? "black" : "white")};
 `;
 const StatusIcon = ({ status, color, tubeId }) => {

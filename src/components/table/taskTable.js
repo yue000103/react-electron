@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button, Flex, Table } from "antd";
 const columns = [
@@ -10,26 +11,39 @@ const columns = [
         dataIndex: "tube_list",
     },
 ];
-const dataSource = Array.from({
-    length: 46,
-}).map((_, i) => ({
-    key: i,
-    status: `Edward King ${i}`,
-    tube_list: `London, Park Lane no. ${i}`,
-}));
+
 const App = (props) => {
-    // console.log("0911    props", props);
+    console.log("0912    props", props);
+    const { selected_tubes, button_flag, callback } = props;
+
     const [title, setTitle] = useState(props.title);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [loading, setLoading] = useState(false);
     const [buttonFlag, setButtonFlag] = useState(props.buttonFlag);
+    const dataSource = selected_tubes.map((tube,i) => ({
+        key: i,
+        status: tube.status === 'abandon'
+   ? '废弃'
+    : tube.status === 'clean'
+   ? '清洗'
+    : tube.status === 'retain'
+   ? '保留'
+    : tube.status,
+        tube_list: ` ${tube.tube_list}`,
+    }));
     const start = () => {
+        const selectedData = dataSource.filter((item) =>
+            selectedRowKeys.includes(item.key)
+          );
+          
+          console.log('9012   选中的信息：', selectedData);
+
         setLoading(true);
         // ajax request after empty completing
-        setTimeout(() => {
-            setSelectedRowKeys([]);
-            setLoading(false);
-        }, 1000);
+        // setTimeout(() => {
+        //     setSelectedRowKeys([]);
+        //     setLoading(false);
+        // }, 1000);
     };
     const onSelectChange = (newSelectedRowKeys) => {
         console.log("selectedRowKeys changed: ", newSelectedRowKeys);
