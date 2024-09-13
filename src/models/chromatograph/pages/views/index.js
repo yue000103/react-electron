@@ -330,51 +330,66 @@ const App = () => {
         console.log("0911  2   excutedTubes", excutedTubes);
     };
 
-    const undoReceiveFlags = (index, flag) => {
-        console.log("9012   index", index);
-        console.log("9012   flag", flag);
-        
+    const undoReceiveFlags = (result) => {
+        console.log("9012   result", result);
+        console.log("9012   selected_tubes", selected_tubes);
+
         console.log(
             "0911   callback---------undoReceiveFlags-----------------------------------------"
         );
 
         const methodId = localStorage.getItem("methodId");
-
-        const tubeList = selected_tubes[index].tube_list;
-
-        console.log("0910----flag", selected_tubes);
-
-        if (flag === "run") {
-            taskId = generateTaskId();
-            // console.log("9012  taskid", taskId);
-            // console.log("9012  generateTaskId()", generateTaskId());
-            if (taskId === undefined) {
+        if (result[0].flag === "run") {
+            result.map((res) => {
+                let flag = res.flag;
+                let index = res.index;
                 taskId = generateTaskId();
-            }
+                // console.log("9012  taskid", taskId);
+                // console.log("9012  generateTaskId()", generateTaskId());
+                if (taskId === undefined) {
+                    taskId = generateTaskId();
+                }
 
-            let task = {
-                tube_list: selected_tubes[index].tube_list,
-                status: selected_tubes[index].status,
-                method_id: Number(methodId),
-                task_id: taskId,
-            };
-            getTube({
-                task_list: task,
-            }).then((responseData) => {});
-            task.currentTubeId = 0;
-            task.flag = -1;
-            excuted_tubes.push(task);
-            setExcutedTubes((prevExcutedTubes) => {
-                // 这里我们返回一个新的数组，包含了旧的任务加上新的任务
-                return [...prevExcutedTubes, task];
+                let task = {
+                    tube_list: selected_tubes[index].tube_list,
+                    status: selected_tubes[index].status,
+                    method_id: Number(methodId),
+                    task_id: taskId,
+                };
+                getTube({
+                    task_list: task,
+                }).then((responseData) => {});
+                task.currentTubeId = 0;
+                task.flag = -1;
+                excuted_tubes.push(task);
+                setExcutedTubes((prevExcutedTubes) => {
+                    // 这里我们返回一个新的数组，包含了旧的任务加上新的任务
+                    return [...prevExcutedTubes, task];
+                });
             });
             // setExcutedTubes(excuted_tubes);
-            console.log("0911----excuted_tubes", excuted_tubes);
-        } else {
-            selected_tubes = selected_tubes.filter((_, idx) => idx !== index);
-            process_data_flag(tubeList, undefined);
-            console.log("0909----tubeList", tubeList);
+        } else if (result[0].flag === "delete") {
+            const indexesToDelete = new Set(result.map((item) => item.index));
+            // 处理被删除的元素
+            indexesToDelete.forEach((index) => {
+                const tubeList = selected_tubes[index].tube_list;
+                process_data_flag(tubeList, undefined);
+            });
+
+            // 使用filter方法删除指定下标的元素
+            selected_tubes = selected_tubes.filter((item, index) => {
+                // 如果当前下标不在要删除的下标集合中，则保留该元素
+                return !indexesToDelete.has(index);
+            });
         }
+
+        // const tubeList = selected_tubes[index].tube_list;
+
+        // selected_tubes = selected_tubes.filter(
+        //     (_, idx) => idx !== index
+        // );
+        // process_data_flag(tubeList, undefined);
+        // console.log("0909----tubeList", tubeList);
     };
 
     const error = () => {
@@ -787,11 +802,17 @@ const App = () => {
                                             title={"任务列表"}
                                             height={"300px"}
                                         >
-                                            <TaskList
+                                            {/* <TaskList
                                                 selected_tubes={selected_tubes}
                                                 button_flag={1}
                                                 callback={undoReceiveFlags}
-                                            />
+                                            /> */}
+                                            <TaskTable
+                                                selected_tubes={selected_tubes}
+                                                title={""}
+                                                buttonFlag={1}
+                                                callback={undoReceiveFlags}
+                                            ></TaskTable>
                                         </DynamicCard>
                                     </Col>
                                     <Col span={10}>
@@ -803,18 +824,13 @@ const App = () => {
                                             {/* <TaskSteps
                                                 excuted_tubes={excutedTubes}
                                             ></TaskSteps> */}
-                                            <TaskStep excuted_tubes={excutedTubes}></TaskStep>
+                                            <TaskStep
+                                                excuted_tubes={excutedTubes}
+                                            ></TaskStep>
                                         </DynamicCard>
                                     </Col>
                                 </Row>
-                                <TaskTable
-                                    selected_tubes={selected_tubes}
 
-                                    title={""}
-                                    buttonFlag={1}
-                                    callback={undoReceiveFlags}
-
-                                            ></TaskTable>
                                 {/* ) : (
                                     // <Empty
                                     //     image={Empty.PRESENTED_IMAGE_SIMPLE}
