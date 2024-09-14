@@ -40,7 +40,7 @@ const App = (props) => {
 
         console.log("9012   选中的信息：", selectedData);
         const result = selectedData.map((item, index) => {
-            return { flag: "run", index: index };
+            return { flag: "run", index: item.key };
         });
         callback(result);
 
@@ -138,6 +138,7 @@ const App = (props) => {
                         onClick={deleteTubes}
                         disabled={!hasSelected}
                         loading={loading}
+                        // style={{backgroundColor: '#ad0202',}}
                     >
                         删除
                     </Button>

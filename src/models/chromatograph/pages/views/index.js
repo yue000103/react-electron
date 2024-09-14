@@ -55,6 +55,7 @@ let data = [
     // { time: "17:48:40", value: 88.51848125394666 },
     // { time: "17:48:60", value: 20.51848125394666 },
 ];
+let excutedTubesUpdateFlag = false;
 
 let linePoint = [];
 const tube_list = [];
@@ -81,6 +82,7 @@ let intervalId2;
 let startTime;
 let flagStartTime = 1; //  1 实验从头开始  0 实验继续
 let newPoints = [];
+let counter = 0;
 
 const App = () => {
     const [loading, setLoading] = React.useState(false);
@@ -123,9 +125,9 @@ const App = () => {
     const [excuteTaskFlag, setExcuteTaskFlag] = useState();
 
     const generateTaskId = () => {
-        const now = new Date();
-        console.log("0911  now :", now);
-        return now.getTime(); // 返回当前时间的毫秒数
+        const timestamp = new Date().getTime();
+        counter++;
+    return `${timestamp}${counter}`;
     };
 
     useEffect(() => {
@@ -141,18 +143,18 @@ const App = () => {
 
         socket.on("new_curve_point", (responseData) => {
             console.log("9090   responseData", responseData);
-            if (responseData.point["value"] == 0) {
-                // messageApi.open({
-                //     type: "error",
-                //     content: "检测器异常！暂停实验",
-                // });
-                // pause()
-                // setLoading(false);
-                // flagStartTime = 1;
-                terminate();
-            } else {
+            // if (responseData.point["value"] == 0) {
+            //     // messageApi.open({
+            //     //     type: "error",
+            //     //     content: "检测器异常！暂停实验",
+            //     // });
+            //     // pause()
+            //     // setLoading(false);
+            //     // flagStartTime = 1;
+            //     terminate();
+            // } else {
                 setData((prevData) => [...prevData, responseData.point]);
-            }
+            // }
         });
         socket.on("warning", (responseData) => {
             setWaringCode(responseData.code);
@@ -167,7 +169,7 @@ const App = () => {
             );
             setCurrentTubeId(responseData.tube_id);
             setCurrentTaskId(responseData.task_id);
-            updateExcuteTask(responseData.tube_id, responseData.task_id);
+            // updateExcuteTask(responseData.tube_id,responseData.task_id);
         });
         socket.on("device_free", (responseData) => {
             console.log(
@@ -177,8 +179,15 @@ const App = () => {
             setExcuteTaskFlag(responseData.flag);
             setCurrentTaskId(responseData.task_id);
             excute_status = responseData.flag;
-            updateExcuteTask(currentTubeId, responseData.task_id);
+            // updateExcuteTask(currentTubeId, responseData.task_id);
         });
+        socket.on("equilibration_flag",(responseData)=> {
+            if(responseData.flag === 1){
+                reset()
+                flagStartTime = 0;
+
+            }
+        })
         socket.on("disconnect", () => {
             console.log("Disconnected from WebSocket server");
         });
@@ -188,6 +197,12 @@ const App = () => {
             socket.disconnect();
         };
     }, []);
+    useEffect(() => {
+        excutedTubesUpdateFlag = true;
+        updateExcuteTask(currentTubeId, currentTaskId);
+
+        console.log("0913 -------8------ excutedTubes", excutedTubes);
+    }, [currentTubeId,currentTaskId,excuteTaskFlag]);
     const handleReceiveFlags = (select_tubes, numss) => {
         console.log("Receive flags", select_tubes);
         selected_tube = select_tubes;
@@ -207,6 +222,7 @@ const App = () => {
 
         return updatedData;
     };
+    
 
     // flag  ： undefined  没被选中   true  保留  false  废弃
     const handleUpdatePoint = (linePointChange) => {
@@ -312,25 +328,30 @@ const App = () => {
     };
 
     const updateExcuteTask = (tubeId, taskId) => {
+        
         console.log("9011     taskId :", taskId);
         console.log("9011     tubeId :", tubeId);
-        // excuted_tubes = excutedTubes;
-        excuted_tubes.forEach((task) => {
-            if (task.task_id === taskId) {
-                task.currentTubeId = tubeId;
-                task.flag = excute_status;
-            }
-        });
-        console.log("0911  3   excuted_tubes", excuted_tubes);
-        console.log("0911  4   excutedTubes", excutedTubes);
-
-        setExcutedTubes((prevExcutedTubes) => {
-            return [...excuted_tubes];
-        });
-        console.log("0911  2   excutedTubes", excutedTubes);
+        console.log("0913  5   excutedTubes", excutedTubes);
+        if(excutedTubesUpdateFlag){
+            excuted_tubes = excutedTubes;
+            excuted_tubes.forEach((task) => {
+                if (task.task_id === taskId) {
+                    task.currentTubeId = tubeId;
+                    task.flag = excute_status;
+                }
+            });
+            console.log("0913  3   excuted_tubes", excuted_tubes);
+            console.log("0913  4   excutedTubes", excutedTubes);
+    
+            setExcutedTubes((prevExcutedTubes) => {
+                return [...excuted_tubes];
+            });
+            console.log("0911  2   excutedTubes", excutedTubes);
+        }
+        
     };
 
-    const undoReceiveFlags = (result) => {
+    const undoReceiveFlags = async (result) => {
         console.log("9012   result", result);
         console.log("9012   selected_tubes", selected_tubes);
 
@@ -340,33 +361,34 @@ const App = () => {
 
         const methodId = localStorage.getItem("methodId");
         if (result[0].flag === "run") {
-            result.map((res) => {
+            const tasks = result.map((res) => {
                 let flag = res.flag;
                 let index = res.index;
-                taskId = generateTaskId();
-                // console.log("9012  taskid", taskId);
-                // console.log("9012  generateTaskId()", generateTaskId());
+                const taskId = generateTaskId();
                 if (taskId === undefined) {
                     taskId = generateTaskId();
                 }
-
-                let task = {
+                return {
                     tube_list: selected_tubes[index].tube_list,
                     status: selected_tubes[index].status,
                     method_id: Number(methodId),
-                    task_id: taskId,
+                    task_id: Number(taskId),
                 };
-                getTube({
-                    task_list: task,
-                }).then((responseData) => {});
-                task.currentTubeId = 0;
-                task.flag = -1;
-                excuted_tubes.push(task);
-                setExcutedTubes((prevExcutedTubes) => {
-                    // 这里我们返回一个新的数组，包含了旧的任务加上新的任务
-                    return [...prevExcutedTubes, task];
-                });
             });
+
+            console.log("0913 ---------------- tasks",tasks);
+            excutedTubesUpdateFlag = false;
+
+    
+            // 将任务数组添加到状态中
+            setExcutedTubes((prevExcutedTubes) => [...prevExcutedTubes,...tasks]);
+            console.log("0913 ------------- excutedTubes",excutedTubes);
+            // const firstTask = tasks.shift();
+            // const responseForFirstTask = getTube({ task_list: firstTask });
+            for (const task of tasks) {
+                    const response = getTube({ task_list: task });
+                    console.log('0913     Response for task:', response);
+            }
             // setExcutedTubes(excuted_tubes);
         } else if (result[0].flag === "delete") {
             const indexesToDelete = new Set(result.map((item) => item.index));
@@ -391,7 +413,7 @@ const App = () => {
         // process_data_flag(tubeList, undefined);
         // console.log("0909----tubeList", tubeList);
     };
-
+    
     const error = () => {
         messageApi.open({
             type: "error",
@@ -476,6 +498,8 @@ const App = () => {
     };
 
     const reset = () => {
+        setExcutedTubes((prevExcutedTubes) => []);
+
         setCleanFlag(0);
         flagStartTime = 1;
         getEluentLine().then((responseData) => {

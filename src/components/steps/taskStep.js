@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './taskStep.css'
 const TubeProgressBar = ({ excuted_tubes }) => {
+  console.log("0913 ------------ TubeProgressBar",excuted_tubes);
+  
   const [currentSteps, setCurrentSteps] = useState(
     excuted_tubes.map(task => task.currentTubeId || undefined)
   );
@@ -90,7 +92,7 @@ const TubeProgressBar = ({ excuted_tubes }) => {
               }}
             >
                {task.flag === 1 && tubeId === currentSteps[taskIndex] && (
-                      <div style={{ position: 'absolute', top: 0, left: 7, zIndex: 99 }}>{tubeId}</div>
+                      <div style={{ position: 'absolute', top: 0, left: 6, zIndex: 99 }}>{tubeId}</div>
                     )}
                     {task.flag !== 1 || tubeId !== currentSteps[taskIndex]? tubeId : null}
             </div>

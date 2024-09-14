@@ -54,6 +54,7 @@ const App = (props) => {
         setOpenWarning(true);
     };
     const onCloseWarning = () => {
+        setAlarmData([])
         setOpenWarning(false);
     };
 
@@ -205,7 +206,10 @@ const App = (props) => {
         props.callback(type, status);
     };
     useEffect(() => {
+        
         if (props.warningCode !== warningCode) {
+            showDrawerWarning()
+
             setWarningCode(props.warningCode);
             setAlarmData((prevData) => [
                 ...prevData,

@@ -49,7 +49,7 @@ const renderCurve = (svg, width, height, margin, cleanFlag, samplingTime) => {
     endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
 
     const xScale = d3.scaleTime().domain([now, endTime]).range([0, width]);
-    const yScale = d3.scaleLinear().domain([0, 4]).range([height, 0]);
+    const yScale = d3.scaleLinear().domain([-2, 4]).range([height, 0]);
     const xAxis = d3.axisTop(xScale).tickFormat((d) => {
         const dateObj = new Date(d);
         const timeStr = dateObj.toTimeString().split(" ")[0];
