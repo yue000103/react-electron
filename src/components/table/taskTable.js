@@ -88,9 +88,9 @@ const App = (props) => {
     const rowSelection = {
         selectedRowKeys,
         onChange: onSelectChange,
-        getCheckboxProps: (record) => ({
-            disabled: record.status === "保留", // 举例：如果状态是“保留”，则禁用选择
-        }),
+        // getCheckboxProps: (record) => ({
+        //     disabled: record.status === "保留", // 举例：如果状态是“保留”，则禁用选择
+        // }),
     };
     const hasSelected = selectedRowKeys.length > 0;
 
