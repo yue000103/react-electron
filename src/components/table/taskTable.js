@@ -4,23 +4,22 @@ const columns = [
     {
         title: "操作",
         dataIndex: "status",
+        width: 30,
     },
     {
         title: "试管",
         dataIndex: "tube_list",
+        width: 150,
     },
 ];
 
 const App = (props) => {
-    console.log("0912    props", props);
     const { selected_tubes, button_flag, callback } = props;
-
     const [title, setTitle] = useState(props.title);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [loading, setLoading] = useState(false);
     const [buttonFlag, setButtonFlag] = useState(props.buttonFlag);
     const [allSelected, setAllSelected] = useState(false); // 新增状态
-
     const dataSource = selected_tubes.map((tube, i) => ({
         key: i,
         status:
@@ -43,39 +42,19 @@ const App = (props) => {
             return { flag: "run", index: item.key };
         });
         callback(result);
-
-        // console.log(result);
         console.log("9012   result", result);
-
-        // setLoading(true);
-        // ajax request after empty completing
-        // setTimeout(() => {
-        //     setSelectedRowKeys([]);
-        //     setLoading(false);
-        // }, 1000);
     };
     const deleteTubes = () => {
         const selectedData = dataSource.filter((item) =>
             selectedRowKeys.includes(item.key)
         );
 
-        console.log("9012   选中的信息：", selectedData);
         const result = selectedData.map((item, index) => {
             return { flag: "delete", index: index };
         });
         callback(result);
-        // console.log(result);
-        console.log("9012   result", result);
-
-        // setLoading(true);
-        // ajax request after empty completing
-        // setTimeout(() => {
-        //     setSelectedRowKeys([]);
-        //     setLoading(false);
-        // }, 1000);
     };
     const onSelectChange = (newSelectedRowKeys) => {
-        console.log("selectedRowKeys changed: ", newSelectedRowKeys);
         setSelectedRowKeys(newSelectedRowKeys);
     };
     const onSelectAll = (e) => {
@@ -88,15 +67,13 @@ const App = (props) => {
     const rowSelection = {
         selectedRowKeys,
         onChange: onSelectChange,
-        // getCheckboxProps: (record) => ({
-        //     disabled: record.status === "保留", // 举例：如果状态是“保留”，则禁用选择
-        // }),
     };
     const hasSelected = selectedRowKeys.length > 0;
 
     return (
         <Flex gap="middle" vertical>
             <Table
+                size="small"
                 rowSelection={rowSelection}
                 columns={columns}
                 dataSource={dataSource}
@@ -146,10 +123,6 @@ const App = (props) => {
             ) : (
                 <div></div>
             )}
-
-            {/* {hasSelected
-                    ? `Selected ${selectedRowKeys.length} items`
-                    : null} */}
         </Flex>
     );
 };

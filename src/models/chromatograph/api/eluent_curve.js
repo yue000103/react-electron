@@ -27,3 +27,7 @@ export function startEluentLine() {
 export function terminateEluentLine() {
     return axiosInstance.get("/eluent_curve/update_line_terminate");
 }
+
+export function initLine(data) {
+    return axiosInstance.post("/eluent_curve/init", data);
+}

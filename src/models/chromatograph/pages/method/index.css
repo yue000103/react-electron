@@ -3,7 +3,8 @@
 }
 
 .method{
-  height: 2rem;
+  /* height: 2rem; */
+  margin-top: 1rem;
 }
 .button{
   /* margin-left: 1.5rem;
@@ -16,10 +17,10 @@
 }
 .button-div{
   height: 100%;
-  display: flex;
+  /* display: flex;
   justify-content: center;
   align-items: center;   
-  text-align: center;
+  text-align: center; */
 }
 .isocratic{
   /* background-color: aqua; */

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import colors from "@components/color/index";
-import { Modal, Input, TimePicker, Button, InputNumber } from "antd";
+import { Modal, Input, TimePicker, Button, InputNumber, Spin } from "antd";
 import dayjs from "dayjs";
 import { PlusOutlined, MinusOutlined } from "@ant-design/icons";
 import "./line.css";
@@ -49,7 +49,7 @@ const renderCurve = (svg, width, height, margin, cleanFlag, samplingTime) => {
     endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
 
     const xScale = d3.scaleTime().domain([now, endTime]).range([0, width]);
-    const yScale = d3.scaleLinear().domain([-2, 4]).range([height, 0]);
+    const yScale = d3.scaleLinear().domain([-2, 50]).range([height, 0]);
     const xAxis = d3.axisTop(xScale).tickFormat((d) => {
         const dateObj = new Date(d);
         const timeStr = dateObj.toTimeString().split(" ")[0];
@@ -465,6 +465,8 @@ const LineChart = (props) => {
     const [linePointChange, setlinePointChange] = useState([]);
     const [samplingTime, setSamplingTime] = useState(props.samplingTime);
     const [lineFlag, setLineFlag] = useState(1);
+    const [lineLoading, setLineLoading] = useState(props.lineLoading);
+
     // console.log("8672  samplingTime", samplingTime);
     // console.log("lineFlag   lineFlag", lineFlag);
 
@@ -484,7 +486,9 @@ const LineChart = (props) => {
     }, [props.samplingTime]);
     useEffect(() => {
         setLineFlag(props.lineFlag);
-    }, [props.lineFlag]);
+        setLineLoading(props.lineLoading);
+    }, [props.lineFlag, props.lineLoading]);
+
     // console.log("lineFlag   lineFlag   2---", props.lineFlag);
 
     // 在组件挂载时设置linePointChange的初始值
@@ -621,7 +625,9 @@ const LineChart = (props) => {
                 top: "0px",
             }}
         >
-            <svg ref={svgRef} width="100%" height="100%"></svg>
+            <Spin spinning={lineLoading} delay={500}>
+                <svg ref={svgRef} width="100%" height="20rem"></svg>
+            </Spin>
             <Modal
                 title="梯度曲线"
                 open={isModalVisible}

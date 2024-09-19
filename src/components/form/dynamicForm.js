@@ -8,25 +8,21 @@ import { Button, Form, Input, Space, Row, Col } from "antd";
 
 const App = (props) => {
     const [form] = Form.useForm();
-    const [flowRateDefault,setFlowRateDefault] = useState(0)
-    const [lastData,setLastData] = useState([])
+    const [flowRateDefault, setFlowRateDefault] = useState(0);
+    const [lastData, setLastData] = useState([]);
 
     const onFinish = (values) => {
         props.onValuesChange(values);
     };
     useEffect(() => {
-        console.log("9999---------props",props);
-        
-        setFlowRateDefault(props.flowRateDefault)
-        if (lastData.length !== 0){
+        console.log("9999---------props", props);
+
+        setFlowRateDefault(props.flowRateDefault);
+        if (lastData.length !== 0) {
             form.setFieldsValue({ users: lastData });
-
-        }
-        else{
-            setLastData(props.pressure)
+        } else {
+            setLastData(props.pressure);
             form.setFieldsValue({ users: props.pressure });
-
-
         }
     }, [props.pressure, form]);
 
@@ -34,20 +30,20 @@ const App = (props) => {
         if (changedValues.users) {
             const index = changedValues.users.findIndex((item) => item);
             const field = changedValues.users[index];
-            const key = Object.keys(field)[0]
+            const key = Object.keys(field)[0];
             if (field) {
-                allValues.users[index][key] = Number(allValues.users[index][key])
+                allValues.users[index][key] = Number(
+                    allValues.users[index][key]
+                );
             }
             if (field && field.pumpB !== undefined) {
                 const pumpBValue = parseFloat(field.pumpB);
                 const pumpAValue = 100 - pumpBValue;
-                allValues.users[index].pumpA = pumpAValue
+                allValues.users[index].pumpA = pumpAValue;
             }
         }
-        setLastData(allValues.users)
-
+        setLastData(allValues.users);
     };
-
 
     const submit = () => {
         form.submit();
@@ -56,9 +52,10 @@ const App = (props) => {
     return (
         <div
             style={{
-                maxHeight: "20rem",
+                maxHeight: "18rem",
                 overflowY: "auto",
                 padding: "16px",
+                paddingTop: "0px",
                 paddingRight: "0px",
             }}
         >
@@ -67,7 +64,7 @@ const App = (props) => {
                 name="dynamic_form_nest_item"
                 onFinish={onFinish}
                 onValuesChange={handleValuesChange}
-                style={{ maxWidth: 600 }}
+                style={{ maxWidth: 500 }}
                 autoComplete="off"
             >
                 <Form.List name="users">
@@ -167,7 +164,7 @@ const App = (props) => {
                                             },
                                         ]}
                                     >
-                                        <Input placeholder = {flowRateDefault} />
+                                        <Input placeholder={flowRateDefault} />
                                     </Form.Item>
                                     <MinusCircleOutlined
                                         onClick={() => remove(name)}
