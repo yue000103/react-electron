@@ -29,17 +29,21 @@ const App = (props) => {
     const handleValuesChange = (changedValues, allValues) => {
         if (changedValues.users) {
             const index = changedValues.users.findIndex((item) => item);
-            const field = changedValues.users[index];
-            const key = Object.keys(field)[0];
-            if (field) {
-                allValues.users[index][key] = Number(
-                    allValues.users[index][key]
-                );
-            }
-            if (field && field.pumpB !== undefined) {
-                const pumpBValue = parseFloat(field.pumpB);
-                const pumpAValue = 100 - pumpBValue;
-                allValues.users[index].pumpA = pumpAValue;
+            if (index !== -1) {
+                console.log("0920 index :", index);
+                const field = changedValues.users[index];
+                const key = Object.keys(field)[0];
+
+                if (field) {
+                    allValues.users[index][key] = Number(
+                        allValues.users[index][key]
+                    );
+                }
+                if (field && field.pumpB !== undefined) {
+                    const pumpBValue = parseFloat(field.pumpB);
+                    const pumpAValue = 100 - pumpBValue;
+                    allValues.users[index].pumpA = pumpAValue;
+                }
             }
         }
         setLastData(allValues.users);
@@ -52,11 +56,13 @@ const App = (props) => {
     return (
         <div
             style={{
-                maxHeight: "18rem",
+                maxHeight: "16rem",
+                width: "100%",
                 overflowY: "auto",
-                padding: "16px",
+                padding: "0px",
                 paddingTop: "0px",
                 paddingRight: "0px",
+                marginLeft: "1rem",
             }}
         >
             <Form
@@ -64,7 +70,7 @@ const App = (props) => {
                 name="dynamic_form_nest_item"
                 onFinish={onFinish}
                 onValuesChange={handleValuesChange}
-                style={{ maxWidth: 500 }}
+                style={{ maxWidth: 700 }}
                 autoComplete="off"
             >
                 <Form.List name="users">
@@ -82,7 +88,6 @@ const App = (props) => {
                                 <Row gutter={0}>
                                     <Col span={1}></Col>
                                     <Col span={10}>
-                                        {" "}
                                         <Button
                                             type="dashed"
                                             onClick={() => add()}
@@ -94,7 +99,6 @@ const App = (props) => {
                                     </Col>
                                     <Col span={2}></Col>
                                     <Col span={10}>
-                                        {" "}
                                         <Button
                                             type="dashed"
                                             onClick={submit}
@@ -125,7 +129,11 @@ const App = (props) => {
                                             },
                                         ]}
                                     >
-                                        <Input placeholder="时间" />
+                                        <Input
+                                            placeholder="时间"
+                                            type="number"
+                                            step="any"
+                                        />
                                     </Form.Item>
                                     <Form.Item
                                         {...restField}
@@ -138,7 +146,7 @@ const App = (props) => {
                                             },
                                         ]}
                                     >
-                                        <Input placeholder="泵A比例" disabled />
+                                        <Input placeholder="泵A速度" disabled />
                                     </Form.Item>
                                     <Form.Item
                                         {...restField}
@@ -151,7 +159,11 @@ const App = (props) => {
                                             },
                                         ]}
                                     >
-                                        <Input placeholder="泵B比例" />
+                                        <Input
+                                            placeholder="泵B速度"
+                                            type="number"
+                                            step="any"
+                                        />
                                     </Form.Item>
                                     <Form.Item
                                         {...restField}
@@ -164,7 +176,11 @@ const App = (props) => {
                                             },
                                         ]}
                                     >
-                                        <Input placeholder={flowRateDefault} />
+                                        <Input
+                                            placeholder={flowRateDefault}
+                                            type="number"
+                                            step="any"
+                                        />
                                     </Form.Item>
                                     <MinusCircleOutlined
                                         onClick={() => remove(name)}

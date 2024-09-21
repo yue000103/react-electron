@@ -376,6 +376,23 @@ const Method = () => {
                             <></>
                         )}
                         <tr>
+                            <td>蠕动泵速度:</td>
+                            <td>{item.peristaltic_velocity}</td>
+                            <td>蠕动泵加速度:</td>
+                            <td>{item.peristaltic_acceleration}</td>
+                            <td>蠕动泵减速度:</td>
+                            <td>{item.peristaltic_deceleration}</td>
+                            <td>喷淋准备时间:</td>
+                            <td>{item.spray_ready_time}</td>
+                        </tr>
+
+                        <tr>
+                            <td>喷淋开始时间:</td>
+                            <td>{item.spray_start_time}</td>
+                            <td>喷淋停止时间:</td>
+                            <td>{item.spray_stop_time}</td>
+                        </tr>
+                        <tr>
                             <td>模式:</td>
                             <td>
                                 {item.isocratic == 1
@@ -430,27 +447,6 @@ const Method = () => {
                                 </td>
                             </tr>
                         )}
-                        <tr>
-                            <td>蠕动泵速度:</td>
-                            <td>{item.peristaltic_velocity}</td>
-                            <td>蠕动泵加速度:</td>
-                            <td>{item.peristaltic_acceleration}</td>
-                            <td>蠕动泵减速度:</td>
-                            <td>{item.peristaltic_deceleration}</td>
-                            <td>喷淋准备时间:</td>
-                            <td>{item.spray_ready_time}</td>
-                        </tr>
-
-                        <tr></tr>
-
-                        <tr></tr>
-                        <tr>
-                            <td>喷淋开始时间:</td>
-                            <td>{item.spray_start_time}</td>
-                            <td>喷淋停止时间:</td>
-                            <td>{item.spray_stop_time}</td>
-                        </tr>
-                        <tr></tr>
                     </tbody>
                 </table>
             </div>
@@ -623,272 +619,120 @@ const Method = () => {
         <Flex gap="middle" vertical>
             {contextHolder}
             <div className="method">
-                <>
-                    <Row>
-                        <DynamicCard
-                            position={"top"}
-                            title={"历史方法"}
-                            height={"300px"}
+                <Row gutter={50}>
+                    <Col span={6}>
+                        <Form
+                            form={formBasis}
+                            labelCol={{
+                                span: 8,
+                            }}
+                            wrapperCol={{
+                                span: 14,
+                            }}
+                            layout="horizontal"
+                            initialValues={{
+                                equilibrationColumn: false,
+                            }}
+                            size="small"
+                            onFinish={onFinishBasis}
+                            onValuesChange={basisValuesChange}
                         >
-                            <div
-                                style={{
-                                    height: "250px", // 设置折叠面板的固定高度
-                                    overflowY: "auto", // 当内容超出高度时显示滚动条
-                                    padding: "10px",
-                                }}
+                            <Form.Item label="方法名称" name="methodName">
+                                <Input disabled={true} />
+                            </Form.Item>
+                            <Form.Item label="采集时间/min" name="samplingTime">
+                                <Input />
+                            </Form.Item>
+                            <Form.Item
+                                label="检测器波长"
+                                name="detectorWavelength"
                             >
-                                <Collapse
-                                    accordion
-                                    items={methodItems}
-                                    size="small"
-                                />
-                            </div>
-                        </DynamicCard>
-                    </Row>
-                    <Row gutter={50}>
-                        <Col span={6}>
-                            <DynamicCard
-                                position={"top"}
-                                title={"基础设置"}
-                                height={"400px"}
+                                <Input />
+                            </Form.Item>
+                            <Form.Item label="试管容积/ml" name="tubeVolume">
+                                <Input />
+                            </Form.Item>
+                            <Form.Item
+                                label="平衡柱子"
+                                name="equilibrationColumn"
+                                valuePropName="checked"
                             >
-                                <Form
-                                    form={formBasis}
-                                    labelCol={{
-                                        span: 8,
-                                    }}
-                                    wrapperCol={{
-                                        span: 14,
-                                    }}
-                                    layout="horizontal"
-                                    initialValues={{
-                                        equilibrationColumn: false,
-                                    }}
-                                    size="small"
-                                    onFinish={onFinishBasis}
-                                    onValuesChange={basisValuesChange}
-                                >
-                                    <Form.Item
-                                        label="方法名称"
-                                        name="methodName"
-                                    >
-                                        <Input disabled={true} />
-                                    </Form.Item>
-                                    <Form.Item
-                                        label="采集时间/min"
-                                        name="samplingTime"
-                                    >
-                                        <Input />
-                                    </Form.Item>
-                                    <Form.Item
-                                        label="检测器波长"
-                                        name="detectorWavelength"
-                                    >
-                                        <Input />
-                                    </Form.Item>
-                                    <Form.Item
-                                        label="试管容积/ml"
-                                        name="tubeVolume"
-                                    >
-                                        <Input />
-                                    </Form.Item>
-                                    <Form.Item
-                                        label="平衡柱子"
-                                        name="equilibrationColumn"
-                                        valuePropName="checked"
-                                    >
-                                        <Switch onChange={handleSwitchChange} />
-                                    </Form.Item>
-                                    <Form.Item label="泵B速度/%" name="speed">
-                                        <Input disabled={!isEquilibration} />
-                                    </Form.Item>
-                                    <Form.Item
-                                        label="总流速"
-                                        name="totalFlowRate"
-                                    >
-                                        <Input disabled={!isEquilibration} />
-                                    </Form.Item>
-                                </Form>
-                            </DynamicCard>
-                        </Col>
-                        <Col span={12}>
-                            <DynamicCard
-                                position={"top"}
-                                title={"洗脱模式"}
-                                height={"400px"}
+                                <Switch onChange={handleSwitchChange} />
+                            </Form.Item>
+                            <Form.Item label="泵B速度/%" name="speed">
+                                <Input disabled={!isEquilibration} />
+                            </Form.Item>
+                            <Form.Item label="总流速" name="totalFlowRate">
+                                <Input disabled={!isEquilibration} />
+                            </Form.Item>
+                        </Form>
+                    </Col>
+                    <Col span={6}>
+                        <Form
+                            form={formPump}
+                            labelCol={{
+                                span: 10,
+                            }}
+                            wrapperCol={{
+                                span: 20,
+                            }}
+                            layout="horizontal"
+                            initialValues={{
+                                size: "lager",
+                            }}
+                            size="small"
+                            onFinish={onFinishPump}
+                        >
+                            <Form.Item
+                                label="喷雾准备时间"
+                                name="spray_ready_time"
                             >
-                                <Row>
-                                    <Col span={13}>
-                                        <div style={{ marginTop: 13 }}>
-                                            <Radio.Group
-                                                onChange={onChange}
-                                                value={value}
-                                            >
-                                                <Radio value={1}>
-                                                    等度洗脱
-                                                </Radio>
-                                                <Radio value={2}>
-                                                    二元高压梯度
-                                                </Radio>
-                                            </Radio.Group>
-                                        </div>
-                                    </Col>
-                                    <Col span={4}>
-                                        {value === 2 && (
-                                            <Col span={4}>
-                                                <pre
-                                                    style={{
-                                                        fontSize: "15px",
-                                                        fontWeight: "550",
-                                                    }}
-                                                >
-                                                    {
-                                                        "时间     泵A速度    泵B速度    总流速 "
-                                                    }
-                                                </pre>
-                                            </Col>
-                                        )}
-                                    </Col>
-                                </Row>
-                                {value === 1 && (
-                                    <div className="isocratic">
-                                        {" "}
-                                        <Form
-                                            labelCol={{
-                                                span: 8,
-                                            }}
-                                            wrapperCol={{
-                                                span: 14,
-                                            }}
-                                            layout="horizontal"
-                                            initialValues={{
-                                                size: "small",
-                                            }}
-                                            size="small"
-                                            form={formElution}
-                                            onFinish={onFinishElution}
-                                        >
-                                            <Form.Item
-                                                label="泵A流速"
-                                                name="pumpA"
-                                            >
-                                                <Input />
-                                            </Form.Item>
-                                            <Form.Item
-                                                label="泵B流速"
-                                                name="pumpB"
-                                            >
-                                                <Input />
-                                            </Form.Item>
-                                        </Form>
-                                    </div>
-                                )}
-                                {value === 2 && (
-                                    <div className="pressure">
-                                        <Row>
-                                            <Col span={12}>
-                                                <div className="dynamic-line">
-                                                    <DynamicLine
-                                                        widthLine={widthLine}
-                                                        heightLine={heightLine}
-                                                        samplingTime={
-                                                            samplingTime
-                                                        }
-                                                        pressure={pressure}
-                                                    ></DynamicLine>
-                                                </div>
-                                            </Col>
-                                            <Col span={12}>
-                                                <DynamicForm
-                                                    flowRateDefault={
-                                                        flowRateDefault
-                                                    }
-                                                    pressure={pressure}
-                                                    onValuesChange={
-                                                        handleValuesChange
-                                                    }
-                                                ></DynamicForm>
-                                            </Col>
-                                        </Row>
-                                    </div>
-                                )}
-                            </DynamicCard>
-                        </Col>
-                        <Col span={6}>
-                            <DynamicCard
-                                position={"top"}
-                                title={"泵参数"}
-                                height={"400px"}
+                                <Input />
+                            </Form.Item>
+                            <Form.Item
+                                label="喷雾开始时间"
+                                name="spray_start_time"
                             >
-                                <Form
-                                    form={formPump}
-                                    labelCol={{
-                                        span: 10,
-                                    }}
-                                    wrapperCol={{
-                                        span: 20,
-                                    }}
-                                    layout="horizontal"
-                                    initialValues={{
-                                        size: "lager",
-                                    }}
-                                    size="small"
-                                    onFinish={onFinishPump}
-                                >
-                                    <Form.Item
-                                        label="喷雾准备时间"
-                                        name="spray_ready_time"
-                                    >
-                                        <Input />
-                                    </Form.Item>
-                                    <Form.Item
-                                        label="喷雾开始时间"
-                                        name="spray_start_time"
-                                    >
-                                        <Input />
-                                    </Form.Item>
-                                    <Form.Item
-                                        label="喷雾停止时间"
-                                        name="spray_stop_time"
-                                    >
-                                        <Input />
-                                    </Form.Item>
-                                    <Form.Item
-                                        label="蠕动泵速度"
-                                        name="peristaltic_velocity"
-                                    >
-                                        <Input />
-                                    </Form.Item>
-                                    <Form.Item
-                                        label="蠕动泵加速度"
-                                        name="peristaltic_acceleration"
-                                    >
-                                        <Input />
-                                    </Form.Item>
-                                    <Form.Item
-                                        label="蠕动泵减速度"
-                                        name="peristaltic_deceleration"
-                                    >
-                                        <Input />
-                                    </Form.Item>
-                                </Form>
-                            </DynamicCard>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col span={4}>
-                            <div className="button-div">
-                                <Row>
-                                    <Button
-                                        type="primary  "
-                                        size="large"
-                                        className={`button button4`}
-                                        onClick={() => saveMethod()}
-                                    >
-                                        保存
-                                    </Button>
+                                <Input />
+                            </Form.Item>
+                            <Form.Item
+                                label="喷雾停止时间"
+                                name="spray_stop_time"
+                            >
+                                <Input />
+                            </Form.Item>
+                            <Form.Item
+                                label="蠕动泵速度"
+                                name="peristaltic_velocity"
+                            >
+                                <Input />
+                            </Form.Item>
+                            <Form.Item
+                                label="蠕动泵加速度"
+                                name="peristaltic_acceleration"
+                            >
+                                <Input />
+                            </Form.Item>
+                            <Form.Item
+                                label="蠕动泵减速度"
+                                name="peristaltic_deceleration"
+                            >
+                                <Input />
+                            </Form.Item>
+                        </Form>
+                    </Col>
+                    <Col span={10}>
+                        <Row>
+                            <Button
+                                type="primary  "
+                                size="large"
+                                className={`button button4`}
+                                onClick={() => saveMethod()}
+                            >
+                                保存
+                            </Button>
 
-                                    {/* <Button
+                            {/* <Button
                                         type="primary  "
                                         size="large"
                                         className={`button button2`}
@@ -897,24 +741,119 @@ const Method = () => {
                                         上传
                                     </Button> */}
 
-                                    {/* <Button
-                                        type="primary  "
-                                        size="large"
-                                        className={`button button3`}
-                                        onClick={() => allMethod()}
-                                    >
-                                        方法
-                                    </Button> */}
+                            <Button
+                                type="primary  "
+                                size="large"
+                                className={`button button3`}
+                                onClick={() => allMethod()}
+                            >
+                                方法
+                            </Button>
 
-                                    <Button
-                                        type="primary  "
-                                        size="large"
-                                        className={`button button5`}
-                                        onClick={() => clearMethod()}
+                            <Button
+                                type="primary  "
+                                size="large"
+                                className={`button button5`}
+                                onClick={() => clearMethod()}
+                            >
+                                清空
+                            </Button>
+                        </Row>
+                    </Col>
+                </Row>
+            </div>
+
+            <DynamicCard position={"top"} title={"洗脱梯度"} height={"350px"}>
+                <div className="clean">
+                    <Row>
+                        <Col span={19}>
+                            <Row>
+                                <Col span={9}>
+                                    <div style={{ marginTop: 13 }}>
+                                        <Radio.Group
+                                            onChange={onChange}
+                                            value={value}
+                                        >
+                                            <Radio value={1}>等度洗脱</Radio>
+                                            <Radio value={2}>
+                                                二元高压梯度
+                                            </Radio>
+                                        </Radio.Group>
+                                    </div>
+                                </Col>
+                                <Col span={4}>
+                                    {value === 2 && (
+                                        <pre
+                                            style={{
+                                                fontSize: "15px",
+                                                fontWeight: "550",
+                                            }}
+                                        >
+                                            {
+                                                "时间           泵A速度          泵B速度          总流速 "
+                                            }
+                                        </pre>
+                                    )}
+                                </Col>
+                            </Row>
+                            {value === 1 && (
+                                <div className="isocratic">
+                                    {" "}
+                                    <Form
+                                        labelCol={{
+                                            span: 8,
+                                        }}
+                                        wrapperCol={{
+                                            span: 14,
+                                        }}
+                                        layout="horizontal"
+                                        initialValues={{
+                                            size: "small",
+                                        }}
+                                        size="small"
+                                        form={formElution}
+                                        onFinish={onFinishElution}
                                     >
-                                        清空
-                                    </Button>
-                                </Row>
+                                        <Form.Item label="泵A流速" name="pumpA">
+                                            <Input />
+                                        </Form.Item>
+                                        <Form.Item label="泵B流速" name="pumpB">
+                                            <Input />
+                                        </Form.Item>
+                                    </Form>
+                                </div>
+                            )}
+                            {value === 2 && (
+                                <div className="pressure">
+                                    <Row>
+                                        <Col span={8}>
+                                            <div className="dynamic-line">
+                                                <DynamicLine
+                                                    widthLine={widthLine}
+                                                    heightLine={heightLine}
+                                                    samplingTime={samplingTime}
+                                                    pressure={pressure}
+                                                ></DynamicLine>
+                                            </div>
+                                        </Col>
+                                        <Col span={12}>
+                                            <DynamicForm
+                                                flowRateDefault={
+                                                    flowRateDefault
+                                                }
+                                                pressure={pressure}
+                                                onValuesChange={
+                                                    handleValuesChange
+                                                }
+                                            ></DynamicForm>
+                                        </Col>
+                                    </Row>
+                                </div>
+                            )}
+                        </Col>
+
+                        <Col span={3}>
+                            <div className="button-div">
                                 <Modal
                                     open={open}
                                     onOk={handleOk}
@@ -937,11 +876,54 @@ const Method = () => {
                                 >
                                     <p>是否覆盖---{methodName}---此方法？</p>
                                 </Modal>
+                                <Modal
+                                    width="100%"
+                                    title={"方法"}
+                                    open={openAllMethod}
+                                    onCancel={handleCancel}
+                                    footer={null}
+                                >
+                                    <div
+                                        style={{
+                                            height: "40rem", // 设置折叠面板的固定高度
+                                            overflowY: "auto", // 当内容超出高度时显示滚动条
+                                            padding: "10px",
+                                        }}
+                                    >
+                                        <Collapse
+                                            accordion
+                                            items={methodItems}
+                                            size="large"
+                                        />
+                                    </div>
+                                </Modal>
                             </div>
                         </Col>
                     </Row>
-                </>
-            </div>
+                </div>
+            </DynamicCard>
+
+            {/* <Row>
+                        <DynamicCard
+                            position={"top"}
+                            title={"历史方法"}
+                            height={"300px"}
+                        >
+                            <div
+                                style={{
+                                    height: "250px", // 设置折叠面板的固定高度
+                                    overflowY: "auto", // 当内容超出高度时显示滚动条
+                                    padding: "10px",
+                                }}
+                            >
+                                <Collapse
+                                    accordion
+                                    items={methodItems}
+                                    size="small"
+                                />
+                            </div>
+                        </DynamicCard>
+                    </Row> */}
             <Spin
                 spinning={spinning}
                 percent={percent}

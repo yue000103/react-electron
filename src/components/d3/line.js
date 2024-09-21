@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import * as d3 from "d3";
 import colors from "@components/color/index";
 import { Modal, Input, TimePicker, Button, InputNumber, Spin } from "antd";
@@ -36,7 +36,15 @@ now.setHours(0, 0, 0);
 // now.setHours(1, 0, 0);
 // const endTime = new Date(now.getTime() + 5 * 60 * 1000);
 
-const renderCurve = (svg, width, height, margin, cleanFlag, samplingTime) => {
+const renderCurve = (
+    svg,
+    width,
+    height,
+    margin,
+    cleanFlag,
+    samplingTime,
+    xScale
+) => {
     // console.log("data", data);
     //data{time: '17:46:47', value: 81.41712213857508}
 
@@ -44,12 +52,19 @@ const renderCurve = (svg, width, height, margin, cleanFlag, samplingTime) => {
         ...d,
         time: parseTime(d.time),
     }));
-    console.log("data--------------------", parsedData);
+    console.log("0920   data--------------------", parsedData);
+    const valueExtent = d3.extent(parsedData, (d) => d.value);
+    const [minValue = 0, maxValue = 50] = valueExtent || [0, 50]; // 默认值为 [0, 50]
+    console.log("0920  maxValue :", maxValue);
+    console.log("0920  minValue :", minValue);
 
     endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
 
-    const xScale = d3.scaleTime().domain([now, endTime]).range([0, width]);
-    const yScale = d3.scaleLinear().domain([-2, 50]).range([height, 0]);
+    // const xScale = d3.scaleTime().domain([now, endTime]).range([0, width]);
+    const yScale = d3
+        .scaleLinear()
+        .domain([minValue - 2, maxValue + 2])
+        .range([height, 0]);
     const xAxis = d3.axisTop(xScale).tickFormat((d) => {
         const dateObj = new Date(d);
         const timeStr = dateObj.toTimeString().split(" ")[0];
@@ -268,21 +283,20 @@ const renderLine = (
     setlinePointChange,
     callback,
     samplingTime,
-    lineFlag
+    lineFlag,
+    xScale
 ) => {
     // console.log("8672 linePointChange :", linePointChange);
     const parsedData = linePointChange?.map((d) => ({
         ...d,
         time: parseTime(d.time),
     }));
-    // console.log("8672 parseLine", parsedData);
-    //洗脱液的折线图
-    // 定义拖拽行为
-    const drag = d3
-        .drag()
-        .on("start", dragstarted)
-        .on("drag", dragged)
-        .on("end", dragended);
+
+    // const drag = d3
+    //     .drag()
+    //     .on("start", dragstarted)
+    //     .on("drag", dragged)
+    //     .on("end", dragended);
 
     let delD = [];
     let newD = [];
@@ -291,9 +305,9 @@ const renderLine = (
 
     endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
 
-    const x2Scale = d3.scaleLinear().domain([now, endTime]).range([0, width]);
+    // const x2Scale = d3.scaleLinear().domain([now, endTime]).range([0, width]);
     const y2Scale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
-    const x2Axis = d3.axisTop(x2Scale);
+    // const x2Axis = d3.axisTop(xScale);
     const y2Axis = d3
         .axisLeft(y2Scale)
         .tickFormat((d) => (d === 0 || d === 100 ? "" : d));
@@ -312,7 +326,7 @@ const renderLine = (
         .data(parsedData)
         .enter()
         .append("circle")
-        .attr("cx", (d) => x2Scale(d.time))
+        .attr("cx", (d) => xScale(d.time))
         .attr("cy", (d) => y2Scale(d.value))
         .attr("r", 7) // 设置圆点半径
         .attr("fill", "blue")
@@ -358,7 +372,7 @@ const renderLine = (
     // 折线生成器
     const line2 = d3
         .line()
-        .x((d) => x2Scale(d.time))
+        .x((d) => xScale(d.time))
         .y((d) => y2Scale(d.value))
         .curve(d3.curveLinear); // 使用 Cardinal 曲线插值
     console.log("8672 parsedData", parsedData);
@@ -380,76 +394,76 @@ const renderLine = (
         startY = event.y;
     }
     // 拖拽开始时的处理函数
-    function dragstarted(event, d) {
-        d3.select(this).raise().classed("active", true);
-        delD = { time: parseTimeString(d.time), value: d.value };
-        ifMove = [d.time, d.value];
-    }
+    // function dragstarted(event, d) {
+    //     d3.select(this).raise().classed("active", true);
+    //     delD = { time: parseTimeString(d.time), value: d.value };
+    //     ifMove = [d.time, d.value];
+    // }
 
     // 拖拽过程中的处理函数
-    function dragged(event, d) {
-        const dx = event.x - startX;
-        // console.log("dx :", dx);
-        const dy = event.y - startY;
-        // console.log("dy :", dy);
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        // console.log("distance :", distance);
+    // function dragged(event, d) {
+    //     const dx = event.x - startX;
+    //     // console.log("dx :", dx);
+    //     const dy = event.y - startY;
+    //     // console.log("dy :", dy);
+    //     const distance = Math.sqrt(dx * dx + dy * dy);
+    //     // console.log("distance :", distance);
 
-        if (distance > dragThreshold) {
-            // console.log("dragged :");
-            isDragging = true;
+    //     if (distance > dragThreshold) {
+    //         // console.log("dragged :");
+    //         isDragging = true;
 
-            d3.select(this)
-                .attr("cx", (d.time = event.x))
-                .attr("cy", (d.value = event.y));
-            let newLinePoint = linePointChange;
-            newLinePoint = newLinePoint.filter((point) => {
-                return !_.isEqual(delD, point);
-            });
-            setlinePointChange(newLinePoint);
-            // console.log("setlinePointChange :", newLinePoint);
-        } else {
-            d3.select(this).raise().classed("active", false);
-        }
-    }
+    //         d3.select(this)
+    //             .attr("cx", (d.time = event.x))
+    //             .attr("cy", (d.value = event.y));
+    //         let newLinePoint = linePointChange;
+    //         newLinePoint = newLinePoint.filter((point) => {
+    //             return !_.isEqual(delD, point);
+    //         });
+    //         setlinePointChange(newLinePoint);
+    //         // console.log("setlinePointChange :", newLinePoint);
+    //     } else {
+    //         d3.select(this).raise().classed("active", false);
+    //     }
+    // }
 
     // 拖拽结束时的处理函数
-    function dragended(event, d) {
-        // dragTimeout = setTimeout(() => {
-        //     if (!isDragging) {
-        //     }
-        //     isDragging = false;
-        // }, 100);
-        //判断是否是拖拽行为
-        if (isDragging) {
-            // console.log("isDragging :", isDragging);
+    // function dragended(event, d) {
+    //     // dragTimeout = setTimeout(() => {
+    //     //     if (!isDragging) {
+    //     //     }
+    //     //     isDragging = false;
+    //     // }, 100);
+    //     //判断是否是拖拽行为
+    //     if (isDragging) {
+    //         // console.log("isDragging :", isDragging);
 
-            var date = new Date(x2Scale.invert(d.time));
-            d3.select(this).classed("active", false);
-            newD = {
-                time: parseTimeString(date),
-                value: parseFloat(y2Scale.invert(d.value).toFixed(2)),
-            };
-            console.log("newD", newD);
-            if (!_.isEqual(newD, delD)) {
-                let newLinePoint = linePointChange.filter((point) => {
-                    return !_.isEqual(delD, point);
-                });
-                newLinePoint.push(newD);
-                newLinePoint = newLinePoint.sort(
-                    (a, b) => parseTime(a.time) - parseTime(b.time)
-                );
-                setlinePointChange(newLinePoint);
-                console.log("newLinePoint :", newLinePoint);
-                console.log("linePointChange :", linePointChange);
-                callback(newLinePoint);
-            }
-        } else {
-            // console.log("isDragging :", isDragging);
+    //         var date = new Date(x2Scale.invert(d.time));
+    //         d3.select(this).classed("active", false);
+    //         newD = {
+    //             time: parseTimeString(date),
+    //             value: parseFloat(y2Scale.invert(d.value).toFixed(2)),
+    //         };
+    //         console.log("newD", newD);
+    //         if (!_.isEqual(newD, delD)) {
+    //             let newLinePoint = linePointChange.filter((point) => {
+    //                 return !_.isEqual(delD, point);
+    //             });
+    //             newLinePoint.push(newD);
+    //             newLinePoint = newLinePoint.sort(
+    //                 (a, b) => parseTime(a.time) - parseTime(b.time)
+    //             );
+    //             setlinePointChange(newLinePoint);
+    //             console.log("newLinePoint :", newLinePoint);
+    //             console.log("linePointChange :", linePointChange);
+    //             callback(newLinePoint);
+    //         }
+    //     } else {
+    //         // console.log("isDragging :", isDragging);
 
-            handleClick(event, d);
-        }
-    }
+    //         handleClick(event, d);
+    //     }
+    // }
 };
 
 const LineChart = (props) => {
@@ -470,6 +484,46 @@ const LineChart = (props) => {
     // console.log("8672  samplingTime", samplingTime);
     // console.log("lineFlag   lineFlag", lineFlag);
 
+    // 修改状态
+    const [zoomState, setZoomState] = useState({
+        k: 1,
+        x: 0,
+        y: 0,
+    });
+
+    // ... (保留之前的useEffect和其他函数)
+
+    const handleZoomIn = useCallback(() => {
+        setZoomState((prevState) => ({
+            ...prevState,
+            k: Math.min(prevState.k * 1.2, 5),
+        }));
+    }, []);
+
+    const handleZoomOut = useCallback(() => {
+        setZoomState((prevState) => ({
+            ...prevState,
+            k: Math.max(prevState.k / 1.2, 1),
+            x: 0,
+            y: 0,
+        }));
+    }, []);
+
+    const handlePan = useCallback(
+        (event) => {
+            if (zoomState.scale > 1) {
+                setZoomState((prevState) => ({
+                    ...prevState,
+                    translate: [
+                        prevState.translate[0] -
+                            event.movementX / prevState.scale,
+                        prevState.translate[1],
+                    ],
+                }));
+            }
+        },
+        [zoomState.scale]
+    );
     data = props.data;
     // console.log("data.props", props.data);
     num = props.num;
@@ -510,25 +564,73 @@ const LineChart = (props) => {
         };
     }, []);
 
-    useEffect(() => {
+    const drawChart = useCallback(() => {
         if (!data || dimensions.width === 0 || dimensions.height === 0) return;
-        d3.select(svgRef.current).selectAll("*").remove();
 
-        // 数据
         const svg = d3.select(svgRef.current);
-        // console.log(
-        //     "-------------------------------bianle----------------------------------"
-        // );
-        // SVG 宽度和高度
+        svg.selectAll("*").remove();
+
         const width = dimensions.width;
         const height = dimensions.height;
         const margin = { top: 20, right: width, bottom: 10, left: 0 };
-        // console.log("lineFlag  selectedPoint", selectedPoint);
-        // console.log("lineFlag  inputValues", inputValues);
 
-        renderCurve(svg, width, height, margin, cleanFlag, samplingTime);
+        // 创建缩放行为
+        const zoom = d3
+            .zoom()
+            .scaleExtent([1, 5])
+            .on("zoom", (event) => {
+                console.log("0920   event.transform", event.transform);
+
+                const newK = event.transform.k;
+                const newX = Math.max(
+                    Math.min(event.transform.x, 0), // 左边界
+                    width - width * newK // 右边界
+                );
+
+                // const newX = event.transform.x;
+                console.log("0920   newX", newX);
+
+                if (zoomState.k !== newK || zoomState.x !== newX) {
+                    setZoomState({
+                        k: newK,
+                        x: newX,
+                        y: 0, // 保持y不变
+                    });
+                }
+            });
+
+        // svg.call(zoom).call(
+        //     zoom.transform,
+        //     d3.zoomIdentity.scale(zoomState.k).translate(zoomState.x, 0)
+        // );
+
+        // 应用缩放和平移
+        const zoomedWidth = width * zoomState.k;
+        const xScale = d3
+            .scaleTime()
+            .domain([now, endTime])
+            .range([0, zoomedWidth]);
+
+        const yScale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
+
+        const zoomedXScale = d3
+            .scaleTime()
+            .domain([now, endTime])
+            .range([zoomState.x, zoomedWidth + zoomState.x]);
+
+        // 绘制曲线
+        renderCurve(
+            svg,
+            zoomedWidth,
+            height,
+            margin,
+            props.clean_flag,
+            samplingTime,
+            zoomedXScale,
+            yScale
+        );
         renderLine(
-            width,
+            zoomedWidth,
             height,
             margin,
             svg,
@@ -540,17 +642,23 @@ const LineChart = (props) => {
             setlinePointChange,
             props.callback,
             samplingTime,
-            lineFlag
+            lineFlag,
+            zoomedXScale,
+            yScale
         );
     }, [
         data,
         dimensions,
-        num,
-        selected,
-        linePoint,
+        zoomState,
         linePointChange,
         samplingTime,
+        lineFlag,
+        props.clean_flag,
     ]);
+    useEffect(() => {
+        drawChart();
+    }, [drawChart]);
+
     const handleOk = () => {
         const newX = parseTimeString(inputValues.time);
         console.log("lineFlag  newX :", typeof newX);
@@ -628,6 +736,14 @@ const LineChart = (props) => {
             <Spin spinning={lineLoading} delay={500}>
                 <svg ref={svgRef} width="100%" height="20rem"></svg>
             </Spin>
+            <div style={{ position: "absolute", top: "10rem", right: "10px" }}>
+                <Button icon={<PlusOutlined />} onClick={handleZoomIn} />
+                <Button
+                    style={{ marginLeft: "10px" }}
+                    icon={<MinusOutlined />}
+                    onClick={handleZoomOut}
+                />
+            </div>
             <Modal
                 title="梯度曲线"
                 open={isModalVisible}

@@ -140,10 +140,13 @@ const App = () => {
     const [minTubeId, setMinTubeId] = useState(1); // 默认最小值
     const [maxTubeId, setMaxTubeId] = useState(10); // 默认最大值
     const [inputTubeId, setInputTubeId] = useState(minTubeId); // 默认值为 minTubeId
+
     const handleInputNumberChange = (value) => {
         setInputTubeId(value);
     };
     const [form] = Form.useForm(); // 获取表单实例
+
+    const [spinning, setSpinning] = React.useState(false);
 
     const generateTaskId = () => {
         const timestamp = new Date().getTime();
@@ -243,7 +246,6 @@ const App = () => {
         return updatedData;
     };
 
-    // flag  ： undefined  没被选中   true  保留  false  废弃
     const handleUpdatePoint = (linePointChange) => {
         console.log(
             "-------------------------------------------------linePointChange",
@@ -254,6 +256,7 @@ const App = () => {
         // newPoints = linePointChange;
     };
 
+    // flag  ： undefined  没被选中   true  保留  false  废弃
     const process_data_flag = (selected_tube, flag, color) => {
         let nums = num.map((item) => {
             if (selected_tube.includes(item.tube)) {
@@ -406,7 +409,6 @@ const App = () => {
                 duration: 2,
             });
         } else {
-            setLineLoading(true);
             if (flagStartTime == 1) {
                 setOpenStart(true);
             } else {
@@ -419,7 +421,10 @@ const App = () => {
     const handleStart = () => {
         form.validateFields()
             .then((values) => {
-                console.log("0919  Form values:", values);
+                if (values.tube_id === 1) {
+                    values.tube_id = 0;
+                }
+
                 initLine({
                     detector_zeroing: values.detector_zeroing,
                     tube_id: values.tube_id,
@@ -449,25 +454,15 @@ const App = () => {
                 content: "已经平衡过柱子了，再次开始实验",
             });
         }
-        //  else {
-        //   messageApi.open({
-        //       type: "success",
-        //       content: "开始实验",
-        //   });
-        // }
         setCleanFlag(0);
-        // console.log("Starting");
-
+        setLineLoading(true);
         setLoading(true);
         console.log("0919  flagStartTime", flagStartTime);
         console.log("0919  ----------1------");
-
         if (flagStartTime == 1) {
             reset();
             handleStart();
-
             startTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
-            // console.log("startTime --------------------:", startTime);
             flagStartTime = 0;
         } else {
             console.log("0919  ----------2------", flagStartTime);
@@ -495,16 +490,12 @@ const App = () => {
         setLineLoading(false);
         flagStartTime = 1;
         setLoading(false);
-        terminateEluentLine().then((responseData) => {
-            // console.log("responseData :", responseData);
-        });
+        terminateEluentLine().then((responseData) => {});
     };
 
     const pause = () => {
         setLineLoading(false);
-        pauseEluentLine().then((responseData) => {
-            // console.log("responseData :", responseData);
-        });
+        pauseEluentLine().then((responseData) => {});
     };
 
     const reset = () => {
@@ -520,10 +511,49 @@ const App = () => {
         setSelectedReverse([]);
         selected_tubes = [];
     };
-    const uploadMethod = () => {
-        // localStorage.setItem("methodId", methodID);
-        uploadMethodOperate().then((response) => {});
+    const uploadMethod = async () => {
+        try {
+            setSpinning(true);
+
+            // 等待 uploadMethodOperate() 执行完毕
+            const response = await uploadMethodOperate();
+
+            // 等待 uploadMethodFlag() 的返回结果
+            const responsedata = await uploadMethodFlag();
+
+            // 更新 flags
+            const uploadFlag = responsedata.data.upload_flag;
+            const equilibrationFlag = responsedata.data.equilibration_flag;
+
+            setUploadFlag(uploadFlag);
+            setEquilibrationFlag(equilibrationFlag);
+
+            if (uploadFlag === 1) {
+                // 上传成功的情况
+                setSpinning(false);
+                messageApi.open({
+                    type: "success",
+                    content: "上传成功！",
+                });
+            } else if (uploadFlag === 0) {
+                // 上传失败的情况
+                setSpinning(false);
+                messageApi.open({
+                    type: "error",
+                    content: "上传失败，请重新上传！",
+                });
+            }
+        } catch (error) {
+            // 错误处理
+            setSpinning(false);
+            messageApi.open({
+                type: "error",
+                content: "发生错误，请稍后重试！",
+            });
+            console.error(error);
+        }
     };
+
     const clean = () => {
         setData(() => []);
         setSelectedReverse([]);
@@ -930,6 +960,7 @@ const App = () => {
                     </Form.Item>
                 </Form>
             </Modal>
+            <Spin spinning={spinning} fullscreen tip="正在上传......" />
         </Flex>
     );
 };
