@@ -56,9 +56,8 @@ const groupsOrigin = [
     ],
 ];
 const App = ({ num, callback, selected, clean_flag }) => {
-    const _ = require('lodash');
+    const _ = require("lodash");
 
-    
     const [selectedFlag, setSelectedFlags] = useState([]);
     const [cleanFlag, setCleanFlag] = useState(0);
     const [forceUpdate, setForceUpdate] = useState(0);
@@ -69,13 +68,12 @@ const App = ({ num, callback, selected, clean_flag }) => {
         setCleanFlag(clean_flag);
         // console.log("0831   num", num);
         // console.log("0831  cleanFlag:", cleanFlag);
-        console.log("0831  ----------------------------selected",selected);
-        console.log("0831  ----------------------------clean_flag",clean_flag);
+        console.log("0831  ----------------------------selected", selected);
+        console.log("0831  ----------------------------clean_flag", clean_flag);
 
         if (num.length == 0) {
             console.log("0831  -------  groupsOfTen :", groupsOfTen);
             console.log("0831  groupsOrigin :", groupsOrigin);
-
 
             // console.log("0831  ----------------------------",selected);
 
@@ -83,7 +81,6 @@ const App = ({ num, callback, selected, clean_flag }) => {
 
             setGroupsOfTen(_.cloneDeep(groupsOrigin));
             console.log("0831  groupsOfTen :", groupsOfTen);
-
         }
         if (selected) {
             console.log("---------------------------------------", selected);
@@ -125,6 +122,7 @@ const App = ({ num, callback, selected, clean_flag }) => {
 
         return groups;
     };
+    const a = () => {};
     const handleButtonClick = (tube) => {
         setSelectedFlags((prevFlags) => {
             const isSelected = prevFlags.includes(tube);

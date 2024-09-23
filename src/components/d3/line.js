@@ -1,11 +1,21 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import * as d3 from "d3";
 import colors from "@components/color/index";
-import { Modal, Input, TimePicker, Button, InputNumber, Spin } from "antd";
+import {
+    Modal,
+    Input,
+    TimePicker,
+    Button,
+    InputNumber,
+    Spin,
+    Row,
+    Col,
+} from "antd";
 import dayjs from "dayjs";
 import { PlusOutlined, MinusOutlined } from "@ant-design/icons";
 import "./line.css";
 import KeyboardNumber from "@components/keyboard/number/index.js";
+import CustomScrollbar from "@components/scrollbar/customScrollbar.js";
 
 let fillAreaDatas = [];
 let fillAreaData = [];
@@ -65,6 +75,7 @@ const renderCurve = (
         .scaleLinear()
         .domain([minValue - 2, maxValue + 2])
         .range([height, 0]);
+
     const xAxis = d3.axisTop(xScale).tickFormat((d) => {
         const dateObj = new Date(d);
         const timeStr = dateObj.toTimeString().split(" ")[0];
@@ -73,6 +84,7 @@ const renderCurve = (
     const yAxis = d3
         .axisRight(yScale)
         .tickFormat((d) => (d === 0 || d === 0.5 ? "" : d));
+
     svg.append("g")
         .attr("transform", `translate(0, ${height - 1})`)
         .style("color", "red")
@@ -81,6 +93,7 @@ const renderCurve = (
         .attr("transform", `translate(0, 0)`)
         .style("color", "red")
         .call(yAxis);
+
     const line = d3
         .line()
         .x((d) => xScale(d.time))
@@ -303,14 +316,15 @@ const renderLine = (
     let ifMove = [];
     console.log("8672   ----samplingTime ---- ", samplingTime);
 
-    endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
+    // endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
 
     // const x2Scale = d3.scaleLinear().domain([now, endTime]).range([0, width]);
-    const y2Scale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
+    const yScale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
     // const x2Axis = d3.axisTop(xScale);
     const y2Axis = d3
-        .axisLeft(y2Scale)
+        .axisLeft(yScale)
         .tickFormat((d) => (d === 0 || d === 100 ? "" : d));
+
     const yAxisG = svg
         .append("g")
         .attr("transform", `translate(${margin.right - 1}, 0)`)
@@ -318,8 +332,8 @@ const renderLine = (
         .call(y2Axis);
     yAxisG
         .selectAll(".tick text")
-        .attr("x", -10) // 将文本标签向左移动 10 像素
-        .attr("y", 0) // 将文本标签向左移动 10 像素
+        .attr("x", -10)
+        .attr("y", 0)
         .style("text-anchor", "end"); // 右对齐文本
 
     svg.selectAll("circle")
@@ -327,7 +341,7 @@ const renderLine = (
         .enter()
         .append("circle")
         .attr("cx", (d) => xScale(d.time))
-        .attr("cy", (d) => y2Scale(d.value))
+        .attr("cy", (d) => yScale(d.value))
         .attr("r", 7) // 设置圆点半径
         .attr("fill", "blue")
         .on("mouseover", function (event, d) {
@@ -373,7 +387,7 @@ const renderLine = (
     const line2 = d3
         .line()
         .x((d) => xScale(d.time))
-        .y((d) => y2Scale(d.value))
+        .y((d) => yScale(d.value))
         .curve(d3.curveLinear); // 使用 Cardinal 曲线插值
     console.log("8672 parsedData", parsedData);
     // 绘制折线路径
@@ -468,6 +482,11 @@ const renderLine = (
 
 const LineChart = (props) => {
     const svgRef = useRef(null);
+
+    const [scrollPosition, setScrollPosition] = useState(0);
+    const [realPosition, setRealPosition] = useState(0);
+    const [maxScrollPosition, setMaxScrollPosition] = useState(100); // 假设最大滚动范围为1000
+
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedPoint, setSelectedPoint] = useState(null);
@@ -480,6 +499,7 @@ const LineChart = (props) => {
     const [samplingTime, setSamplingTime] = useState(props.samplingTime);
     const [lineFlag, setLineFlag] = useState(1);
     const [lineLoading, setLineLoading] = useState(props.lineLoading);
+    endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
 
     // console.log("8672  samplingTime", samplingTime);
     // console.log("lineFlag   lineFlag", lineFlag);
@@ -490,40 +510,10 @@ const LineChart = (props) => {
         x: 0,
         y: 0,
     });
-
-    // ... (保留之前的useEffect和其他函数)
-
-    const handleZoomIn = useCallback(() => {
-        setZoomState((prevState) => ({
-            ...prevState,
-            k: Math.min(prevState.k * 1.2, 5),
-        }));
-    }, []);
-
-    const handleZoomOut = useCallback(() => {
-        setZoomState((prevState) => ({
-            ...prevState,
-            k: Math.max(prevState.k / 1.2, 1),
-            x: 0,
-            y: 0,
-        }));
-    }, []);
-
-    const handlePan = useCallback(
-        (event) => {
-            if (zoomState.scale > 1) {
-                setZoomState((prevState) => ({
-                    ...prevState,
-                    translate: [
-                        prevState.translate[0] -
-                            event.movementX / prevState.scale,
-                        prevState.translate[1],
-                    ],
-                }));
-            }
-        },
-        [zoomState.scale]
+    console.log(
+        "0923 -------------------------------zoomState--------------------------------- :"
     );
+
     data = props.data;
     // console.log("data.props", props.data);
     num = props.num;
@@ -572,68 +562,40 @@ const LineChart = (props) => {
 
         const width = dimensions.width;
         const height = dimensions.height;
-        const margin = { top: 20, right: width, bottom: 10, left: 0 };
+        const margin = { top: 0, right: width, bottom: 10, left: 0 };
 
-        // 创建缩放行为
-        const zoom = d3
-            .zoom()
-            .scaleExtent([1, 5])
-            .on("zoom", (event) => {
-                console.log("0920   event.transform", event.transform);
-
-                const newK = event.transform.k;
-                const newX = Math.max(
-                    Math.min(event.transform.x, 0), // 左边界
-                    width - width * newK // 右边界
-                );
-
-                // const newX = event.transform.x;
-                console.log("0920   newX", newX);
-
-                if (zoomState.k !== newK || zoomState.x !== newX) {
-                    setZoomState({
-                        k: newK,
-                        x: newX,
-                        y: 0, // 保持y不变
-                    });
-                }
-            });
-
-        // svg.call(zoom).call(
-        //     zoom.transform,
-        //     d3.zoomIdentity.scale(zoomState.k).translate(zoomState.x, 0)
-        // );
-
-        // 应用缩放和平移
         const zoomedWidth = width * zoomState.k;
-        const xScale = d3
-            .scaleTime()
-            .domain([now, endTime])
-            .range([0, zoomedWidth]);
 
-        const yScale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
+        updateMaxScroll(scrollPosition, zoomState.k);
+        svg.attr("width", width).attr("height", height);
+
+        const gContent = svg
+            .append("g")
+            .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
         const zoomedXScale = d3
             .scaleTime()
             .domain([now, endTime])
-            .range([zoomState.x, zoomedWidth + zoomState.x]);
+            .range([
+                zoomState.x - realPosition,
+                width * zoomState.k + zoomState.x - realPosition,
+            ]);
 
         // 绘制曲线
         renderCurve(
-            svg,
+            gContent,
             zoomedWidth,
             height,
             margin,
             props.clean_flag,
             samplingTime,
-            zoomedXScale,
-            yScale
+            zoomedXScale
         );
         renderLine(
             zoomedWidth,
             height,
             margin,
-            svg,
+            gContent,
             svgRef,
             setSelectedPoint,
             setInputValues,
@@ -643,8 +605,7 @@ const LineChart = (props) => {
             props.callback,
             samplingTime,
             lineFlag,
-            zoomedXScale,
-            yScale
+            zoomedXScale
         );
     }, [
         data,
@@ -654,6 +615,8 @@ const LineChart = (props) => {
         samplingTime,
         lineFlag,
         props.clean_flag,
+        realPosition,
+        scrollPosition,
     ]);
     useEffect(() => {
         drawChart();
@@ -722,6 +685,32 @@ const LineChart = (props) => {
         // setInputValues({ value: result });
     };
 
+    const handleZoomOut = useCallback(() => {
+        setZoomState((prevState) => ({
+            ...prevState,
+            k: Math.max(prevState.k / 1.2, 1),
+            x: 0,
+            y: 0,
+        }));
+    }, []);
+    const handleZoomIn = useCallback(() => {
+        setZoomState((prevState) => ({
+            ...prevState,
+            k: Math.min(prevState.k * 1.2, 5),
+        }));
+    }, []);
+
+    const handleScrollChange = (newPosition) => {
+        updateMaxScroll(newPosition, zoomState.k);
+        setScrollPosition(newPosition);
+    };
+
+    const updateMaxScroll = (position, k) => {
+        const maxScroll = dimensions.width * k - dimensions.width;
+        const percentage = (position / 100) * maxScroll; // 将 newPosition 转换为 0 到 1 之间的数
+        setRealPosition(percentage);
+    };
+
     return (
         <div
             className="headerStyle"
@@ -736,13 +725,36 @@ const LineChart = (props) => {
             <Spin spinning={lineLoading} delay={500}>
                 <svg ref={svgRef} width="100%" height="20rem"></svg>
             </Spin>
-            <div style={{ position: "absolute", top: "10rem", right: "10px" }}>
-                <Button icon={<PlusOutlined />} onClick={handleZoomIn} />
-                <Button
-                    style={{ marginLeft: "10px" }}
-                    icon={<MinusOutlined />}
-                    onClick={handleZoomOut}
-                />
+
+            <div
+                style={{
+                    position: "absolute",
+                    top: "10rem",
+                    width: "100%",
+                }}
+            >
+                <Row>
+                    <Col span={17}></Col>
+                    <Col span={2}>
+                        {" "}
+                        <Button
+                            icon={<PlusOutlined />}
+                            onClick={handleZoomIn}
+                        />
+                        <Button
+                            style={{ marginLeft: "10px" }}
+                            icon={<MinusOutlined />}
+                            onClick={handleZoomOut}
+                        />
+                    </Col>
+                    <Col span={4}>
+                        <CustomScrollbar
+                            scrollPosition={scrollPosition}
+                            maxScrollPosition={maxScrollPosition}
+                            onScrollChange={handleScrollChange}
+                        />
+                    </Col>
+                </Row>
             </div>
             <Modal
                 title="梯度曲线"
