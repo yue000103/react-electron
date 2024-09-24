@@ -4,6 +4,7 @@ import logo from "./logo.svg";
 import "./App.css";
 import Choramatograph from "./views/index";
 import Method from "./method/index";
+import Historical from "./historical/index";
 import Test from "./views/test";
 import { Radio, Space, Tabs, Row, Col, Flex, Layout, Anchor } from "antd";
 import Clock from "@components/clock/index";
@@ -24,9 +25,15 @@ function App() {
         if (Number(link["href"].substring(1)) === 1) {
             setShowMethod(true);
             setShowExperiment(false);
-        } else {
+            setShowHistorical(false);
+        } else if (Number(link["href"].substring(1)) === 2) {
             setShowExperiment(true);
             setShowMethod(false);
+            setShowHistorical(false);
+        } else if (Number(link["href"].substring(1)) === 3) {
+            setShowMethod(false);
+            setShowExperiment(false);
+            setShowHistorical(true);
         }
     };
 
@@ -64,6 +71,15 @@ function App() {
                                     ),
                                 },
                                 {
+                                    key: "3",
+                                    href: "#3",
+                                    title: (
+                                        <div className="anchor-item">
+                                            历史数据&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        </div>
+                                    ),
+                                },
+                                {
                                     key: "2",
                                     href: "#2",
                                     title: (
@@ -78,7 +94,7 @@ function App() {
                     <Col span={22}>
                         {showExperiment ? <Choramatograph /> : null}{" "}
                         {showMethod ? <Method /> : null}{" "}
-                        {showHistorical ? <div /> : null}{" "}
+                        {showHistorical ? <Historical /> : null}{" "}
                     </Col>
                 </Row>
                 {/* <Test></Test> */}

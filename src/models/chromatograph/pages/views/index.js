@@ -41,6 +41,9 @@ import {
     setCurrentMethodOperate,
     uploadMethodOperate,
 } from "../../api/methods";
+
+import { saveExperimentData, executionMethod } from "../../api/experiment";
+
 import { getDeviceStatus, postDeviceStatus } from "../../api/status";
 import { uploadMethodFlag } from "../../api/methods";
 import { timeout } from "d3";
@@ -115,6 +118,7 @@ const App = () => {
     const [messageApi, contextHolder] = message.useMessage();
 
     const [warningCode, setWaringCode] = useState(0);
+    const [errorCodes, setErrorCode] = useState([200, 300]);
 
     const [pumpStatus, setPumpStatus] = useState({});
     const [samplingTime, setSamplingTime] = useState(10);
@@ -140,6 +144,8 @@ const App = () => {
     const [minTubeId, setMinTubeId] = useState(1); // 默认最小值
     const [maxTubeId, setMaxTubeId] = useState(10); // 默认最大值
     const [inputTubeId, setInputTubeId] = useState(minTubeId); // 默认值为 minTubeId
+
+    const [openReset, setOpenReset] = useState(false);
 
     const handleInputNumberChange = (value) => {
         setInputTubeId(value);
@@ -184,6 +190,7 @@ const App = () => {
             setWaringCode(responseData.code);
             console.log("responseData---------------------", responseData.code);
             console.log("warningCode :", warningCode);
+            setErrorCode((pre) => [...pre, responseData.code]);
         });
         socket.on("current_tube", (responseData) => {
             console.log(
@@ -207,7 +214,7 @@ const App = () => {
         });
         socket.on("equilibration_flag", (responseData) => {
             if (responseData.flag === 1) {
-                reset();
+                clearData();
                 flagStartTime = 0;
             }
         });
@@ -373,7 +380,6 @@ const App = () => {
                 };
             });
             excutedTubesUpdateFlag = false;
-            // 将任务数组添加到状态中
             setExcutedTubes((prevExcutedTubes) => [
                 ...prevExcutedTubes,
                 ...tasks,
@@ -439,6 +445,7 @@ const App = () => {
     const handleCancel = () => {
         console.log("Clicked cancel button");
         setOpenStart(false);
+        setOpenReset(false);
     };
 
     const start = () => {
@@ -460,7 +467,7 @@ const App = () => {
         console.log("0919  flagStartTime", flagStartTime);
         console.log("0919  ----------1------");
         if (flagStartTime == 1) {
-            reset();
+            clearData();
             handleStart();
             startTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
             flagStartTime = 0;
@@ -497,10 +504,8 @@ const App = () => {
         setLineLoading(false);
         pauseEluentLine().then((responseData) => {});
     };
-
-    const reset = () => {
+    const clearData = () => {
         setExcutedTubes((prevExcutedTubes) => []);
-
         setCleanFlag(0);
         flagStartTime = 1;
         getEluentLine().then((responseData) => {
@@ -510,6 +515,62 @@ const App = () => {
         setNum(() => []);
         setSelectedReverse([]);
         selected_tubes = [];
+    };
+    const reset = () => {
+        const methodId = localStorage.getItem("methodId");
+        const experimentId = generateTaskId();
+        if (experimentId === undefined) {
+            experimentId = generateTaskId();
+        }
+        console.log("0924  experimentId :", experimentId);
+        console.log("0924  data  ", data);
+        console.log("0924  num  ", num);
+        console.log("0924  excutedTubes :", excutedTubes);
+        console.log("0924  errorCodes :", errorCodes);
+        console.log("0924  samplingTime :", samplingTime);
+        console.log("0924  methodId :", methodId);
+        console.log("0924  startTime :", startTime);
+        let endTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+        console.log("0924  timeEnd :", endTime);
+        const excute_data = {
+            method_id: Number(methodId),
+            experiment_id: Number(experimentId),
+            method_start_time: startTime,
+            method_end_time: endTime,
+            error_codes: errorCodes,
+        };
+        executionMethod(excute_data).then((response) => {
+            console.log("0924   response", response);
+        });
+        const filteredNum = num.map(({ flag, color, ...rest }) => rest);
+        const filteredExcute = Object.entries(excutedTubes)
+            .map(([key, value]) => {
+                if (typeof value === "object") {
+                    return {
+                        operate: value.status, // 重命名为 operate
+                        tubeList: value.tubeList, // 保留 tubeList
+                    };
+                }
+                return null;
+            })
+            .filter(Boolean); // 过滤掉 null 值
+
+        const experiment_data = {
+            method_id: Number(methodId),
+            experiment_id: Number(experimentId),
+            curve_data: data,
+            vertical_data: filteredNum,
+            task_list: filteredExcute,
+            sampling_time: samplingTime,
+        };
+
+        saveExperimentData(experiment_data).then((res) => {
+            console.log("res :", res);
+        });
+        setOpenReset(true);
+    };
+    const handleOkRest = () => {
+        setOpenReset(false);
     };
     const uploadMethod = async () => {
         try {
@@ -606,7 +667,7 @@ const App = () => {
             setUploadFlag(responsedata.data.upload_flag);
             setEquilibrationFlag(responsedata.data.equilibration_flag);
         });
-        reset();
+        clearData();
         // setData([])
         getEluentLine().then((responseData) => {
             if (responseData.data.point.length === 0) {
@@ -961,6 +1022,14 @@ const App = () => {
                 </Form>
             </Modal>
             <Spin spinning={spinning} fullscreen tip="正在上传......" />
+            <Modal
+                open={openReset}
+                onOk={handleOkRest}
+                confirmLoading={confirmLoading}
+                onCancel={handleCancel}
+            >
+                <p>是否保存实验数据?</p>
+            </Modal>
         </Flex>
     );
 };

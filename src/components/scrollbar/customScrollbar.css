@@ -9,7 +9,6 @@
 }
 .ant-slider .ant-slider-handle:focus::after {
   box-shadow: 0 0 0 2.5px #d10909;
-
 }
 .ant-slider:hover .ant-slider-handle::after{
   box-shadow: 0 0 0 2px #d10909;
