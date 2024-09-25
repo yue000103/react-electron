@@ -15,14 +15,15 @@ const App = (props) => {
         props.onValuesChange(values);
     };
     useEffect(() => {
-        console.log("9999---------props", props);
-
         setFlowRateDefault(props.flowRateDefault);
         if (lastData.length !== 0) {
             form.setFieldsValue({ users: lastData });
         } else {
             setLastData(props.pressure);
             form.setFieldsValue({ users: props.pressure });
+        }
+        if (props.pressure.length === 0) {
+            form.setFieldsValue({ users: [] });
         }
     }, [props.pressure, form]);
 
@@ -56,7 +57,7 @@ const App = (props) => {
     return (
         <div
             style={{
-                maxHeight: "16rem",
+                maxHeight: "15rem",
                 width: "100%",
                 overflowY: "auto",
                 padding: "0px",

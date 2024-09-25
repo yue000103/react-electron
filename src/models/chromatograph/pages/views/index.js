@@ -118,7 +118,7 @@ const App = () => {
     const [messageApi, contextHolder] = message.useMessage();
 
     const [warningCode, setWaringCode] = useState(0);
-    const [errorCodes, setErrorCode] = useState([200, 300]);
+    const [errorCodes, setErrorCode] = useState([]);
 
     const [pumpStatus, setPumpStatus] = useState({});
     const [samplingTime, setSamplingTime] = useState(10);
@@ -516,76 +516,83 @@ const App = () => {
         setSelectedReverse([]);
         selected_tubes = [];
     };
+    const saveExcute = (experimentId) => {
+        console.log("0925  startTime", startTime);
+        if (startTime !== undefined) {
+            const methodId = localStorage.getItem("methodId");
+
+            let endTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+            const excute_data = {
+                method_id: Number(methodId),
+                experiment_id: Number(experimentId),
+                method_start_time: startTime,
+                method_end_time: endTime,
+                error_codes: errorCodes,
+            };
+            executionMethod(excute_data).then((response) => {
+                console.log("0924   response.status", response.status);
+            });
+        } else {
+            clearData();
+        }
+    };
+    const saveExperiment = (experimentId) => {
+        if (startTime !== undefined) {
+            const methodId = localStorage.getItem("methodId");
+            const filteredNum = num.map(({ flag, color, ...rest }) => rest);
+            const filteredExcute = Object.entries(excutedTubes)
+                .map(([key, value]) => {
+                    if (typeof value === "object") {
+                        return {
+                            operate: value.status, // 重命名为 operate
+                            tube_list: value.tube_list, // 保留 tubeList
+                        };
+                    }
+                    return null;
+                })
+                .filter(Boolean); // 过滤掉 null 值
+            const experiment_data = {
+                method_id: Number(methodId),
+                experiment_id: Number(experimentId),
+                curve_data: data,
+                vertical_data: filteredNum,
+                task_list: filteredExcute,
+                sampling_time: samplingTime,
+            };
+
+            saveExperimentData(experiment_data).then((res) => {
+                console.log("res :", res.status);
+            });
+        }
+    };
     const reset = () => {
-        const methodId = localStorage.getItem("methodId");
+        setOpenReset(true);
+    };
+    const handleOkRest = () => {
         const experimentId = generateTaskId();
         if (experimentId === undefined) {
             experimentId = generateTaskId();
         }
-        console.log("0924  experimentId :", experimentId);
-        console.log("0924  data  ", data);
-        console.log("0924  num  ", num);
-        console.log("0924  excutedTubes :", excutedTubes);
-        console.log("0924  errorCodes :", errorCodes);
-        console.log("0924  samplingTime :", samplingTime);
-        console.log("0924  methodId :", methodId);
-        console.log("0924  startTime :", startTime);
-        let endTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
-        console.log("0924  timeEnd :", endTime);
-        const excute_data = {
-            method_id: Number(methodId),
-            experiment_id: Number(experimentId),
-            method_start_time: startTime,
-            method_end_time: endTime,
-            error_codes: errorCodes,
-        };
-        executionMethod(excute_data).then((response) => {
-            console.log("0924   response", response);
-        });
-        const filteredNum = num.map(({ flag, color, ...rest }) => rest);
-        const filteredExcute = Object.entries(excutedTubes)
-            .map(([key, value]) => {
-                if (typeof value === "object") {
-                    return {
-                        operate: value.status, // 重命名为 operate
-                        tubeList: value.tubeList, // 保留 tubeList
-                    };
-                }
-                return null;
-            })
-            .filter(Boolean); // 过滤掉 null 值
-
-        const experiment_data = {
-            method_id: Number(methodId),
-            experiment_id: Number(experimentId),
-            curve_data: data,
-            vertical_data: filteredNum,
-            task_list: filteredExcute,
-            sampling_time: samplingTime,
-        };
-
-        saveExperimentData(experiment_data).then((res) => {
-            console.log("res :", res);
-        });
-        setOpenReset(true);
+        saveExcute(experimentId);
+        saveExperiment(experimentId);
+        setOpenReset(false);
     };
-    const handleOkRest = () => {
+    const handleCancelReset = () => {
+        const experimentId = generateTaskId();
+        if (experimentId === undefined) {
+            experimentId = generateTaskId();
+        }
+        saveExcute(experimentId);
         setOpenReset(false);
     };
     const uploadMethod = async () => {
         try {
             setSpinning(true);
 
-            // 等待 uploadMethodOperate() 执行完毕
             const response = await uploadMethodOperate();
-
-            // 等待 uploadMethodFlag() 的返回结果
             const responsedata = await uploadMethodFlag();
-
-            // 更新 flags
             const uploadFlag = responsedata.data.upload_flag;
             const equilibrationFlag = responsedata.data.equilibration_flag;
-
             setUploadFlag(uploadFlag);
             setEquilibrationFlag(equilibrationFlag);
 
@@ -809,7 +816,7 @@ const App = () => {
                                         <Button
                                             type="primary  "
                                             size="large"
-                                            className={`button button4`}
+                                            className={`button button5`}
                                             onClick={() => uploadMethod()}
                                             disabled={
                                                 methodFlag === 0 ? true : false
@@ -1026,7 +1033,9 @@ const App = () => {
                 open={openReset}
                 onOk={handleOkRest}
                 confirmLoading={confirmLoading}
-                onCancel={handleCancel}
+                onCancel={handleCancelReset}
+                okText="保存" // 修改确认按钮文字
+                cancelText="不保存" // 修改取消按钮文字
             >
                 <p>是否保存实验数据?</p>
             </Modal>

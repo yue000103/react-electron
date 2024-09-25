@@ -83,13 +83,13 @@
 }
 
 .custom-anchor .ant-anchor-ink {
-  display: none !important; /* 隐藏默认的锚点滑动条 */
-  background-color:#9b0000 !important;
+  display: none ; /* 隐藏默认的锚点滑动条 */
+  background-color:#9b0000 !;
 }
 
 .anchor-item {
   width: 2.5rem;
-  height: 15rem; /* 设置每个锚点的高度 */
+  height: 12.5rem; /* 设置每个锚点的高度 */
   background-color: #f0f0f0; /* 设置背景颜色 */
   display: flex;
   align-items: center;
@@ -99,6 +99,12 @@
   writing-mode: vertical-rl; /* 垂直文字模式 */
     text-orientation: mixed; /* 文字方向 */
 }
+
+.experiment {
+  height: 18.5rem; /* 设置每个锚点的高度 */
+  
+}
+
 .custom-anchor .ant-anchor-link{
   padding-inline:0 !important
 }

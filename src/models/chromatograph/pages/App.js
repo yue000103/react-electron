@@ -70,21 +70,22 @@ function App() {
                                         </div>
                                     ),
                                 },
+
+                                {
+                                    key: "2",
+                                    href: "#2",
+                                    title: (
+                                        <div className="anchor-item experiment">
+                                            实&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;验
+                                        </div>
+                                    ),
+                                },
                                 {
                                     key: "3",
                                     href: "#3",
                                     title: (
                                         <div className="anchor-item">
-                                            历史数据&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                                        </div>
-                                    ),
-                                },
-                                {
-                                    key: "2",
-                                    href: "#2",
-                                    title: (
-                                        <div className="anchor-item">
-                                            实&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;验
+                                            历&nbsp;史&nbsp;数&nbsp;据&nbsp;
                                         </div>
                                     ),
                                 },
