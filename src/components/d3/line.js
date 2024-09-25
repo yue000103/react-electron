@@ -64,16 +64,29 @@ const renderCurve = (
     }));
     console.log("0920   data--------------------", parsedData);
     const valueExtent = d3.extent(parsedData, (d) => d.value);
-    const [minValue = 0, maxValue = 50] = valueExtent || [0, 50]; // 默认值为 [0, 50]
-    console.log("0920  maxValue :", maxValue);
-    console.log("0920  minValue :", minValue);
+    const [minValue = -3, maxValue = 53] = valueExtent || [-3, 50]; // 默认值为 [0, 50]
+
+    let newMinValue = parseFloat(minValue) - parseFloat(maxValue) * 0.05;
+    let newMaxValue = parseFloat(maxValue) + parseFloat(maxValue) * 0.05;
+    console.log("0920  newMinValue ---- :", newMinValue);
+    console.log("0920  newMaxValue ---- :", newMaxValue);
+    if (newMinValue > newMaxValue) {
+        [newMinValue, newMaxValue] = [newMaxValue, newMinValue];
+    }
+    if (Math.abs(newMaxValue - newMinValue) < 1e-3) {
+        newMinValue -= 2;  // 给值一个小的偏移量
+        newMaxValue += 2;
+    }
+
+    console.log("0920  newMinValue :", newMinValue);
+    console.log("0920  newMaxValue :", newMaxValue);
 
     endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
 
     // const xScale = d3.scaleTime().domain([now, endTime]).range([0, width]);
     const yScale = d3
         .scaleLinear()
-        .domain([minValue - 2, maxValue + 2])
+        .domain([newMinValue, newMaxValue])
         .range([height, 0]);
 
     const xAxis = d3.axisTop(xScale).tickFormat((d) => {
@@ -83,7 +96,7 @@ const renderCurve = (
     });
     const yAxis = d3
         .axisRight(yScale)
-        .tickFormat((d) => (d === 0 || d === 0.5 ? "" : d));
+        .tickFormat((d) => (d === minValue || d === 0.5 ? "" : d));
 
     svg.append("g")
         .attr("transform", `translate(0, ${height - 1})`)
@@ -609,6 +622,7 @@ const LineChart = (props) => {
         );
     }, [
         data,
+        props.num,
         dimensions,
         zoomState,
         linePointChange,

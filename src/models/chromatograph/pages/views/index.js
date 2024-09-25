@@ -416,8 +416,11 @@ const App = () => {
             });
         } else {
             if (flagStartTime == 1) {
-                setOpenStart(true);
+                    setOpenStart(true);
+
             } else {
+                setLineLoading(true);
+
                 startEluentLine().then((responsedata) => {
                     // console.log("responsedata :", responsedata);
                 });
@@ -566,7 +569,13 @@ const App = () => {
         }
     };
     const reset = () => {
-        setOpenReset(true);
+        if(clean_flag === 0){
+            setOpenReset(true);
+
+        }else if( clean_flag === 1){
+            clearData()
+
+        }
     };
     const handleOkRest = () => {
         const experimentId = generateTaskId();
@@ -576,6 +585,8 @@ const App = () => {
         saveExcute(experimentId);
         saveExperiment(experimentId);
         setOpenReset(false);
+        clearData()
+
     };
     const handleCancelReset = () => {
         const experimentId = generateTaskId();
@@ -583,6 +594,7 @@ const App = () => {
             experimentId = generateTaskId();
         }
         saveExcute(experimentId);
+        clearData()
         setOpenReset(false);
     };
     const uploadMethod = async () => {
