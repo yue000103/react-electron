@@ -265,14 +265,16 @@ const App = () => {
 
     // flag  ： undefined  没被选中   true  保留  false  废弃
     const process_data_flag = (selected_tube, flag, color) => {
-        let nums = num.map((item) => {
-            if (selected_tube.includes(item.tube)) {
-                return { ...item, flag: flag, color: color };
-            }
-            return item;
+        setNum((prevNum) => {
+            let nums = prevNum.map((item) => {
+                if (selected_tube.includes(item.tube)) {
+                    return { ...item, flag: flag, color: color };
+                }
+                return item;
+            });
+            console.log("0926 --------- nums", nums);
+            return nums;
         });
-
-        setNum(nums);
         // console.log(nums);
     };
 
@@ -389,14 +391,20 @@ const App = () => {
             }
         } else if (result[0].flag === "delete") {
             const indexesToDelete = new Set(result.map((item) => item.index));
+            console.log("0926  indexesToDelete", indexesToDelete);
+            
             // 处理被删除的元素
             indexesToDelete.forEach((index) => {
                 const tubeList = selected_tubes[index].tube_list;
+                console.log("0926 --------- tubeList", tubeList);
+                
                 process_data_flag(tubeList, undefined);
             });
             selected_tubes = selected_tubes.filter((item, index) => {
                 return !indexesToDelete.has(index);
             });
+            console.log("0926  selected_tubes", selected_tubes);
+
         }
     };
 
@@ -430,10 +438,7 @@ const App = () => {
     const handleStart = () => {
         form.validateFields()
             .then((values) => {
-                if (values.tube_id === 1) {
-                    values.tube_id = 0;
-                }
-
+                
                 initLine({
                     detector_zeroing: values.detector_zeroing,
                     tube_id: values.tube_id,
@@ -475,7 +480,7 @@ const App = () => {
             startTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
             flagStartTime = 0;
         } else {
-            console.log("0919  ----------2------", flagStartTime);
+            console.log("0919  ----------2-------", flagStartTime);
         }
         console.log("0919  ----------3------", flagStartTime);
 
@@ -569,11 +574,10 @@ const App = () => {
         }
     };
     const reset = () => {
-        if(clean_flag === 0){
-            setOpenReset(true);
-
-        }else if( clean_flag === 1){
+       if( clean_flag === 1 || data.length === 0){
             clearData()
+        }else if(clean_flag === 0){
+            setOpenReset(true);
 
         }
     };

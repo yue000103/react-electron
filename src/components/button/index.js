@@ -66,7 +66,7 @@ const App = ({ num, callback, selected, clean_flag }) => {
     useEffect(() => {
         // console.log("0831  groupsOrigin", groupsOrigin);
         setCleanFlag(clean_flag);
-        // console.log("0831   num", num);
+        console.log("0831   num", num);
         // console.log("0831  cleanFlag:", cleanFlag);
         console.log("0831  ----------------------------selected", selected);
         console.log("0831  ----------------------------clean_flag", clean_flag);
