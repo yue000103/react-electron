@@ -43,7 +43,14 @@ axiosInstance.interceptors.response.use(
 
         // 统一处理错误，防止全屏错误提示
         // alert("请求出错，请稍后重试！");
-        return Promise.reject(error);
+        // return Promise.reject(error);
+        return Promise.resolve({
+            data: null,
+            error: {
+                message: "请求失败，请检查网络连接或稍后重试",
+                details: error.response ? error.response.data : error.message,
+            },
+        });
     }
 );
 

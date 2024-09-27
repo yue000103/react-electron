@@ -44,8 +44,8 @@ const App = () => {
 
     useEffect(() => {
         // 使用你的Swagger JSON文件的URL
-        // const swaggerUrl = "http://192.168.5.185:5000/swagger/";
-        const swaggerUrl = "http://localhost:5000/swagger/";
+        const swaggerUrl = "http://192.168.5.185:5000/swagger/";
+        // const swaggerUrl = "http://localhost:5000/swagger/";
         // "http://192.168.5.155:5000/swagger/"
         // "http://127.0.0.1:5000/swagger-json/"
         axios
@@ -60,7 +60,7 @@ const App = () => {
     }, []);
 
     useEffect(() => {
-        const socket = io("http://localhost:5000", {
+        const socket = io("http://192.168.5.185:5000/swagger/", {
             transports: ["polling", "websocket"], // 确保使用的传输方式与后端匹配
             withCredentials: true, // 如果CORS需要发送凭据
         }); // 确保 URL 正确
@@ -215,8 +215,8 @@ const App = () => {
         if (method === "get") {
             config = {
                 method: method,
-                // url: `http://192.168.137.1:5000${dynamicPath}`,
-                url: `http://localhost:5000${dynamicPath}`,
+                url: `http://192.168.137.1:5000${dynamicPath}`,
+                // url: `http://localhost:5000${dynamicPath}`,
 
                 params: params, // 剩余查询参数
                 headers: {},
@@ -224,8 +224,8 @@ const App = () => {
         } else {
             config = {
                 method: method,
-                // url: `http://192.168.137.1:5000${dynamicPath}`,
-                url: `http://localhost:5000${dynamicPath}`,
+                url: `http://192.168.137.1:5000${dynamicPath}`,
+                // url: `http://localhost:5000${dynamicPath}`,
 
                 headers: { "Content-Type": "application/json" },
                 data: params, // 设置数据字段

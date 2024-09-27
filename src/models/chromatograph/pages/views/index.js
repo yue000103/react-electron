@@ -44,7 +44,11 @@ import {
 
 import { saveExperimentData, executionMethod } from "../../api/experiment";
 
-import { getDeviceStatus, postDeviceStatus } from "../../api/status";
+import {
+    getDeviceStatus,
+    postDeviceStatus,
+    postInitDevice,
+} from "../../api/status";
 import { uploadMethodFlag } from "../../api/methods";
 import { timeout } from "d3";
 import moment from "moment";
@@ -106,11 +110,9 @@ const App = () => {
     //清洗标志，当0时，所有试管禁用，当1时，所有试管可以选择。
     const [clean_flag, setCleanFlag] = useState(0);
     //方法，当0时，所有按钮禁用，当1时，所有按钮可以正常使用。
-
     const [methodFlag, setMethodFlag] = useState(0);
     //  1 可以修改折线 0 不可以修改折线
     const [lineFlag, setLineFlag] = useState(1);
-
     const [selected_reverse, setSelectedReverse] = useState([]);
 
     const [linePoint, setLine] = useState([]);
@@ -392,19 +394,18 @@ const App = () => {
         } else if (result[0].flag === "delete") {
             const indexesToDelete = new Set(result.map((item) => item.index));
             console.log("0926  indexesToDelete", indexesToDelete);
-            
+
             // 处理被删除的元素
             indexesToDelete.forEach((index) => {
                 const tubeList = selected_tubes[index].tube_list;
                 console.log("0926 --------- tubeList", tubeList);
-                
+
                 process_data_flag(tubeList, undefined);
             });
             selected_tubes = selected_tubes.filter((item, index) => {
                 return !indexesToDelete.has(index);
             });
             console.log("0926  selected_tubes", selected_tubes);
-
         }
     };
 
@@ -424,8 +425,7 @@ const App = () => {
             });
         } else {
             if (flagStartTime == 1) {
-                    setOpenStart(true);
-
+                setOpenStart(true);
             } else {
                 setLineLoading(true);
 
@@ -438,7 +438,6 @@ const App = () => {
     const handleStart = () => {
         form.validateFields()
             .then((values) => {
-                
                 initLine({
                     detector_zeroing: values.detector_zeroing,
                     tube_id: values.tube_id,
@@ -517,7 +516,9 @@ const App = () => {
         setCleanFlag(0);
         flagStartTime = 1;
         getEluentLine().then((responseData) => {
-            setLine(responseData.data.point);
+            if (!responseData.error) {
+                setLine(responseData.data.point);
+            }
         });
         setData(() => []);
         setNum(() => []);
@@ -574,11 +575,10 @@ const App = () => {
         }
     };
     const reset = () => {
-       if( clean_flag === 1 || data.length === 0){
-            clearData()
-        }else if(clean_flag === 0){
+        if (clean_flag === 1 || data.length === 0) {
+            clearData();
+        } else if (clean_flag === 0) {
             setOpenReset(true);
-
         }
     };
     const handleOkRest = () => {
@@ -589,8 +589,7 @@ const App = () => {
         saveExcute(experimentId);
         saveExperiment(experimentId);
         setOpenReset(false);
-        clearData()
-
+        clearData();
     };
     const handleCancelReset = () => {
         const experimentId = generateTaskId();
@@ -598,7 +597,7 @@ const App = () => {
             experimentId = generateTaskId();
         }
         saveExcute(experimentId);
-        clearData()
+        clearData();
         setOpenReset(false);
     };
     const uploadMethod = async () => {
@@ -671,56 +670,71 @@ const App = () => {
 
     const getStatus = () => {
         getDeviceStatus().then((responseData) => {
-            // console.log("getStatus   responseData :", responseData.data);
-            let status = JSON.parse(responseData.data.pump_status);
-            // console.log("getStatus status :", status);
-            setPumpStatus(status);
-            // console.log("getStatus pumpStatus :", pumpStatus);
+            if (!responseData.error) {
+                let status = JSON.parse(responseData.data.pump_status);
+                // console.log("getStatus status :", status);
+                setPumpStatus(status);
+                // console.log("getStatus pumpStatus :", pumpStatus);
+            }
         });
     };
 
     const handleStatus = (type, status) => {
         console.log("handleStatus ---status :", status);
         console.log("handleStatus ---type :", type);
-        postDeviceStatus({ type: type, status: JSON.stringify(status) }).then();
+        postDeviceStatus({ type: type, status: JSON.stringify(status) }).then(
+            (response) => {}
+        );
+    };
+
+    const handleOffline = (checked) => {
+        postInitDevice({ use_mock: checked }).then((response) => {
+            if (!response.error) {
+            }
+        });
+        console.log("0927   checked", checked);
     };
 
     useEffect(() => {
         uploadMethodFlag().then((responsedata) => {
-            setUploadFlag(responsedata.data.upload_flag);
-            setEquilibrationFlag(responsedata.data.equilibration_flag);
+            if (!responsedata.error) {
+                setUploadFlag(responsedata.data.upload_flag);
+                setEquilibrationFlag(responsedata.data.equilibration_flag);
+            }
         });
         clearData();
         // setData([])
         getEluentLine().then((responseData) => {
-            if (responseData.data.point.length === 0) {
-                setMethodFlag(0);
-            } else {
-                const methodId = localStorage.getItem("methodId");
-                if (methodId) {
-                    setCurrentMethodOperate({
-                        method_id: Number(methodId),
-                    }).then((response) => {
-                        console.log(
-                            "0909 ------response :",
-                            response.data.methods
-                        );
-                        setCurrentMethod(response.data.methods[0]);
-                    });
+            if (!responseData.error) {
+                if (responseData.data.point.length === 0) {
+                    setMethodFlag(0);
+                } else {
+                    const methodId = localStorage.getItem("methodId");
+                    if (methodId) {
+                        setCurrentMethodOperate({
+                            method_id: Number(methodId),
+                        }).then((response) => {
+                            console.log(
+                                "0909 ------response :",
+                                response.data.methods
+                            );
+                            setCurrentMethod(response.data.methods[0]);
+                        });
+                    }
+                    setMethodFlag(1);
+                    setLine(responseData.data.point);
+                    newPoints = responseData.data.point;
+                    // console.log(
+                    //     "samplingTime  responseData.data :",
+                    //     responseData.data
+                    // );
+                    setSamplingTime(responseData.data.sampling_time);
+                    // console.log(
+                    //     "samplingTime responseData.data.sampling_time :",
+                    //     responseData.data.sampling_time
+                    // );
+                    // console.log("samplingTime ------------:", samplingTime);
                 }
-                setMethodFlag(1);
-                setLine(responseData.data.point);
-                newPoints = responseData.data.point;
-                // console.log(
-                //     "samplingTime  responseData.data :",
-                //     responseData.data
-                // );
-                setSamplingTime(responseData.data.sampling_time);
-                // console.log(
-                //     "samplingTime responseData.data.sampling_time :",
-                //     responseData.data.sampling_time
-                // );
-                // console.log("samplingTime ------------:", samplingTime);
             }
         });
         getStatus();
@@ -760,6 +774,7 @@ const App = () => {
                 callback={handleStatus}
                 newPoints={newPoints}
                 dynamicHeight={dimensions.height}
+                handleOffline={handleOffline}
             />
             <Layout>
                 <div

@@ -56,13 +56,13 @@
   border-top: 45px solid #9b0000 !important; */
   border: 5px solid !important;
             /*边框颜色：上 右 下 左 （从上边框开始 顺时针方向）*/
-  border-color: transparent transparent #9b0000 transparent !important;
+  border-color: transparent transparent #9b0000 transparent ;
   /*为了兼容IE6，所有设置为透明（transparent）的边，需要设置为dashed；有颜色的边设置为solid*/
-  border-style: dashed dashed solid dashed !important;
+  border-style: dashed dashed solid dashed ;
   /* box-shadow: 0px 0 0 0 #c1212100, 0 0px 0 0 #f0f0f0, 0  #f0f0f0,  0 #f0f0f0 inset, 0  #f0f0f0 inset !important; */
-  box-shadow:none !important;
+  box-shadow:none ;
   /* border-radius: 30% !important; */
-  padding:0px !important
+  padding:0px 
 }
 
 

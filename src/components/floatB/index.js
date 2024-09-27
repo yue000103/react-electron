@@ -18,6 +18,7 @@ import {
     Card,
     Statistic,
     Tooltip,
+    Switch,
 } from "antd";
 
 const App = (props) => {
@@ -54,7 +55,7 @@ const App = (props) => {
         setOpenWarning(true);
     };
     const onCloseWarning = () => {
-        setAlarmData([])
+        setAlarmData([]);
         setOpenWarning(false);
     };
 
@@ -122,26 +123,24 @@ const App = (props) => {
             children: (
                 <Row gutter={16}>
                     <Col span={24}>
-                        <Card title="设备状态参数" bordered={false}>
-                            <Row gutter={16}>
-                                <Col span={12}>
-                                    <Card title="喷淋泵">
-                                        <FormStatus
-                                            data={spray}
-                                            runningFlag={runningFlag}
-                                        ></FormStatus>
-                                    </Card>
-                                </Col>
-                                <Col span={12}>
-                                    <Card title="蠕动泵">
-                                        <FormStatus
-                                            data={peristaltic}
-                                            runningFlag={runningFlag}
-                                        ></FormStatus>
-                                    </Card>
-                                </Col>
-                            </Row>
-                        </Card>
+                        <Row gutter={16}>
+                            <Col span={12}>
+                                <Card title="喷淋泵">
+                                    <FormStatus
+                                        data={spray}
+                                        runningFlag={runningFlag}
+                                    ></FormStatus>
+                                </Card>
+                            </Col>
+                            <Col span={12}>
+                                <Card title="蠕动泵">
+                                    <FormStatus
+                                        data={peristaltic}
+                                        runningFlag={runningFlag}
+                                    ></FormStatus>
+                                </Card>
+                            </Col>
+                        </Row>
 
                         <Card title="控制器时间" bordered={false}>
                             {/* 控制器时间内容 */}
@@ -205,10 +204,13 @@ const App = (props) => {
         console.log("handleStatus status :", status);
         props.callback(type, status);
     };
+    const handleOffline = (checked) => {
+        console.log("0927   checked 11111111", checked);
+        props.handleOffline(checked);
+    };
     useEffect(() => {
-        
         if (props.warningCode !== warningCode) {
-            showDrawerWarning()
+            showDrawerWarning();
 
             setWarningCode(props.warningCode);
             setAlarmData((prevData) => [
@@ -296,30 +298,37 @@ const App = (props) => {
             >
                 <Row>
                     <Col span={24}>
-                        <Card title="设备状态参数" bordered={false}>
-                            <Row gutter={16}>
-                                <Col span={12}>
-                                    <Card title="喷淋泵">
-                                        <FormStatus
-                                            type={"spray"}
-                                            data={spray}
-                                            runningFlag={runningFlag}
-                                            callback={handleStatus}
-                                        ></FormStatus>
-                                    </Card>
-                                </Col>
-                                <Col span={12}>
-                                    <Card title="蠕动泵">
-                                        <FormStatus
-                                            type={"peristaltic"}
-                                            data={peristaltic}
-                                            runningFlag={runningFlag}
-                                            callback={handleStatus}
-                                        ></FormStatus>
-                                    </Card>
-                                </Col>
-                            </Row>
-                        </Card>
+                        {"是否开启离线测试："}
+                        <Switch
+                            checkedChildren="开启"
+                            unCheckedChildren="关闭"
+                            defaultChecked
+                            onChange={handleOffline}
+                        />
+                    </Col>
+                    <Col span={24}>
+                        <Row gutter={16}>
+                            <Col span={12}>
+                                <Card title="喷淋泵">
+                                    <FormStatus
+                                        type={"spray"}
+                                        data={spray}
+                                        runningFlag={runningFlag}
+                                        callback={handleStatus}
+                                    ></FormStatus>
+                                </Card>
+                            </Col>
+                            <Col span={12}>
+                                <Card title="蠕动泵">
+                                    <FormStatus
+                                        type={"peristaltic"}
+                                        data={peristaltic}
+                                        runningFlag={runningFlag}
+                                        callback={handleStatus}
+                                    ></FormStatus>
+                                </Card>
+                            </Col>
+                        </Row>
 
                         <Card title="梯度曲线设置" bordered={false}>
                             {/* 控制器时间内容 */}

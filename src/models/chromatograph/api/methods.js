@@ -36,7 +36,6 @@ export function startEquilibration() {
     return axiosInstance.post("/method/equilibration");
 }
 
-
 export function uploadMethodFlag() {
     return axiosInstance.post("/method/upload/flag");
 }

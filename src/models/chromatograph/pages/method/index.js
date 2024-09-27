@@ -49,6 +49,7 @@ import {
 } from "../../api/methods";
 
 import p7ConBg from "@/assets/image/image.png"; // 使用 import 引入图片
+import res from "antd-mobile-icons/es/AaOutline";
 
 const text = "您确定要删除这个方法？";
 let num = [
@@ -139,13 +140,15 @@ const Method = () => {
 
     const getStatus = () => {
         getDeviceStatus().then((responseData) => {
-            console.log("getStatus   responseData :", responseData.data);
-            let status = JSON.parse(responseData.data.pump_status);
-            console.log("getStatus status :", status);
-            setPumpStatus(status);
-            console.log("getStatus pumpStatus :", pumpStatus);
-            setSpray(status.spray);
-            setPeristalic(status.peristaltic);
+            if (!responseData.error) {
+                console.log("getStatus   responseData :", responseData.data);
+                let status = JSON.parse(responseData.data.pump_status);
+                console.log("getStatus status :", status);
+                setPumpStatus(status);
+                console.log("getStatus pumpStatus :", pumpStatus);
+                setSpray(status.spray);
+                setPeristalic(status.peristaltic);
+            }
         });
     };
 
@@ -600,7 +603,12 @@ const Method = () => {
         // formPump.resetFields();
         formElution.resetFields();
         setPressure([]);
-        setCurrentMethodOperate({ method_id: 0 }).then((response) => {});
+        setCurrentMethodOperate({ method_id: 0 }).then((response) => {
+            if (response.error) {
+                console.error("设置当前方法失败:", response.error.message);
+                // 可以在这里添加用户提示，比如使用 Toast 组件
+            }
+        });
     };
     useEffect(() => {
         const methodId = localStorage.getItem("methodId");
@@ -608,14 +616,18 @@ const Method = () => {
         if (methodId) {
             setCurrentMethodOperate({ method_id: Number(methodId) }).then(
                 (response) => {
-                    console.log("response :", response.data.methods);
-                    applyMethod(response.data.methods[0]);
+                    if (!response.error) {
+                        applyMethod(response.data.methods[0]);
+                    }
                 }
             );
         }
         getAllMethodOperate().then((response) => {
-            console.log("response :", response.data);
-            setMethodDatas(response.data.methods);
+            // console.log("response :", response.data);
+            if (!response.error) {
+                setMethodDatas(response.data.methods);
+                // 可以在这里添加用户提示
+            }
         });
     }, []);
 

@@ -38,7 +38,7 @@
         "start:chromatograph": "cross-env MODEL_NAME=chromatograph DISABLE_ESLINT_PLUGIN=true react-app-rewired start",
         "build:chromatograph": "cross-env MODEL_NAME=chromatograph DISABLE_ESLINT_PLUGIN=true react-app-rewired build",
         "start:AI4Fiber": "cross-env MODEL_NAME=AI4Fiber react-app-rewired start",
-        "build:AI4Fiber": "cross-env MODEL_NAME=AI4Fiber react-app-rewired build",
+        "build:AI4Fiber": "cross-env MODEL_NAME=AI4Fiber DISABLE_ESLINT_PLUGIN=true react-app-rewired build",
         "start:swagger-ui": "cross-env MODEL_NAME=swagger-ui react-app-rewired start",
         "build:swagger-ui": "cross-env MODEL_NAME=swagger-ui react-app-rewired build"
     },
