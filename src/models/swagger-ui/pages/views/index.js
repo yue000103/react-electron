@@ -59,32 +59,32 @@ const App = () => {
             );
     }, []);
 
-    useEffect(() => {
-        const socket = io("http://192.168.5.185:5000/swagger/", {
-            transports: ["polling", "websocket"], // 确保使用的传输方式与后端匹配
-            withCredentials: true, // 如果CORS需要发送凭据
-        }); // 确保 URL 正确
-        socket.on("connect", () => {
-            console.log("Connected to WebSocket server");
-        });
+    // useEffect(() => {
+    //     const socket = io("http://192.168.5.185:5000/", {
+    //         transports: ["polling", "websocket"], // 确保使用的传输方式与后端匹配
+    //         withCredentials: true, // 如果CORS需要发送凭据
+    //     }); // 确保 URL 正确
+    //     socket.on("connect", () => {
+    //         console.log("Connected to WebSocket server");
+    //     });
 
-        socket.on("current_vacuum_value", (current_vacuum_value) => {
-            // console.log("current_vacuum_value", current_vacuum_value);
-            setVacuumValue(current_vacuum_value.current_vacuum_value);
-        });
-        socket.on("current_temperature", (current_temperature) => {
-            // console.log("current_temperature", current_temperature);
-            setTemperature(current_temperature.current_temperature);
-        });
-        socket.on("signal", (signal) => {
-            // console.log("signal", signal);
-            setTemperature(signal.signal);
-        });
-        socket.on("temperature_list", (temperature_list) => {
-            // console.log("temperature_list", temperature_list);
-            setProgressPoints(temperature_list.temperature_list);
-        });
-    });
+    //     socket.on("current_vacuum_value", (current_vacuum_value) => {
+    //         // console.log("current_vacuum_value", current_vacuum_value);
+    //         setVacuumValue(current_vacuum_value.current_vacuum_value);
+    //     });
+    //     socket.on("current_temperature", (current_temperature) => {
+    //         // console.log("current_temperature", current_temperature);
+    //         setTemperature(current_temperature.current_temperature);
+    //     });
+    //     socket.on("signal", (signal) => {
+    //         // console.log("signal", signal);
+    //         setTemperature(signal.signal);
+    //     });
+    //     socket.on("temperature_list", (temperature_list) => {
+    //         // console.log("temperature_list", temperature_list);
+    //         setProgressPoints(temperature_list.temperature_list);
+    //     });
+    // });
 
     const handleInputChange = (path, paramName, value) => {
         // console.log("paramName :", paramName);
@@ -215,7 +215,7 @@ const App = () => {
         if (method === "get") {
             config = {
                 method: method,
-                url: `http://192.168.137.1:5000${dynamicPath}`,
+                url: `http://192.168.5.185:5000${dynamicPath}`,
                 // url: `http://localhost:5000${dynamicPath}`,
 
                 params: params, // 剩余查询参数
@@ -224,7 +224,7 @@ const App = () => {
         } else {
             config = {
                 method: method,
-                url: `http://192.168.137.1:5000${dynamicPath}`,
+                url: `http://192.168.5.185:5000${dynamicPath}`,
                 // url: `http://localhost:5000${dynamicPath}`,
 
                 headers: { "Content-Type": "application/json" },

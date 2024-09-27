@@ -40,7 +40,7 @@
         "start:AI4Fiber": "cross-env MODEL_NAME=AI4Fiber react-app-rewired start",
         "build:AI4Fiber": "cross-env MODEL_NAME=AI4Fiber DISABLE_ESLINT_PLUGIN=true react-app-rewired build",
         "start:swagger-ui": "cross-env MODEL_NAME=swagger-ui react-app-rewired start",
-        "build:swagger-ui": "cross-env MODEL_NAME=swagger-ui react-app-rewired build"
+        "build:swagger-ui": "cross-env MODEL_NAME=swagger-ui DISABLE_ESLINT_PLUGIN=true react-app-rewired build"
     },
     "eslintConfig": {
         "extends": [
