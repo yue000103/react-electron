@@ -13,6 +13,7 @@ import { DownloadOutlined } from "@ant-design/icons";
 
 import "./index.css";
 import data1 from "@/assets/image/data1.png";
+import { getHistory } from "@/models/chromatograph/api/experiment";
 
 const props = {
     name: "file",
@@ -44,6 +45,9 @@ const App = () => {
         console.log("Clicked cancel button");
         setOpenReset(false);
     };
+    getHistory().then((res) => {
+        console.log("1011  res", res);
+    });
     const items = [
         {
             key: "1",

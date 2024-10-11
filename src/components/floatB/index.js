@@ -34,6 +34,7 @@ const App = (props) => {
     const [spray, setSpray] = useState({});
     const [runningFlag, setRunningFlag] = useState(0);
     const [dynamicHeight, setDynamicHeight] = useState();
+    const [isChecked, setIsChecked] = useState(false);
 
     const showDrawerNotice = () => {
         setSize("large");
@@ -206,6 +207,8 @@ const App = (props) => {
     };
     const handleOffline = (checked) => {
         console.log("0927   checked 11111111", checked);
+        setIsChecked(checked);
+
         props.handleOffline(checked);
     };
     useEffect(() => {
@@ -302,7 +305,7 @@ const App = (props) => {
                         <Switch
                             checkedChildren="开启"
                             unCheckedChildren="关闭"
-                            defaultChecked
+                            checked={isChecked}
                             onChange={handleOffline}
                         />
                     </Col>

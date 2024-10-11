@@ -89,7 +89,7 @@
 
 .anchor-item {
   width: 2.5rem;
-  height: 22.5rem; /* 设置每个锚点的高度 */
+  height: 10.5rem; /* 设置每个锚点的高度 */
   background-color: #f0f0f0; /* 设置背景颜色 */
   display: flex;
   align-items: center;
