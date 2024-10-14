@@ -269,7 +269,10 @@ const App = (props) => {
                     />
                 </Tooltip>
                 <Tooltip placement="left" title="刷新">
-                    <FloatButton icon={<SyncOutlined />} />
+                    <FloatButton
+                        icon={<SyncOutlined />}
+                        onClick={() => window.location.reload()}
+                    />
                 </Tooltip>
 
                 {/* <FloatButton.BackTop visibilityHeight={0} /> */}

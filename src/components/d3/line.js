@@ -74,7 +74,7 @@ const renderCurve = (
         [newMinValue, newMaxValue] = [newMaxValue, newMinValue];
     }
     if (Math.abs(newMaxValue - newMinValue) < 1e-3) {
-        newMinValue -= 2;  // 给值一个小的偏移量
+        newMinValue -= 2; // 给值一个小的偏移量
         newMaxValue += 2;
     }
 
@@ -312,7 +312,7 @@ const renderLine = (
     lineFlag,
     xScale
 ) => {
-    // console.log("8672 linePointChange :", linePointChange);
+    console.log("1012 linePointChange :", linePointChange);
     const parsedData = linePointChange?.map((d) => ({
         ...d,
         time: parseTime(d.time),
@@ -523,16 +523,16 @@ const LineChart = (props) => {
         x: 0,
         y: 0,
     });
-    console.log(
-        "0923 -------------------------------zoomState--------------------------------- :"
-    );
+    // console.log(
+    //     "0923 -------------------------------zoomState--------------------------------- :"
+    // );
 
     data = props.data;
     // console.log("data.props", props.data);
     num = props.num;
     let cleanFlag = props.clean_flag;
     linePoint = props.linePoint;
-    // console.log("props :", props);
+    // console.log("1012 props :", props);
     // if (linePointChange.length == 0) {
     //     setlinePointChange(linePoint);
     // }
@@ -554,8 +554,7 @@ const LineChart = (props) => {
             setlinePointChange(linePoint);
         }
     }, [linePointChange, linePoint]); // 依赖项数组包含需要触发effect的变量
-
-    useEffect(() => {
+    const setHight = () => {
         const headerDiv = document.querySelector(".headerStyle");
         const resizeObserver = new ResizeObserver((entries) => {
             const { width, height } = entries[0].contentRect;
@@ -565,17 +564,25 @@ const LineChart = (props) => {
         return () => {
             resizeObserver.disconnect();
         };
+    };
+    useEffect(() => {
+        setHight();
     }, []);
 
     const drawChart = useCallback(() => {
+        console.log("1014   dimensions", dimensions);
+
         if (!data || dimensions.width === 0 || dimensions.height === 0) return;
+        console.log("1014    props---------------1");
 
         const svg = d3.select(svgRef.current);
         svg.selectAll("*").remove();
+        console.log("1014    props---------------2");
 
         const width = dimensions.width;
         const height = dimensions.height;
         const margin = { top: 0, right: width, bottom: 10, left: 0 };
+        console.log("1014    props---------------3");
 
         const zoomedWidth = width * zoomState.k;
 
@@ -585,6 +592,7 @@ const LineChart = (props) => {
         const gContent = svg
             .append("g")
             .attr("transform", `translate(${margin.left}, ${margin.top})`);
+        console.log("1014    props---------------4");
 
         const zoomedXScale = d3
             .scaleTime()
@@ -593,6 +601,7 @@ const LineChart = (props) => {
                 zoomState.x - realPosition,
                 width * zoomState.k + zoomState.x - realPosition,
             ]);
+        console.log("1014    props---------------5");
 
         // 绘制曲线
         renderCurve(
@@ -632,9 +641,17 @@ const LineChart = (props) => {
         realPosition,
         scrollPosition,
     ]);
+
     useEffect(() => {
+        console.log("1014    props", props);
+
         drawChart();
-    }, [drawChart]);
+    }, [drawChart, props.samplingTime]);
+    // useEffect(() => {
+    //     if (svgRef.current) {
+    //         drawChart();
+    //     }
+    // }, [drawChart, props.data, props.num, props.linePoint, props.samplingTime]);
 
     const handleOk = () => {
         const newX = parseTimeString(inputValues.time);
