@@ -3,3 +3,9 @@
   height: 44rem;
   overflow: auto;
 }
+/* .ant-collapse-content-active {
+  transition: max-height 5s ease-out, opacity 5s ease-out;
+} */
+ .headerStyle{
+  margin-top: 1rem;
+ }

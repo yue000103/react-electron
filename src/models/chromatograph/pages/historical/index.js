@@ -10,9 +10,11 @@ import {
     Modal,
     message,
     Spin,
+    Input
 } from "antd";
 import { DownloadOutlined } from "@ant-design/icons";
-import Line from "@components/d3/line";
+// import Line from "@components/d3/line";
+import Line from "./hisLine.js"
 
 import "./index.css";
 import data1 from "@/assets/image/data1.png";
@@ -39,18 +41,27 @@ const props = {
         }
     },
 };
-let pumpList = [];
+let pumpListMethod = [];
 let smiles = null;
+
 const App = () => {
     const [historyData, setHistoryData] = useState([]);
     const [openReset, setOpenReset] = useState(false);
     const [currentMethod, setCurrentMethod] = useState(null);
     const [activeKey, setActiveKey] = useState(null);
     const fileName = `data_${Date.now()}.txt`; // 生成文件名称
-    const savePath = "E:/experiment_data"; // 默认保存路径（可以根据实际情况设置）
+    const savePath = "F:/experiment_data"; // 默认保存路径（可以根据实际情况设置）
     const [spinning, setSpinning] = React.useState(false);
     const [messageApi, contextHolder] = message.useMessage();
-    const [lineKey, setLineKey] = useState(0);
+    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+    const [curveData,setCurveData] =  useState([])
+    const [verticalData,setVerticalData] = useState([])
+    const [pumpList,setPumpList] = useState([])
+    const [endStart,setEndStart] = useState(5)
+    const [folderName, setFolderName] = useState('');  // 新增状态保存文件夹名称
+    const [folderNameOnly,setFolderNameOnly] = useState('')
+
+
 
     useEffect(() => {
         fetchHistoryData();
@@ -77,11 +88,10 @@ const App = () => {
     };
     const handleDownload = (item) => {
         setSpinning(true);
-
         console.log("1012  item", item);
         downloadFile({
-            fileName: fileName,
-            savePath: savePath,
+            fileName: item.saveTime,
+            folderName: folderNameOnly,
             data: item,
         }).then((res) => {
             if (res.status == 200) {
@@ -94,6 +104,25 @@ const App = () => {
             console.log(res);
         });
     };
+    const handleDownloadAll = () => {
+        setSpinning(true);
+
+        downloadFile({
+            folderName: folderName || 'E:/default_folder',  // 使用输入的文件夹名称
+        }).then((res) => {
+            setSpinning(false);
+            messageApi.open({
+                type: "success",
+                content: "所有文件已成功导出！",
+            });
+        }).catch(() => {
+            setSpinning(false);
+            messageApi.open({
+                type: "error",
+                content: "导出失败！",
+            });
+        });
+    };
 
     const setOpen = () => {
         setOpenReset(true);
@@ -102,16 +131,16 @@ const App = () => {
         console.log("1012  currentMethod  methodId", methodId);
         try {
             const method = await getMethodById({ method_id: methodId });
-            pumpList = method.data["pumpList"];
+            pumpListMethod = method.data["pumpList"];
             smiles = method.data["smiles"];
             console.log("1012 method  currentMethod", method.data["pumpList"]);
-            console.log("1012 pumpList  currentMethod", pumpList);
+            console.log("1012 pumpList  currentMethod", pumpListMethod);
 
             setCurrentMethod(method.data);
             // console.log("1012    currentMethod", currentMethod);
         } catch (error) {
             console.error("获取方法数据时出错:", error);
-            message.error("获取方法数据失败");
+            // message.error("获取方法数据失败");
         }
     };
 
@@ -132,7 +161,7 @@ const App = () => {
             // 根据 operate 的值映射对应的中文描述
             const operateMapping = {
                 abandon: "废弃",
-                save: "保留",
+                retain: "保留",
                 clean: "清洗",
             };
 
@@ -150,11 +179,36 @@ const App = () => {
         });
     };
     const handleUpdatePoint = () => {};
-
     const handleCollapseChange = (key) => {
-        setActiveKey(key);
-        if (key !== activeKey && historyData[key]) {
-            checkMethod(historyData[key].methodId);
+
+        if (key !== activeKey) {
+            setActiveKey(key);  // 切换激活的面板
+            if (historyData[key]) {
+                checkMethod(historyData[key].methodId);
+                setHightWidth();  // 获取面板的尺寸
+                // 确保当前面板的 `data` 被更新
+                const newData = historyData[key].curveData || [];
+                const verticalDatas = historyData[key].verticalData || [];
+                const pumpLists = historyData[key].pumpList || [];
+                const end = historyData[key].endStart || 5
+                setCurveData(newData);  // 设置当前折叠面板的 `Line` 数据
+                setVerticalData(verticalDatas)
+                setPumpList(pumpLists)
+                setEndStart(end)
+            }
+        } else {
+            setActiveKey(null);  // 当相同的面板再次被点击时，关闭面板并注销组件
+        }
+    };
+    const setHightWidth = () => {
+        const headerDiv = document.querySelector(".data-main");
+        if (headerDiv && headerDiv.offsetWidth > 0 && headerDiv.offsetHeight > 0) {
+            // 使用 requestAnimationFrame 确保 DOM 完全渲染之后获取尺寸
+            requestAnimationFrame(() => {
+                const { width, height } = headerDiv.getBoundingClientRect();
+                console.log("1014    requestAnimationFrame", width,height);
+                setDimensions({ width, height });
+            });
         }
     };
 
@@ -168,7 +222,8 @@ const App = () => {
                 extra={
                     <div>
                         <Row>
-                            <Col span={11}>
+                            <Col span={2}></Col>
+                            <Col span={6}>
                                 <Button
                                     type="primary"
                                     onClick={() => setOpen()}
@@ -176,8 +231,16 @@ const App = () => {
                                     方法
                                 </Button>
                             </Col>
+                            <Col span={10}>
+                                <Input
+                                    placeholder="输入文件夹名称"
+                                    value={folderNameOnly}
+                                    onChange={(e) => setFolderNameOnly(e.target.value)}
+                                />
+                            </Col>
                             <Col span={4}>
-                                <Button onClick={() => handleDownload(item)}>
+                                <Button onClick={() => handleDownload(item)}                                     type="primary"
+                                >
                                     下载文件
                                 </Button>
                             </Col>
@@ -217,28 +280,17 @@ const App = () => {
                           ))
                         : "无警报"}
                 </Descriptions.Item>
-                <Descriptions.Item label="实验数据22">
-                    {item.curveData.length || "未知"}
-                </Descriptions.Item>
-                <Descriptions.Item label="实验数据33">
-                    {item.pumpList.length || "未知"}
-                </Descriptions.Item>
-                <Descriptions.Item label="实验数据44">
-                    {item.verticalData.length || "未知"}
-                </Descriptions.Item>
+                
 
-                <Descriptions.Item label="实验数据" span={5}>
+                <Descriptions.Item label="实验数据" span={5} >
                     {item.curveData && item.curveData.length > 0 ? (
                         <Line
-                            data={item.curveData}
-                            num={item.verticalData}
+                            data={curveData}
+                            num={verticalData}
                             selected_tubes={[]}
-                            clean_flag={0}
-                            linePoint={item.pumpList}
-                            lineFlag={1}
-                            callback={handleUpdatePoint}
-                            samplingTime={item.endStart}
-                            lineLoading={false}
+                            linePoint={pumpList}
+                            samplingTime={endStart}
+                            dimensions={dimensions}
                         />
                     ) : null}
                 </Descriptions.Item>
@@ -253,8 +305,23 @@ const App = () => {
     return (
         <div className="data-main">
             {contextHolder}
-
-            <Collapse accordion items={items} onChange={handleCollapseChange} />
+            <div>
+            <Row>
+                <Col span={8}>
+                    <Input
+                        placeholder="请输入文件夹名称"
+                        value={folderName}
+                        onChange={(e) => setFolderName(e.target.value)}
+                    />
+                </Col>
+                <Col span={4}>
+                    <Button type="primary" onClick={handleDownloadAll}>
+                        导出所有文件
+                    </Button>
+                </Col>
+            </Row>
+            </div>
+            <Collapse accordion items={items} onChange={handleCollapseChange} className="headerStyle" />
             <Modal
                 open={openReset}
                 onOk={handleOkReset}
@@ -422,6 +489,7 @@ const App = () => {
                     </div>
                 )}
             </Modal>
+            
             <Spin spinning={spinning} fullscreen tip="正在下载......" />
         </div>
     );
