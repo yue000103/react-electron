@@ -8,6 +8,10 @@ export function postDeviceStatus(data) {
     return axiosInstance.post("/status/get_device_status", data);
 }
 
-export function postInitDevice(data) {
+export function postInitDeviceMode(data) {
     return axiosInstance.post("/status/init_device", data);
+}
+
+export function getInitDeviceMode() {
+    return axiosInstance.get("/status/init_device");
 }

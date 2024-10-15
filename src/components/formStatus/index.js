@@ -3,22 +3,17 @@ import { Form, Input, Button, Switch, Row, Col } from "antd";
 
 // 翻译映射
 const labelTranslations = {
-    spray_output: "喷雾输出",
-    spray_ready_time: "喷雾准备时间",
-    spray_start_time: "喷雾开始时间",
-    spray_stop_time: "喷雾停止时间",
-    spray_switch: "喷雾开关",
-    peristaltic_Error: "蠕动泵错误",
-    peristaltic_acceleration: "蠕动泵加速度",
-    peristaltic_deceleration: "蠕动泵减速度",
-    peristaltic_enable: "蠕动泵使能",
-    peristaltic_errorid: "蠕动泵错误ID",
-    peristaltic_running: "蠕动泵运行",
-    peristaltic_velocity: "蠕动泵速度",
+    mode_switch: "是否启动手动模式",
+    spray_switch: "清洗开关",
+    peristaltic_switch: "排液开关",
+    drain_speed: "排液速度",
+    spray_speed: "清洗速度",
+    spray_time: "清洗次数",
+    tube_id: "试管id",
 };
 
 const CustomForm = ({ type, data, flag, callback }) => {
-    console.log("data----------- :", data);
+    console.log("1015  data----------- :", data);
     const [form] = Form.useForm();
 
     // 表单提交处理函数
@@ -45,6 +40,8 @@ const CustomForm = ({ type, data, flag, callback }) => {
     // 渲染表单项
     const renderFormItems = () => {
         return Object.keys(data).map((key) => {
+            console.log("1015   key", key);
+
             const label = labelTranslations[key] || key;
             const value = data[key];
             console.log("value :", value);
@@ -103,11 +100,14 @@ const CustomForm = ({ type, data, flag, callback }) => {
 
 // 示例数据和 flag
 const data = {
-    spray_output: 0,
-    spray_ready_time: 1000,
-    spray_start_time: 2000,
-    spray_stop_time: 1000,
+    mode_switch: 0,
+
     spray_switch: 0,
+    peristaltic_switch: 0,
+    drain_speed: 1000,
+    spray_speed: 2000,
+    spray_time: 1000,
+    tube_id: 10,
 };
 const flag = 0; // 可以修改，设为1时禁用
 
@@ -118,7 +118,13 @@ const App = (props, callback) => {
     // const [flag, setFlag] = useState(props.runningFlag);
     const [type, setType] = useState(props.type);
     return (
-        <div>
+        <div
+            style={{
+                marginTop: "2rem",
+                marginLeft: "2rem",
+                marginRight: "2rem",
+            }}
+        >
             <CustomForm
                 type={type}
                 data={data}

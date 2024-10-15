@@ -304,7 +304,7 @@ const App = (props) => {
             >
                 <Row>
                     <Col span={24}>
-                        {"是否开启离线测试："}
+                        {"是否开启离线模式："}
                         <Switch
                             checkedChildren="开启"
                             unCheckedChildren="关闭"

@@ -20,7 +20,7 @@ import "./index.css";
 import Line from "@components/d3/line";
 import Buttons from "@components/button/index";
 import TaskList from "@components/taskList/index";
-import FloatB from "@components/floatB/index";
+import FloatB from "../systemSet/index";
 import TaskTable from "@components/table/taskTable";
 import TaskStep from "@components/steps/taskStep";
 import DynamicCard from "@components/cards/dynamicCard";
@@ -44,11 +44,6 @@ import {
 
 import { saveExperimentData, executionMethod } from "../../api/experiment";
 
-import {
-    getDeviceStatus,
-    postDeviceStatus,
-    postInitDevice,
-} from "../../api/status";
 import { uploadMethodFlag } from "../../api/methods";
 import { timeout } from "d3";
 import moment from "moment";
@@ -122,7 +117,6 @@ const App = () => {
     const [warningCode, setWaringCode] = useState(0);
     const [errorCodes, setErrorCode] = useState([]);
 
-    const [pumpStatus, setPumpStatus] = useState({});
     const [samplingTime, setSamplingTime] = useState(10);
 
     const [uploadFlag, setUploadFlag] = useState(0);
@@ -668,33 +662,6 @@ const App = () => {
         // }
     };
 
-    const getStatus = () => {
-        getDeviceStatus().then((responseData) => {
-            if (!responseData.error) {
-                let status = JSON.parse(responseData.data.pump_status);
-                // console.log("getStatus status :", status);
-                setPumpStatus(status);
-                // console.log("getStatus pumpStatus :", pumpStatus);
-            }
-        });
-    };
-
-    const handleStatus = (type, status) => {
-        console.log("handleStatus ---status :", status);
-        console.log("handleStatus ---type :", type);
-        postDeviceStatus({ type: type, status: JSON.stringify(status) }).then(
-            (response) => {}
-        );
-    };
-
-    const handleOffline = (checked) => {
-        postInitDevice({ use_mock: checked }).then((response) => {
-            if (!response.error) {
-            }
-        });
-        console.log("0927   checked", checked);
-    };
-
     useEffect(() => {
         uploadMethodFlag().then((responsedata) => {
             if (!responsedata.error) {
@@ -737,7 +704,6 @@ const App = () => {
                 }
             }
         });
-        getStatus();
         const handleResize = () => {
             setDimensions({
                 width: window.innerWidth,
@@ -758,11 +724,6 @@ const App = () => {
             window.removeEventListener("resize", handleResize);
             resizeObserver.disconnect();
         };
-        // let rubePoint = [];
-        // for (let i = 1; i < 41; i++) {
-        //     rubePoint.push({ timeStart: "", timeEnd: "", tube: i });
-        // }
-        // setNum((prevNum) => rubePoint); // 更新状态
     }, [samplingTime, uploadFlag]);
 
     return (
@@ -770,12 +731,9 @@ const App = () => {
             {contextHolder}
             <FloatB
                 warningCode={warningCode}
-                pumpStatus={pumpStatus}
-                callback={handleStatus}
-                newPoints={newPoints}
                 dynamicHeight={dimensions.height}
-                handleOffline={handleOffline}
             />
+
             <Layout>
                 <div
                     style={{

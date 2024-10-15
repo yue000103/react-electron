@@ -10,11 +10,11 @@ import {
     Modal,
     message,
     Spin,
-    Input
+    Input,
 } from "antd";
 import { DownloadOutlined } from "@ant-design/icons";
 // import Line from "@components/d3/line";
-import Line from "./hisLine.js"
+import Line from "./hisLine.js";
 
 import "./index.css";
 import data1 from "@/assets/image/data1.png";
@@ -54,14 +54,12 @@ const App = () => {
     const [spinning, setSpinning] = React.useState(false);
     const [messageApi, contextHolder] = message.useMessage();
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-    const [curveData,setCurveData] =  useState([])
-    const [verticalData,setVerticalData] = useState([])
-    const [pumpList,setPumpList] = useState([])
-    const [endStart,setEndStart] = useState(5)
-    const [folderName, setFolderName] = useState('');  // 新增状态保存文件夹名称
-    const [folderNameOnly,setFolderNameOnly] = useState('')
-
-
+    const [curveData, setCurveData] = useState([]);
+    const [verticalData, setVerticalData] = useState([]);
+    const [pumpList, setPumpList] = useState([]);
+    const [endStart, setEndStart] = useState(5);
+    const [folderName, setFolderName] = useState(""); // 新增状态保存文件夹名称
+    const [folderNameOnly, setFolderNameOnly] = useState("");
 
     useEffect(() => {
         fetchHistoryData();
@@ -108,20 +106,22 @@ const App = () => {
         setSpinning(true);
 
         downloadFile({
-            folderName: folderName || 'E:/default_folder',  // 使用输入的文件夹名称
-        }).then((res) => {
-            setSpinning(false);
-            messageApi.open({
-                type: "success",
-                content: "所有文件已成功导出！",
+            folderName: folderName || "E:/default_folder", // 使用输入的文件夹名称
+        })
+            .then((res) => {
+                setSpinning(false);
+                messageApi.open({
+                    type: "success",
+                    content: "所有文件已成功导出！",
+                });
+            })
+            .catch(() => {
+                setSpinning(false);
+                messageApi.open({
+                    type: "error",
+                    content: "导出失败！",
+                });
             });
-        }).catch(() => {
-            setSpinning(false);
-            messageApi.open({
-                type: "error",
-                content: "导出失败！",
-            });
-        });
     };
 
     const setOpen = () => {
@@ -153,10 +153,7 @@ const App = () => {
     };
 
     const renderTaskList = (taskList) => {
-        // console.log("1012-------taskList", taskList);
-
         if (!Array.isArray(taskList)) return null;
-
         return taskList.map((task, index) => {
             // 根据 operate 的值映射对应的中文描述
             const operateMapping = {
@@ -164,10 +161,8 @@ const App = () => {
                 retain: "保留",
                 clean: "清洗",
             };
-
             const operateDescription =
                 operateMapping[task.operate] || "未知操作"; // 如果没有匹配，返回“未知操作”
-
             return (
                 <p key={index}>
                     {operateDescription}:{" "}
@@ -178,35 +173,37 @@ const App = () => {
             );
         });
     };
-    const handleUpdatePoint = () => {};
     const handleCollapseChange = (key) => {
-
         if (key !== activeKey) {
-            setActiveKey(key);  // 切换激活的面板
+            setActiveKey(key); // 切换激活的面板
             if (historyData[key]) {
                 checkMethod(historyData[key].methodId);
-                setHightWidth();  // 获取面板的尺寸
+                setHightWidth(); // 获取面板的尺寸
                 // 确保当前面板的 `data` 被更新
                 const newData = historyData[key].curveData || [];
                 const verticalDatas = historyData[key].verticalData || [];
                 const pumpLists = historyData[key].pumpList || [];
-                const end = historyData[key].endStart || 5
-                setCurveData(newData);  // 设置当前折叠面板的 `Line` 数据
-                setVerticalData(verticalDatas)
-                setPumpList(pumpLists)
-                setEndStart(end)
+                const end = historyData[key].endStart || 5;
+                setCurveData(newData); // 设置当前折叠面板的 `Line` 数据
+                setVerticalData(verticalDatas);
+                setPumpList(pumpLists);
+                setEndStart(end);
             }
         } else {
-            setActiveKey(null);  // 当相同的面板再次被点击时，关闭面板并注销组件
+            setActiveKey(null); // 当相同的面板再次被点击时，关闭面板并注销组件
         }
     };
     const setHightWidth = () => {
         const headerDiv = document.querySelector(".data-main");
-        if (headerDiv && headerDiv.offsetWidth > 0 && headerDiv.offsetHeight > 0) {
+        if (
+            headerDiv &&
+            headerDiv.offsetWidth > 0 &&
+            headerDiv.offsetHeight > 0
+        ) {
             // 使用 requestAnimationFrame 确保 DOM 完全渲染之后获取尺寸
             requestAnimationFrame(() => {
                 const { width, height } = headerDiv.getBoundingClientRect();
-                console.log("1014    requestAnimationFrame", width,height);
+                console.log("1014    requestAnimationFrame", width, height);
                 setDimensions({ width, height });
             });
         }
@@ -235,11 +232,15 @@ const App = () => {
                                 <Input
                                     placeholder="输入文件夹名称"
                                     value={folderNameOnly}
-                                    onChange={(e) => setFolderNameOnly(e.target.value)}
+                                    onChange={(e) =>
+                                        setFolderNameOnly(e.target.value)
+                                    }
                                 />
                             </Col>
                             <Col span={4}>
-                                <Button onClick={() => handleDownload(item)}                                     type="primary"
+                                <Button
+                                    onClick={() => handleDownload(item)}
+                                    type="primary"
                                 >
                                     下载文件
                                 </Button>
@@ -280,9 +281,8 @@ const App = () => {
                           ))
                         : "无警报"}
                 </Descriptions.Item>
-                
 
-                <Descriptions.Item label="实验数据" span={5} >
+                <Descriptions.Item label="实验数据" span={5}>
                     {item.curveData && item.curveData.length > 0 ? (
                         <Line
                             data={curveData}
@@ -306,22 +306,27 @@ const App = () => {
         <div className="data-main">
             {contextHolder}
             <div>
-            <Row>
-                <Col span={8}>
-                    <Input
-                        placeholder="请输入文件夹名称"
-                        value={folderName}
-                        onChange={(e) => setFolderName(e.target.value)}
-                    />
-                </Col>
-                <Col span={4}>
-                    <Button type="primary" onClick={handleDownloadAll}>
-                        导出所有文件
-                    </Button>
-                </Col>
-            </Row>
+                <Row>
+                    <Col span={8}>
+                        <Input
+                            placeholder="请输入文件夹名称"
+                            value={folderName}
+                            onChange={(e) => setFolderName(e.target.value)}
+                        />
+                    </Col>
+                    <Col span={4}>
+                        <Button type="primary" onClick={handleDownloadAll}>
+                            导出所有文件
+                        </Button>
+                    </Col>
+                </Row>
             </div>
-            <Collapse accordion items={items} onChange={handleCollapseChange} className="headerStyle" />
+            <Collapse
+                accordion
+                items={items}
+                onChange={handleCollapseChange}
+                className="headerStyle"
+            />
             <Modal
                 open={openReset}
                 onOk={handleOkReset}
@@ -489,7 +494,7 @@ const App = () => {
                     </div>
                 )}
             </Modal>
-            
+
             <Spin spinning={spinning} fullscreen tip="正在下载......" />
         </div>
     );
