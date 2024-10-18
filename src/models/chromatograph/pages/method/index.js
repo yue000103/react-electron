@@ -686,12 +686,12 @@ const Method = () => {
                                     </Form.Item>
                                 </Col>
                                 <Col span={6}>
-                                    <Form.Item
+                                    {/* <Form.Item
                                         label="试管容积/ml"
                                         name="tubeVolume"
                                     >
                                         <Input />
-                                    </Form.Item>
+                                    </Form.Item> */}
                                 </Col>
                             </Row>
                             <Row gutter={16}>

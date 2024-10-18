@@ -3,8 +3,8 @@ import { Card } from "antd";
 import "./dynamicCard.css";
 import p7ConBg from "@/assets/image/image.png"; // 使用 import 引入图片
 
-const DynamicCard = ({ children, position, title, height }) => {
-    console.log("0912   position", position);
+const DynamicCard = ({ children, position, title, height, isScrollable }) => {
+    console.log("1016   isScrollable", isScrollable);
 
     return (
         <Card

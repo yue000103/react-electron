@@ -31,3 +31,7 @@ export function terminateEluentLine() {
 export function initLine(data) {
     return axiosInstance.post("/eluent_curve/init", data);
 }
+
+export function UpdateModuleListAPI(data) {
+    return axiosInstance.post("/eluent_curve/update_module_list", data);
+}

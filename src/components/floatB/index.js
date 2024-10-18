@@ -304,13 +304,13 @@ const App = (props) => {
             >
                 <Row>
                     <Col span={24}>
-                        {"是否开启离线模式："}
+                        {/* {"是否开启离线模式："}
                         <Switch
                             checkedChildren="开启"
                             unCheckedChildren="关闭"
                             checked={isChecked}
                             onChange={handleOffline}
-                        />
+                        /> */}
                     </Col>
                     <Col span={24}>
                         <Row gutter={16}>

@@ -16,3 +16,6 @@
 .grid path {
   stroke-width: 0;
 }
+.point {
+  cursor: pointer; /* 鼠标移动到点上时变成小手 */
+}

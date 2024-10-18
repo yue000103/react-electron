@@ -32,14 +32,30 @@ import {
 } from "antd";
 import DynamicLine from "./dynamicLine";
 import DynamicForm from "@components/form/dynamicForm";
+import parameterDescription from "../config/parameter_description.json";
 
 import {
     getDeviceStatus,
     postDeviceStatus,
     postInitDeviceMode,
     getInitDeviceMode,
+    getCodes,
 } from "../../api/status";
 import { type } from "@testing-library/user-event/dist/type";
+const translateType = (codeInfo) => {
+    // 提取 parameter 数组
+    const parameters = parameterDescription.error_type.parameter;
+    const descriptions = parameterDescription.error_type.description;
+
+    // 找到 codeInfo.type 对应的索引
+    const index = parameters.indexOf(codeInfo.type);
+
+    // 如果找到对应索引，则返回对应的中文描述，否则返回 "未知类型"
+    return index !== -1 ? descriptions[index] : "未知类型";
+
+    // 匹配并返回对应的中文描述
+};
+
 const App = (props) => {
     console.log("props :", props);
 
@@ -61,6 +77,24 @@ const App = (props) => {
     const [samplingTime, setSamplingTime] = useState(10);
     const [pressure, setPressure] = useState([]);
     const [flowRateDefault, setFlowRateDefault] = useState(0);
+    const [codes, setCodes] = useState([]);
+
+    const [alarmData, setAlarmData] = useState([
+        {
+            key: "1",
+            level: 3,
+            type: "火灾报警",
+            time: "2024-07-19 12:00:00",
+            description: "火灾报警描述",
+        },
+        {
+            key: "2",
+            level: 4,
+            type: "烟雾报警",
+            time: "2024-07-19 12:30:00",
+            description: "烟雾报警描述",
+        },
+    ]);
 
     const showDrawerNotice = () => {
         setSize("large");
@@ -73,6 +107,9 @@ const App = (props) => {
     const onCloseNotice = () => {
         setOpenNotice(false);
     };
+    const cleanAllCode = () => {
+        setAlarmData([]);
+    };
     const showDrawerWarning = () => {
         setSize("large");
         setLoading(true);
@@ -82,7 +119,7 @@ const App = (props) => {
         setOpenWarning(true);
     };
     const onCloseWarning = () => {
-        setAlarmData([]);
+        // setAlarmData([]);
         setOpenWarning(false);
     };
 
@@ -100,9 +137,9 @@ const App = (props) => {
 
     const alarmColumns = [
         {
-            title: "等级",
-            dataIndex: "level",
-            key: "level",
+            title: "序号",
+            dataIndex: "key",
+            key: "key",
         },
         {
             title: "报警类型",
@@ -123,35 +160,18 @@ const App = (props) => {
             title: "操作",
             key: "action",
             render: (text, record) => (
-                <Button
-                    type="primary"
-                    onClick={() => handleButtonClick(record)}
-                >
+                <Button type="primary" onClick={() => cleanCurrentCode(record)}>
                     清除
                 </Button>
             ), // 在最后一列添加按钮
         },
     ];
-    const handleButtonClick = (record) => {
+    const cleanCurrentCode = (record) => {
         // 按钮点击事件处理逻辑
-        console.log(`你点击了: ${record.type}`);
+        setAlarmData((prevData) =>
+            prevData.filter((item) => item.key !== record.key)
+        );
     };
-    const [alarmData, setAlarmData] = useState([
-        {
-            key: "1",
-            level: 3,
-            type: "火灾报警",
-            time: "2024-07-19 12:00:00",
-            description: "火灾报警描述",
-        },
-        {
-            key: "2",
-            level: 4,
-            type: "烟雾报警",
-            time: "2024-07-19 12:30:00",
-            description: "烟雾报警描述",
-        },
-    ]);
 
     const handleStatus = (type, status) => {
         console.log("handleStatus type :", type);
@@ -217,21 +237,37 @@ const App = (props) => {
         }, 1000);
     };
     useEffect(() => {
-        if (props.warningCode !== warningCode) {
+        if (props.warningCode.code !== warningCode) {
             showDrawerWarning();
+            setWarningCode(props.warningCode.code);
+            // 获取 codes 数据
+            getCodes()
+                .then((res) => {
+                    console.log("1017 res", res);
+                    const codes = res.data.codes;
 
-            setWarningCode(props.warningCode);
-            setAlarmData((prevData) => [
-                ...prevData,
-                {
-                    key: (prevData.length + 1).toString(),
-                    level: 1, // 这里可以根据 warningCode 的不同情况设置不同的 level
-                    type: "新报警",
-                    time: new Date().toISOString(),
-                    description: `报警代码: ${props.warningCode}`,
-                },
-            ]);
-            console.log("warningCode", warningCode);
+                    // 根据 props.warningCode 查找对应的 message 和 type
+                    const codeInfo = codes.find(
+                        (code) => code.code_id === props.warningCode.code
+                    );
+                    if (codeInfo) {
+                        setAlarmData((prevData) => [
+                            ...prevData,
+                            {
+                                key: (prevData.length + 1).toString(),
+                                type: translateType(codeInfo), // 从获取的 codes 中获取 type
+                                time: props.warningCode.time,
+                                description: `报警代码: ${props.warningCode.code}`, // 添加 message
+                            },
+                        ]);
+                        console.log("warningCode", warningCode);
+                    } else {
+                        console.warn(`未找到报警代码: ${props.warningCode}`);
+                    }
+                })
+                .catch((error) => {
+                    console.error("获取 codes 失败:", error);
+                });
         }
         setDynamicHeight(props.dynamicHeight);
         // console.log("8672 -----------   dynamicHeight :", dynamicHeight);
@@ -300,7 +336,7 @@ const App = (props) => {
                 <div>
                     <Row style={{ marginBottom: 16 }}>
                         <Col>
-                            <Button type="primary" onClick={handleButtonClick}>
+                            <Button type="primary" onClick={cleanAllCode}>
                                 清除所有警报
                             </Button>
                         </Col>
@@ -350,7 +386,7 @@ const App = (props) => {
                             <Card title="梯度曲线设置" bordered={false}>
                                 <div className="pressure">
                                     <Row>
-                                        <Col span={20}>
+                                        <Col span={24}>
                                             <div className="dynamic-line">
                                                 <DynamicLine
                                                     widthLine={widthLine}
@@ -360,17 +396,37 @@ const App = (props) => {
                                                 ></DynamicLine>
                                             </div>
                                         </Col>
-                                        <Col span={3}>
-                                            <div style={{ marginTop: "5rem" }}>
+                                        {/* <Col span={3}>
+                                            <div style={{ marginTop: "4rem" }}>
                                                 <Input placeholder="时间"></Input>
                                                 <Input
                                                     placeholder="泵B速度"
                                                     style={{
-                                                        marginTop: "2rem",
+                                                        marginTop: "1rem",
                                                     }}
                                                 ></Input>
+                                                <Input
+                                                    placeholder="总流速"
+                                                    style={{
+                                                        marginTop: "1rem",
+                                                    }}
+                                                ></Input>
+                                                <Button
+                                                    style={{
+                                                        marginTop: "1rem",
+                                                    }}
+                                                >
+                                                    添加
+                                                </Button>
+                                                <Button
+                                                    style={{
+                                                        marginTop: "1rem",
+                                                    }}
+                                                >
+                                                    删除
+                                                </Button>
                                             </div>
-                                        </Col>
+                                        </Col> */}
                                     </Row>
                                 </div>{" "}
                             </Card>

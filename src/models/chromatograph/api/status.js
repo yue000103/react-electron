@@ -15,3 +15,11 @@ export function postInitDeviceMode(data) {
 export function getInitDeviceMode() {
     return axiosInstance.get("/status/init_device");
 }
+
+export function getCodes() {
+    return axiosInstance.get("/status/get_codes");
+}
+
+export function getAllTubes() {
+    return axiosInstance.get("/status/get_all_tubes");
+}

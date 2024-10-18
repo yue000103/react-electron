@@ -18,7 +18,7 @@ import {
 } from "antd";
 import "./index.css";
 import Line from "@components/d3/line";
-import Buttons from "@components/button/index";
+import Buttons from "./buttonTube";
 import TaskList from "@components/taskList/index";
 import FloatB from "../systemSet/index";
 import TaskTable from "@components/table/taskTable";
@@ -35,6 +35,7 @@ import {
     startEluentLine,
     terminateEluentLine,
     initLine,
+    UpdateModuleListAPI,
 } from "../../api/eluent_curve";
 import {
     startEquilibration,
@@ -99,7 +100,6 @@ const App = () => {
     const [loading, setLoading] = React.useState(false);
     const [lineLoading, setLineLoading] = useState(false);
 
-    // const [nums, setNum] = useState(num);
     const [data, setData] = useState([]);
     const [num, setNum] = useState([]);
     //清洗标志，当0时，所有试管禁用，当1时，所有试管可以选择。
@@ -109,12 +109,13 @@ const App = () => {
     //  1 可以修改折线 0 不可以修改折线
     const [lineFlag, setLineFlag] = useState(1);
     const [selected_reverse, setSelectedReverse] = useState([]);
+    const isScrollable = true;
 
     const [linePoint, setLine] = useState([]);
 
     const [messageApi, contextHolder] = message.useMessage();
 
-    const [warningCode, setWaringCode] = useState(0);
+    const [warningCode, setWarningCode] = useState({ code: 0, time: "" });
     const [errorCodes, setErrorCode] = useState([]);
 
     const [samplingTime, setSamplingTime] = useState(10);
@@ -132,6 +133,12 @@ const App = () => {
     // const [taskId, setTaskId] = useState();
     let taskId = -1;
     const [currentTubeId, setCurrentTubeId] = useState();
+    const [currentTube, setCurrentTube] = useState({
+        time_start: "",
+        time_end: "",
+        module_index: -1,
+        tube_index: -1,
+    });
     const [currentTaskId, setCurrentTaskId] = useState();
     const [excuteTaskFlag, setExcuteTaskFlag] = useState();
 
@@ -139,7 +146,10 @@ const App = () => {
     const [confirmLoading, setConfirmLoading] = useState(false);
     const [minTubeId, setMinTubeId] = useState(1); // 默认最小值
     const [maxTubeId, setMaxTubeId] = useState(10); // 默认最大值
+    const [minModuleId, setMinModuleId] = useState(1); // 默认最小值
+    const [maxModuleId, setMaxModuleId] = useState(10); // 默认最大值
     const [inputTubeId, setInputTubeId] = useState(minTubeId); // 默认值为 minTubeId
+    const [inputModuleId, setInputModuleId] = useState(minModuleId);
 
     const [openReset, setOpenReset] = useState(false);
 
@@ -163,7 +173,7 @@ const App = () => {
         });
 
         socket.on("new_point", (data) => {
-            console.log("data", data);
+            console.log("1017   new_point", data);
             setNum((prevNum) => [...prevNum, data.point]);
         });
 
@@ -183,10 +193,13 @@ const App = () => {
             // }
         });
         socket.on("warning", (responseData) => {
-            setWaringCode(responseData.code);
-            console.log("responseData---------------------", responseData.code);
+            setWarningCode({
+                code: responseData.code,
+                time: responseData.time,
+            });
             console.log("warningCode :", warningCode);
             setErrorCode((pre) => [...pre, responseData.code]);
+            terminate();
         });
         socket.on("current_tube", (responseData) => {
             console.log(
@@ -213,6 +226,9 @@ const App = () => {
                 clearData();
                 flagStartTime = 0;
             }
+        });
+        socket.on("module_flag", (responseData) => {
+            console.log("1017   responseData :", responseData);
         });
         socket.on("disconnect", () => {
             console.log("Disconnected from WebSocket server");
@@ -271,7 +287,6 @@ const App = () => {
             console.log("0926 --------- nums", nums);
             return nums;
         });
-        // console.log(nums);
     };
 
     const retainFlags = () => {
@@ -435,6 +450,7 @@ const App = () => {
                 initLine({
                     detector_zeroing: values.detector_zeroing,
                     tube_id: values.tube_id,
+                    module_id: values.module_id,
                     pump_pressure_zeroing: values.pump_pressure_zeroing,
                 }).then(() => {});
             })
@@ -858,75 +874,93 @@ const App = () => {
                                 height={"300px"}
                             >
                                 {/* <div className="buttonTitle">试管列表</div> */}
+                                {num.length >= 0 ? (
+                                    <div className="buttonTubeFun">
+                                        <Buttons
+                                            num={num}
+                                            callback={handleReceiveFlags}
+                                            selected={selected_reverse}
+                                            clean_flag={clean_flag}
+                                            isScrollable={isScrollable}
+                                        ></Buttons>
 
-                                <div className="buttonTube">
-                                    {/* {num.length > 0 ? (
-                                    <Buttons
-                                        num={num}
-                                        selected={selected_reverse}
-                                        callback={handleReceiveFlags}
-                                    ></Buttons>
+                                        <Row>
+                                            <Col span={6}>
+                                                <Button
+                                                    type="primary"
+                                                    className={`button button1`} // 使用模板字符串
+                                                    onClick={() =>
+                                                        retainFlags()
+                                                    }
+                                                    disabled={
+                                                        clean_flag === 1 ||
+                                                        methodFlag === 0
+                                                            ? true
+                                                            : false
+                                                    }
+                                                >
+                                                    保留
+                                                </Button>
+                                            </Col>
+                                            <Col span={6}>
+                                                {" "}
+                                                <Button
+                                                    type="primary"
+                                                    className={`button button2`}
+                                                    onClick={() =>
+                                                        abandonFlags()
+                                                    }
+                                                    disabled={
+                                                        methodFlag === 0
+                                                            ? true
+                                                            : false
+                                                    }
+                                                >
+                                                    废弃
+                                                </Button>
+                                            </Col>
+
+                                            <Col span={6}>
+                                                {" "}
+                                                <Button
+                                                    type="primary"
+                                                    onClick={() =>
+                                                        reverseFlags()
+                                                    }
+                                                    className={`button button3`}
+                                                    disabled={
+                                                        methodFlag === 0
+                                                            ? true
+                                                            : false
+                                                    }
+                                                >
+                                                    反转
+                                                </Button>
+                                            </Col>
+
+                                            <Col span={6}>
+                                                <Button
+                                                    type="primary"
+                                                    onClick={() => clean()}
+                                                    className={`button button4`}
+                                                    disabled={
+                                                        methodFlag === 0
+                                                            ? true
+                                                            : false
+                                                    }
+                                                >
+                                                    清洗
+                                                </Button>
+                                            </Col>
+                                        </Row>
+                                    </div>
                                 ) : (
                                     <Empty
                                         image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                        imageStyle={{ height: 0 }}
+                                        imageStyle={{ height: 100 }}
                                         description={<span>暂无试管</span>}
                                     />
-                                )} */}
-                                    <Buttons
-                                        num={num}
-                                        callback={handleReceiveFlags}
-                                        selected={selected_reverse}
-                                        clean_flag={clean_flag}
-                                    ></Buttons>
-                                </div>
-
-                                <div className="buttonTubeFun">
-                                    <Button
-                                        type="primary"
-                                        className={`button button1`} // 使用模板字符串
-                                        onClick={() => retainFlags()}
-                                        disabled={
-                                            clean_flag === 1 || methodFlag === 0
-                                                ? true
-                                                : false
-                                        }
-                                    >
-                                        保留
-                                    </Button>
-                                    <Button
-                                        type="primary"
-                                        className={`button button2`}
-                                        onClick={() => abandonFlags()}
-                                        disabled={
-                                            methodFlag === 0 ? true : false
-                                        }
-                                    >
-                                        废弃
-                                    </Button>
-                                    <Button
-                                        type="primary"
-                                        onClick={() => reverseFlags()}
-                                        className={`button button3`}
-                                        disabled={
-                                            methodFlag === 0 ? true : false
-                                        }
-                                    >
-                                        反转
-                                    </Button>
-                                    <Button
-                                        type="primary"
-                                        onClick={() => clean()}
-                                        className={`button button4`}
-                                        disabled={
-                                            methodFlag === 0 ? true : false
-                                        }
-                                    >
-                                        清洗
-                                    </Button>
-                                </div>
-                                {/* </Col>
-                                </Row> */}
+                                )}
                             </DynamicCard>
                         </Sider>
 
@@ -988,6 +1022,7 @@ const App = () => {
                     }}
                     initialValues={{
                         tube_id: inputTubeId,
+                        module_id: inputModuleId,
                         detector_zeroing: true,
                         pump_pressure_zeroing: true,
                     }}
@@ -1005,6 +1040,15 @@ const App = () => {
                         valuePropName="checked"
                     >
                         <Checkbox></Checkbox>
+                    </Form.Item>
+                    <Form.Item label="开始模块：">
+                        <Form.Item name="module_id" noStyle>
+                            <InputNumber
+                                min={minModuleId}
+                                max={maxModuleId}
+                                onChange={handleInputNumberChange}
+                            />
+                        </Form.Item>
                     </Form.Item>
                     <Form.Item label="开始试管：">
                         <Form.Item name="tube_id" noStyle>

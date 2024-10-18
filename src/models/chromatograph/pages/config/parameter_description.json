@@ -1,0 +1,30 @@
+{
+    "valve_type": {
+        "description": "阀的种类包括：单向阀、多向阀",
+        "parameter": ["single", "multi"]
+    },
+    "status": {
+        "description": "阀的状态包括：正常、堵塞",
+        "parameter": ["normal", "blockage"]
+    },
+    "direction": {
+        "description": "阀的方向包括：上面、下面(相对于试管)",
+        "parameter": ["top", "under"]
+    },
+    "device_type": {
+        "description": "设备的类型包括：收集、清洗、保留、废弃",
+        "parameter": ["collect", "clean", "retain", "abandon"]
+    },
+    "error_type": {
+        "description": ["信息级", "警告级", "错误级", "严重级"],
+        "parameter": ["Information", "Warning", "Error", "Critical"]
+    },
+    "error_message": {
+        "description": "警报描述：信息级、泵堵塞、模块用尽、严重级",
+        "parameter": [
+            "Detector Exception。",
+            "Pump Blockage",
+            "The module has been exhausted."
+        ]
+    }
+}

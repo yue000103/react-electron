@@ -44,12 +44,8 @@
 
 }
 .buttonTubeFun{
-  /* background-color: #fdfdfd !important; */
-  display: flex;
-  flex-direction: row; 
-  align-items: center; 
-  justify-content: center; 
-  height: 4rem;
+  max-height: 250px;
+  overflow-y: auto;
 }
 
 .bottomStyle{
@@ -72,8 +68,9 @@
 .buttonTube{
   /* border-top: 1px dotted #9b0000; */
   /* border-radius: 10px;  */
-  border-width: 20%; 
-  height: 100%;
+  /* border-width: 20%;  */
+  /* height: 100%; */
+ 
 }
 
 .taskStyle{

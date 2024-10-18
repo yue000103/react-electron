@@ -1,41 +1,44 @@
 import React, { useState, useEffect } from "react";
 import { Button, Flex, Row, Col, Card, Rate } from "antd";
-import "./index.css";
+import "./buttonTube.css";
 import color from "@components/color/index";
+import { getAllTubes } from "../../api/status";
 import { convertLegacyProps } from "antd/es/button";
 import { HeartOutlined, AliyunOutlined } from "@ant-design/icons";
+import { UpdateModuleListAPI } from "../../api/eluent_curve";
+import { linkHorizontal } from "d3";
 
 let select_tube = [];
-const groupsOrigin = [
-    [
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 1 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 2 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 3 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 4 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 5 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 6 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 7 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 8 },
-    ],
-    [
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 1 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 2 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 3 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 4 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 5 },
-    ],
-    [
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 1 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 2 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 3 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 4 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 5 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 6 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 7 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 8 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 9 },
-        { time_start: "00:00:00", time_end: "00:00:00", tube: 10 },
-    ],
+let groupsOrigin = [
+    // [
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 1 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 2 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 3 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 4 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 5 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 6 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 7 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 8 },
+    // ],
+    // [
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 1 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 2 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 3 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 4 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 5 },
+    // ],
+    // [
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 1 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 2 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 3 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 4 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 5 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 6 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 7 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 8 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 9 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 10 },
+    // ],
 ];
 
 const desc = [
@@ -53,12 +56,14 @@ const desc = [
 const tubeV = 120;
 
 // 新的数据格式：将mode和tubeValues合并为一个数组的元组
-const modeAndValues = [
-    [1, 50],
-    [2, 80],
-    [3, 30],
-    [4, 80],
+let modeAndValues = [
+    // [1, 50],
+    // [2, 80],
+    // [3, 30],
+    // [4, 80],
 ];
+let moduleList = [];
+let flag = 0;
 
 const App = ({ num, callback, selected, clean_flag }) => {
     const _ = require("lodash");
@@ -69,13 +74,48 @@ const App = ({ num, callback, selected, clean_flag }) => {
     const [groupsOfTen, setGroupsOfTen] = useState(_.cloneDeep(groupsOrigin));
     const [value, setValue] = useState([]);
 
-    const handleRateChange = (newValue, index) => {
+    const handleRateChange = (newValue, index, subGroup) => {
         const updatedValue = [...value];
         updatedValue[index] = newValue;
         setValue(updatedValue);
+
+        const dividedArray = updatedValue.map((u) => u / 5);
+        moduleList = dividedArray
+            .map((value, index) => {
+                // 计算 liquid_volume，使用乘法
+                const liquidVolume =
+                    value !== null ? value * modeAndValues[index][1] : 0; // 处理空值
+
+                // 根据 subGroup 长度生成 tube_id
+                const tubeId = Array.from(
+                    { length: groupsOrigin[index].length },
+                    (_, i) => i + 1
+                );
+                return {
+                    module_id: modeAndValues[index][0],
+                    liquid_volume: liquidVolume,
+                    tube_id: tubeId,
+                };
+            })
+            .filter((item) => item.liquid_volume > 0);
+        UpdateModuleListAPI({ module_list: moduleList }).then(() => {});
+        console.log("1018  updatedValue", updatedValue, dividedArray, subGroup);
+        console.log("1018  moduleList", moduleList);
     };
+    if (flag == 0) {
+        getAllTubes().then((res) => {
+            if (!res.error) {
+                console.log("1018   res", res);
+                groupsOrigin = res.data.groups_origin;
+                modeAndValues = res.data.mode_volume;
+            }
+        });
+        flag += 1;
+    }
 
     useEffect(() => {
+        console.log("1018  num", num);
+
         setCleanFlag(clean_flag);
         if (num.length == 0) {
             setGroupsOfTen(_.cloneDeep(groupsOrigin));
@@ -158,6 +198,14 @@ const App = ({ num, callback, selected, clean_flag }) => {
         }
         totalIndex += groupWithinArray * 5;
         totalIndex += itemIndex;
+        console.log(
+            "groupIndex,arrayIndex,groupWithinArray, itemIndex",
+            groupIndex,
+            arrayIndex,
+            groupWithinArray,
+            itemIndex
+        );
+
         return totalIndex;
     }
 
@@ -187,25 +235,49 @@ const App = ({ num, callback, selected, clean_flag }) => {
                                                 const isSelected =
                                                     selectedFlag.includes(tube);
 
-                                                num.map((n) => {
-                                                    groupsOfTen[n.module_index][
-                                                        n.tube_index
-                                                    ].time_start = n.time_start;
-                                                    groupsOfTen[n.module_index][
-                                                        n.tube_index
-                                                    ].time_end = n.time_end;
-                                                });
+                                                // num.map((n) => {
+                                                //     groupsOfTen[n.module_index][
+                                                //         n.tube_index
+                                                //     ].time_start = n.time_start;
+                                                //     groupsOfTen[n.module_index][
+                                                //         n.tube_index
+                                                //     ].time_end = n.time_end;
+                                                // });
+                                                let isNum = false;
 
-                                                let tube_index =
-                                                    findObjectIndex(
-                                                        groupIndex,
-                                                        subGroupIndex,
-                                                        rowIndex,
-                                                        index
-                                                    );
-                                                let isNum =
-                                                    num[tube_index] !==
-                                                    undefined;
+                                                num.forEach((n) => {
+                                                    const {
+                                                        module_index,
+                                                        tube_index,
+                                                        time_start,
+                                                        time_end,
+                                                    } = n;
+                                                    let module =
+                                                        groupIndex * 2 +
+                                                        subGroupIndex;
+                                                    let tube =
+                                                        rowIndex * 5 + index;
+                                                    // 确保 module_index 和 tube_index 在 groupsOfTen 中有效
+                                                    if (
+                                                        module_index === module
+                                                    ) {
+                                                        groupsOfTen[
+                                                            module_index
+                                                        ][
+                                                            tube_index
+                                                        ].time_start =
+                                                            time_start;
+                                                        groupsOfTen[
+                                                            module_index
+                                                        ][tube_index].time_end =
+                                                            time_end;
+                                                        if (
+                                                            tube_index === tube
+                                                        ) {
+                                                            isNum = true;
+                                                        }
+                                                    }
+                                                });
 
                                                 let buttonColorStyle = {};
                                                 let buttonDisabled = false;
@@ -272,7 +344,8 @@ const App = ({ num, callback, selected, clean_flag }) => {
                                         calculateIndex(
                                             groupIndex,
                                             subGroupIndex
-                                        )
+                                        ),
+                                        subGroup
                                     )
                                 }
                                 value={
