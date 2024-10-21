@@ -295,7 +295,7 @@ const Method = () => {
         localStorage.setItem("methodId", item.methodId);
         setCurrentMethodOperate({ method_id: Number(item.methodId) }).then(
             (response) => {
-                console.log("response :", response.data.methods);
+                // console.log("response :", response.data.methods);
                 // applyMethod(response.data.methods[0]);
             }
         );

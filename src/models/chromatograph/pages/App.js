@@ -16,7 +16,7 @@ function App() {
     const { Link } = Anchor;
 
     const [showExperiment, setShowExperiment] = useState(false);
-    const [showMethod, setShowMethod] = useState(false);
+    const [showMethod, setShowMethod] = useState(true);
     const [showHistorical, setShowHistorical] = useState(false);
 
     const handleClick = (e, link) => {

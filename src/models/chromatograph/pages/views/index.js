@@ -95,6 +95,7 @@ let startTime;
 let flagStartTime = 1; //  1 实验从头开始  0 实验继续
 let newPoints = [];
 let counter = 0;
+let selectTubeTransfer = [];
 
 const App = () => {
     const [loading, setLoading] = React.useState(false);
@@ -102,6 +103,13 @@ const App = () => {
 
     const [data, setData] = useState([]);
     const [num, setNum] = useState([]);
+    const [groupsOrigin, setGroupsOrigin] = useState([]);
+
+    const [selectedAllTubes, setSelectedAllTubes] = useState([]);
+    const [selectedTask, setSelectedTask] = useState([]);
+    //反转标志，当0时，没有反转，当1时，已反选。
+
+    const [reverseFlag, setReverseFlag] = useState(0);
     //清洗标志，当0时，所有试管禁用，当1时，所有试管可以选择。
     const [clean_flag, setCleanFlag] = useState(0);
     //方法，当0时，所有按钮禁用，当1时，所有按钮可以正常使用。
@@ -214,7 +222,7 @@ const App = () => {
         socket.on("device_free", (responseData) => {
             console.log(
                 "0911   device_free---------------------",
-                responseData.flag
+                responseData
             );
             setExcuteTaskFlag(responseData.flag);
             setCurrentTaskId(responseData.task_id);
@@ -245,10 +253,18 @@ const App = () => {
 
         console.log("0913 -------8------ excutedTubes", excutedTubes);
     }, [currentTubeId, currentTaskId, excuteTaskFlag]);
-    const handleReceiveFlags = (select_tubes, numss) => {
-        console.log("Receive flags", select_tubes);
+    const handleReceiveFlags = (select_tubes, groupsOrigin) => {
+        console.log("1021  Receive select_tubes", select_tubes);
+        console.log("1021-2  Receive groupsOrigin", groupsOrigin);
+
         selected_tube = select_tubes;
-        setNum(numss);
+        if (groupsOrigin?.length === 0) {
+            setGroupsOrigin((prevNum) => {
+                return groupsOrigin;
+            });
+        }
+
+        // setNum(numss);
     };
     // 把梯度曲线的value值转换成数字
     const convertNonNumericValues = (data) => {
@@ -277,32 +293,122 @@ const App = () => {
 
     // flag  ： undefined  没被选中   true  保留  false  废弃
     const process_data_flag = (selected_tube, flag, color) => {
-        setNum((prevNum) => {
-            let nums = prevNum.map((item) => {
-                if (selected_tube.includes(item.tube)) {
-                    return { ...item, flag: flag, color: color };
-                }
-                return item;
+        let newTubes = [
+            ...selected_tube.map((tube) => ({
+                ...tube,
+                flag: flag,
+                color: color,
+            })),
+        ];
+        selectTubeTransfer = [...selectTubeTransfer, ...newTubes];
+        if (clean_flag !== 1) {
+            setSelectedAllTubes((prevNum) => {
+                return processGroupedData(selectTubeTransfer);
             });
-            console.log("0926 --------- nums", nums);
-            return nums;
+        }
+        setSelectedTask((prevNum) => {
+            return processGroupedData(selectTubeTransfer);
         });
     };
 
-    const retainFlags = () => {
-        if (selected_tube.length > 0) {
-            // let consecutiveArrays = splitConsecutive(selected_tube);
-            let consecutiveArrays = [selected_tube];
+    const processGroupedData = (data) => {
+        const groupedData = {};
 
-            consecutiveArrays.forEach((arr) => {
-                let new_tube = { tube_list: arr, status: "retain" };
-                selected_tubes.push(new_tube);
+        data.forEach((item) => {
+            const key = `${item.module_index}-${item.flag}-${item.color}-${item.status}`;
+
+            if (!groupedData[key]) {
+                groupedData[key] = [];
+            }
+
+            groupedData[key].push(item.tube_index);
+        });
+
+        let result = [];
+
+        Object.keys(groupedData).forEach((key) => {
+            console.log("1021   key", key);
+
+            const [module_index, flag, color, status] = key.split("-");
+            const tube_indices = groupedData[key].sort((a, b) => a - b);
+
+            let current_list = [tube_indices[0]];
+
+            for (let i = 1; i < tube_indices.length; i++) {
+                if (tube_indices[i] === tube_indices[i - 1] + 1) {
+                    current_list.push(tube_indices[i]);
+                } else {
+                    result.push({
+                        module_index: parseInt(module_index),
+                        tube_index_list: current_list,
+                        status: status,
+                        flag: flag === "true",
+                        color: color,
+                    });
+                    current_list = [tube_indices[i]];
+                }
+            }
+
+            // Add the last sequence
+            result.push({
+                module_index: parseInt(module_index),
+                tube_index_list: current_list,
+                status: status,
+                flag: flag === "true",
+                color: color,
             });
+        });
+
+        result.forEach((entry) => {
+            let tube_indices = entry.tube_index_list;
+            let module_index = entry.module_index;
+
+            // 根据 tube_index_list 获取最小和最大的 tube_index
+            let min_tube_index = Math.min(...tube_indices);
+            let max_tube_index = Math.max(...tube_indices);
+
+            // 查找对应的时间
+            let start_time = null;
+            let end_time = null;
+            // console.log("1021  ---------num", num);
+
+            // 遍历 groupsOrigin 查找对应 module_index 和 tube_index 的时间
+            num.forEach((group) => {
+                if (group.module_index === module_index) {
+                    if (group.tube_index === min_tube_index) {
+                        start_time = group.time_start;
+                    }
+                    if (group.tube_index === max_tube_index) {
+                        end_time = group.time_end;
+                    }
+                }
+            });
+
+            // 将找到的时间插入 entry
+            if (start_time && end_time) {
+                entry.time_start = start_time;
+                entry.time_end = end_time;
+            }
+        });
+
+        return result;
+    };
+    const retainFlags = () => {
+        console.log("1021   selected_tube", selected_tube);
+
+        if (selected_tube.length > 0) {
+            let consecutiveArrays = selected_tube.map((tube) => ({
+                ...tube,
+                status: "retain",
+            }));
+            selected_tube = consecutiveArrays;
             if (colorNum != 9) {
                 colorNum++;
             } else {
                 colorNum = 1;
             }
+            console.log("1021   selected_tube   ---2", selected_tube);
+
             process_data_flag(selected_tube, true, colorMap[colorNum]);
             setSelectedReverse([]);
             selected_tube = [];
@@ -313,15 +419,12 @@ const App = () => {
 
     const abandonFlags = () => {
         if (selected_tube.length > 0) {
-            // let consecutiveArrays = splitConsecutive(selected_tube);
-            let consecutiveArrays = [selected_tube];
+            let consecutiveArrays = selected_tube.map((tube) => ({
+                ...tube,
+                status: "retain",
+            }));
+            selected_tube = consecutiveArrays;
 
-            consecutiveArrays.forEach((arr) => {
-                let new_tube = { tube_list: arr, status: "abandon" };
-                selected_tubes.push(new_tube);
-            });
-            // let new_tube = { tube_list: selected_tube, status: "discard" };
-            // selected_tubes = [...selected_tubes, new_tube];
             let color = 0;
 
             process_data_flag(selected_tube, false, colorMap[color]);
@@ -333,30 +436,28 @@ const App = () => {
     };
 
     const reverseFlags = () => {
-        console.log("selected_tubes :", selected_tubes);
-        console.log("num :", num);
-        if (selected_tubes.length > 0) {
-            setSelectedReverse(selected_tubes);
-            let reverse = num.filter(
-                (item) =>
-                    !selected_reverse.includes(item.tube) &&
-                    item.flag == undefined
-            );
-            let selected_r = reverse.map((item) => item.tube);
-            setSelectedReverse(selected_r);
-            selected_tube = selected_r;
-            console.log("selected_tube :", selected_tube);
-            setNum(selected_reverse);
-            handleReceiveFlags(selected_reverse, num);
-        } else {
-            error();
-        }
+        // console.log("1021-2 selected_tube :", selected_tube);
+        // console.log("1021-2  groupsOrigin :", groupsOrigin);
+        setReverseFlag(1);
+        // if (selected_tubes.length > 0) {
+        //     setSelectedReverse(selected_tubes);
+        //     let reverse = num.filter(
+        //         (item) =>
+        //             !selected_reverse.includes(item.tube) &&
+        //             item.flag == undefined
+        //     );
+        //     let selected_r = reverse.map((item) => item.tube);
+        //     setSelectedReverse(selected_r);
+        //     selected_tube = selected_r;
+        //     console.log("selected_tube :", selected_tube);
+        //     setNum(selected_reverse);
+        //     handleReceiveFlags(selected_reverse, num);
+        // } else {
+        //     error();
+        // }
     };
 
     const updateExcuteTask = (tubeId, taskId) => {
-        console.log("9011     taskId :", taskId);
-        console.log("9011     tubeId :", tubeId);
-        console.log("0913  5   excutedTubes", excutedTubes);
         if (excutedTubesUpdateFlag) {
             excuted_tubes = excutedTubes;
             excuted_tubes.forEach((task) => {
@@ -365,13 +466,9 @@ const App = () => {
                     task.flag = excute_status;
                 }
             });
-            console.log("0913  3   excuted_tubes", excuted_tubes);
-            console.log("0913  4   excutedTubes", excutedTubes);
-
             setExcutedTubes((prevExcutedTubes) => {
                 return [...excuted_tubes];
             });
-            console.log("0911  2   excutedTubes", excutedTubes);
         }
     };
 
@@ -386,12 +483,17 @@ const App = () => {
                     taskId = generateTaskId();
                 }
                 return {
-                    tube_list: selected_tubes[index].tube_list,
-                    status: selected_tubes[index].status,
+                    tube_list: selectedTask[index].tube_index_list.map(
+                        (tubeIndex) => tubeIndex + 1
+                    ),
+                    module_id: selectedTask[index].module_index + 1,
+                    status: selectedTask[index].status,
                     method_id: Number(methodId),
                     task_id: Number(taskId),
                 };
             });
+            console.log("9012   tasks", tasks);
+
             excutedTubesUpdateFlag = false;
             setExcutedTubes((prevExcutedTubes) => [
                 ...prevExcutedTubes,
@@ -406,15 +508,26 @@ const App = () => {
 
             // 处理被删除的元素
             indexesToDelete.forEach((index) => {
-                const tubeList = selected_tubes[index].tube_list;
-                console.log("0926 --------- tubeList", tubeList);
+                if (selectedAllTubes.length > 0) {
+                    const tubeList = selectedAllTubes[index].tube_index_list;
 
-                process_data_flag(tubeList, undefined);
+                    process_data_flag(tubeList, undefined);
+                    setSelectedAllTubes(
+                        selectedAllTubes.filter((item, index) => {
+                            return !indexesToDelete.has(index);
+                        })
+                    );
+                } else {
+                    const tubeList = selectedTask[index].tube_index_list;
+
+                    process_data_flag(tubeList, undefined);
+                    setSelectedTask(
+                        selectedTask.filter((item, index) => {
+                            return !indexesToDelete.has(index);
+                        })
+                    );
+                }
             });
-            selected_tubes = selected_tubes.filter((item, index) => {
-                return !indexesToDelete.has(index);
-            });
-            console.log("0926  selected_tubes", selected_tubes);
         }
     };
 
@@ -443,6 +556,7 @@ const App = () => {
                 });
             }
         }
+        `                                                    `;
     };
     const handleStart = () => {
         form.validateFields()
@@ -657,18 +771,19 @@ const App = () => {
         console.log("clean_flag--- :", clean_flag);
         if (selected_tube.length > 0) {
             // let consecutiveArrays = splitConsecutive(selected_tube);
-            let consecutiveArrays = [selected_tube];
             console.log("clean_flag selected_tube :", selected_tube);
-            console.log("clean_flag consecutiveArrays :", consecutiveArrays);
-            consecutiveArrays.forEach((arr) => {
-                let new_tube = { tube_list: arr, status: "clean" };
-                selected_tubes.push(new_tube);
-            });
-            if (colorNum != 9) {
-                colorNum++;
-            } else {
-                colorNum = 1;
-            }
+
+            let consecutiveArrays = selected_tube.map((tube) => ({
+                ...tube,
+                status: "clean",
+            }));
+            selected_tube = consecutiveArrays;
+            // if (colorNum != 9) {
+            //     colorNum++;
+            // } else {
+            //     colorNum = 1;
+            // }
+            colorNum = 4;
             process_data_flag(selected_tube, true, colorMap[colorNum]);
             setSelectedReverse([]);
             selected_tube = [];
@@ -846,6 +961,7 @@ const App = () => {
                                         callback={handleUpdatePoint}
                                         samplingTime={samplingTime}
                                         lineLoading={lineLoading}
+                                        selectedAllTubes={selectedAllTubes}
                                     ></Line>
                                 </div>
 
@@ -882,6 +998,8 @@ const App = () => {
                                             selected={selected_reverse}
                                             clean_flag={clean_flag}
                                             isScrollable={isScrollable}
+                                            selectedAllTubes={selectedAllTubes}
+                                            reverseFlag={reverseFlag}
                                         ></Buttons>
 
                                         <Row>
@@ -895,7 +1013,7 @@ const App = () => {
                                                     disabled={
                                                         clean_flag === 1 ||
                                                         methodFlag === 0
-                                                            ? true
+                                                            ? false
                                                             : false
                                                     }
                                                 >
@@ -981,6 +1099,7 @@ const App = () => {
                                                 title={""}
                                                 buttonFlag={1}
                                                 callback={undoReceiveFlags}
+                                                selectedAllTubes={selectedTask}
                                             ></TaskTable>
                                         </DynamicCard>
                                     </Col>

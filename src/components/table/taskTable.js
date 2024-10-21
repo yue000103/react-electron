@@ -14,13 +14,13 @@ const columns = [
 ];
 
 const App = (props) => {
-    const { selected_tubes, button_flag, callback } = props;
+    const { selected_tubes, button_flag, callback, selectedAllTubes } = props;
     const [title, setTitle] = useState(props.title);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [loading, setLoading] = useState(false);
     const [buttonFlag, setButtonFlag] = useState(props.buttonFlag);
     const [allSelected, setAllSelected] = useState(false); // 新增状态
-    const dataSource = selected_tubes.map((tube, i) => ({
+    const dataSource = selectedAllTubes.map((tube, i) => ({
         key: i,
         status:
             tube.status === "abandon"
@@ -30,7 +30,9 @@ const App = (props) => {
                 : tube.status === "retain"
                 ? "保留"
                 : tube.status,
-        tube_list: ` ${tube.tube_list}`,
+        tube_list: `${tube.module_index + 1} - ${tube.tube_index_list
+            .map((index) => index + 1)
+            .join(", ")}`,
     }));
     const runTubes = () => {
         const selectedData = dataSource.filter((item) =>

@@ -133,9 +133,9 @@ const renderCurve = (
     //     .attr("d", lineX);
     renderVertical(svg, xScale, height);
     console.log("cleanFlag", cleanFlag);
-    if (cleanFlag == 0) {
-        renderArea(svg, xScale, yScale, height);
-    }
+    // if (cleanFlag == 0) {
+    renderArea(svg, xScale, yScale, height);
+    // }
 };
 
 const renderVertical = (svg, xScale, height) => {
@@ -174,7 +174,7 @@ const renderVertical = (svg, xScale, height) => {
         )
         .attr("y", 30) // 计算中间位置的 y 坐标
         .attr("text-anchor", "middle")
-        .text((d) => d.tube);
+        .text((d) => `${d.module_index + 1}-${d.tube_index + 1}`);
 };
 
 const renderArea = (svg, xScale, yScale, height) => {
@@ -185,100 +185,64 @@ const renderArea = (svg, xScale, yScale, height) => {
         .y0(height)
         .y1((d) => yScale(d.value))
         .curve(d3.curveLinear);
-    console.log("num:", num);
-    const getXandY = (tube) => {
-        const selectedTube = num.find((item) => item.tube === tube);
-        // console.log("selectedTube---------- :", selectedTube);
+    console.log("1021   num:", num);
+    console.log("1021   selected:", selected);
+    let fillColor = "";
 
-        if (selectedTube) {
-            return {
-                x1: selectedTube.time_start,
-                x2: selectedTube.time_end,
-                color: selectedTube.color,
-            };
-        } else {
-            return null; // 如果未找到匹配的 tube，则返回 null 或者其他你认为合适的值
-        }
-    };
     selected.forEach((selectTube) => {
-        console.log("selectTube", selectTube["tube_list"]);
-        let fillColor = "";
-        // console.log("selectTube :", selectTube);
-        selectTube["tube_list"].forEach((tube) => {
-            // console.log("tube :", tube);
+        console.log("1021 selectTube", selectTube);
+        console.log("1021   selectTube :", selectTube);
 
-            const xy = getXandY(tube);
-            // console.log("xy", xy);
-            if (xy) {
-                const { x1, x2, color } = xy;
-                // console.log("x1, x2, color :", x1, x2, color);
-                fillColor = color;
-                // console.log("data :", data);
+        fillColor = selectTube.color;
 
-                let fillArea = data.filter((item) => {
-                    return item.time >= x1 && item.time <= x2;
-                });
-                fillAreaData = [...fillAreaData, ...fillArea];
-                // console.log("fillAreaData :", fillAreaData);
-            }
-        });
-        const { x1, x2, color } = selectTube["tube_list"][0]
-            ? getXandY(selectTube["tube_list"][0])
-            : "";
-        fillAreaData.unshift({ time: x1, value: fillAreaData[0].value });
-        // const { x1, x2, color } = getXandY(
-        //     selectTube["tube_list"][selectTube["tube_list"].length - 1]
-        // );
+        let fillArea = data
+            .filter((item) => {
+                return (
+                    item.time >= selectTube.time_start &&
+                    item.time <= selectTube.time_end
+                );
+            })
+            .map((item) => {
+                // 在每个对象中添加 fillColor 属性
+                return {
+                    ...item,
+                    color: fillColor,
+                };
+            });
 
-        // fillAreaData.unshift({
-        //     time: x1,
-        //     value: fillAreaData[fillAreaData.length - 1].value,
-        // });
+        fillAreaData = [...fillArea];
         fillAreaData = fillAreaData.sort((a, b) => a.time - b.time);
-        // console.log("fillAreaData :", fillAreaData);
         let fill = { area: fillAreaData, color: fillColor };
         fillAreaDatas = [...fillAreaDatas, fill];
         fillAreaData = [];
+        fillAreaDatas.forEach((fill) => {
+            console.log("fill :", fill);
+            const parsedData = fill.area?.map((d) => ({
+                ...d,
+                time: parseTime(d.time),
+            }));
+
+            if (fill.color) {
+                const colorName = `color${fill.color}`;
+                svg.append("path")
+                    .datum(parsedData)
+                    .attr("fill", colors[colorName].backgroundColor)
+                    .attr("stroke", "none")
+                    .attr("d", area);
+            }
+        });
+
+        console.log("1021   fillAreaData :", fillAreaData);
     });
 
-    // console.log("fillAreaDatas :", fillAreaDatas);
-    fillAreaDatas.forEach((fill) => {
-        // console.log("fill :", fill);
-        const parsedData = fill.area?.map((d) => ({
-            ...d,
-            time: parseTime(d.time),
-        }));
-
-        if (fill.color) {
-            const colorName = `color${fill.color}`;
-            svg.append("path")
-                .datum(parsedData)
-                .attr("fill", colors[colorName].backgroundColor)
-                .attr("stroke", "none")
-                .attr("d", area);
-        }
-    });
     fillAreaDatas = [];
     // 绘制填充区域
 };
 const parseTime = (timeString) => {
     // 解析时间字符串
-    // console.log("timeString", timeString);
     const [hours, minutes, seconds] = timeString.split(":").map(Number);
-
     const parsedTime = new Date();
     parsedTime.setHours(hours, minutes, seconds, 0);
-    // console.log("parsedTime", parsedTime);
-    // console.log("endTime", endTime);
-    // console.log("startTime", startTime);
-    // 计算相对于起始时间的差值（毫秒）
-    // const timeDifference = parsedTime.getTime() - startTime.getTime();
-    // console.log("timeDiff", timeDifference);
-    // 计算映射到横坐标的值
-    // const totalDuration = endTime.getTime() - startTime.getTime();
-    // const xCoordinate = (timeDifference / totalDuration) * 100; // 比如映射到0-100的范围内
-    // console.log("timeDiff", totalDuration);
-
     return parsedTime;
 };
 const parseTimeString = (time) => {
@@ -536,7 +500,8 @@ const LineChart = (props) => {
     // if (linePointChange.length == 0) {
     //     setlinePointChange(linePoint);
     // }
-    selected = props.selected_tubes;
+    selected = props.selectedAllTubes;
+    console.log("1021   selected", selected);
 
     useEffect(() => {
         setSamplingTime(props.samplingTime);
@@ -570,19 +535,16 @@ const LineChart = (props) => {
     }, []);
 
     const drawChart = useCallback(() => {
-        console.log("1014   dimensions", dimensions);
+        // console.log("1014   dimensions", dimensions);
 
         if (!data || dimensions.width === 0 || dimensions.height === 0) return;
-        console.log("1014    props---------------1");
 
         const svg = d3.select(svgRef.current);
         svg.selectAll("*").remove();
-        console.log("1014    props---------------2");
 
         const width = dimensions.width;
         const height = dimensions.height;
         const margin = { top: 0, right: width, bottom: 10, left: 0 };
-        console.log("1014    props---------------3");
 
         const zoomedWidth = width * zoomState.k;
 
@@ -592,7 +554,6 @@ const LineChart = (props) => {
         const gContent = svg
             .append("g")
             .attr("transform", `translate(${margin.left}, ${margin.top})`);
-        console.log("1014    props---------------4");
 
         const zoomedXScale = d3
             .scaleTime()
@@ -601,7 +562,7 @@ const LineChart = (props) => {
                 zoomState.x - realPosition,
                 width * zoomState.k + zoomState.x - realPosition,
             ]);
-        console.log("1014    props---------------5");
+        console.log("1021    props---------------5");
 
         // 绘制曲线
         renderCurve(
@@ -640,6 +601,7 @@ const LineChart = (props) => {
         props.clean_flag,
         realPosition,
         scrollPosition,
+        selected,
     ]);
 
     useEffect(() => {

@@ -11,33 +11,23 @@ import { linkHorizontal } from "d3";
 let select_tube = [];
 let groupsOrigin = [
     // [
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 1 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 2 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 3 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 4 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 5 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 6 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 7 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 8 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 1 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 2 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 3 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 4 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 5 },
     // ],
     // [
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 1 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 2 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 3 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 4 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 5 },
-    // ],
-    // [
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 1 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 2 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 3 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 4 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 5 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 6 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 7 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 8 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 9 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube: 10 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 1 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 2 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 3 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 4 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 5 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 6 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 7 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 8 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 9 },
+    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 10 },
     // ],
 ];
 
@@ -54,6 +44,7 @@ const desc = [
     "1",
 ];
 const tubeV = 120;
+let select_tube_flag = [];
 
 // 新的数据格式：将mode和tubeValues合并为一个数组的元组
 let modeAndValues = [
@@ -65,7 +56,14 @@ let modeAndValues = [
 let moduleList = [];
 let flag = 0;
 
-const App = ({ num, callback, selected, clean_flag }) => {
+const App = ({
+    num,
+    callback,
+    selected,
+    clean_flag,
+    selectedAllTubes,
+    reverseFlag,
+}) => {
     const _ = require("lodash");
 
     const [selectedFlag, setSelectedFlags] = useState([]);
@@ -105,7 +103,6 @@ const App = ({ num, callback, selected, clean_flag }) => {
     if (flag == 0) {
         getAllTubes().then((res) => {
             if (!res.error) {
-                console.log("1018   res", res);
                 groupsOrigin = res.data.groups_origin;
                 modeAndValues = res.data.mode_volume;
             }
@@ -113,8 +110,20 @@ const App = ({ num, callback, selected, clean_flag }) => {
         flag += 1;
     }
 
+    function findColorByModuleAndTube(module_index, tube_index) {
+        const matchingObject = selectedAllTubes.find(
+            (item) =>
+                item.module_index === module_index &&
+                item.tube_index_list.includes(tube_index)
+        );
+
+        // 如果找到匹配对象，返回 color，否则返回 null
+        return matchingObject ? matchingObject.color : null;
+    }
+
     useEffect(() => {
         console.log("1018  num", num);
+        console.log("1018  selectedAllTubes", selectedAllTubes);
 
         setCleanFlag(clean_flag);
         if (num.length == 0) {
@@ -122,7 +131,7 @@ const App = ({ num, callback, selected, clean_flag }) => {
         }
         if (selected) {
             setSelectedFlags(selected);
-            callback(selected, num);
+            callback(selected);
         } else {
             setSelectedFlags([]);
         }
@@ -130,29 +139,145 @@ const App = ({ num, callback, selected, clean_flag }) => {
         return () => {
             console.log("组件即将卸载，清除副作用...");
         };
-    }, [num, selected, clean_flag]);
+    }, [num, selected, clean_flag, selectedAllTubes]);
 
-    const handleButtonClick = (tube) => {
+    useEffect(() => {
+        if (reverseFlag === 1) {
+            console.log("1021  select_tube_flag", select_tube_flag);
+            console.log("1021  groupsOrigin", groupsOrigin);
+
+            setSelectedFlags((prevFlags) => {
+                let filteredData = groupsOrigin.map(
+                    (moduleData, moduleIndex) => {
+                        return moduleData.filter((tubeData, tubeIndex) => {
+                            // 检查是否需要排除
+                            return !select_tube_flag.some(
+                                (exclude) =>
+                                    exclude.module_index === moduleIndex &&
+                                    exclude.tube_index === tubeData.tube - 1
+                            );
+                        });
+                    }
+                );
+                let result = [];
+                filteredData.forEach((moduleData, moduleIndex) => {
+                    moduleData.forEach((tubeData) => {
+                        result.push({
+                            module_index: moduleIndex,
+                            tube_index: tubeData.tube - 1,
+                        });
+                    });
+                });
+                console.log("1021  filteredData", filteredData);
+                console.log("1021  result", result);
+                callback(result);
+
+                return result;
+            });
+        }
+    }, [reverseFlag]);
+
+    const handleButtonClick = (tube_i, module, groupIndex, subGroupIndex) => {
+        console.log("1021  Receive tube", module, tube_i);
         setSelectedFlags((prevFlags) => {
-            const isSelected = prevFlags.includes(tube);
+            const isSelected = prevFlags.some(
+                (f) => f.module_index === module && f.tube_index === tube_i
+            );
+            // console.log("1021  Receive isSelected", isSelected);
+
+            let select_tube = [];
 
             if (isSelected) {
-                select_tube = prevFlags.filter((f) => f !== tube);
-                callback(select_tube, num);
+                // 如果已经选择过，删除该试管
+                select_tube = prevFlags.filter(
+                    (f) =>
+                        !(f.module_index === module && f.tube_index === tube_i)
+                );
+                callback(select_tube);
                 return select_tube;
             } else {
-                let newFlags = [tube];
-                if (prevFlags.length > 0) {
-                    newFlags = Array.from(
-                        {
-                            length: tube - prevFlags[prevFlags.length - 1] + 1,
-                        },
-                        (_, i) => prevFlags[prevFlags.length - 1] + i
-                    );
-                }
+                // 检查是否存在该模块的试管
+                const existingModuleTubes = prevFlags.filter(
+                    (f) => f.module_index === module
+                );
 
-                select_tube = [...newFlags];
-                callback(select_tube, num);
+                if (existingModuleTubes.length > 0) {
+                    // 如果存在同一模块的试管，选中上一个和当前试管之间的所有试管
+                    const lastSelectedTube =
+                        existingModuleTubes[existingModuleTubes.length - 1];
+                    const startTube = lastSelectedTube.tube_index;
+
+                    const newFlags = Array.from(
+                        {
+                            length: Math.abs(tube_i - startTube) + 1,
+                        },
+                        (_, i) => ({
+                            module_index: module,
+                            tube_index: Math.min(tube_i, startTube) + i,
+                        })
+                    ).filter((t) => {
+                        // 根据体积筛选出体积大于 0 的试管
+                        const currentNum =
+                            desc[
+                                Math.floor(
+                                    value[
+                                        calculateIndex(
+                                            groupIndex,
+                                            subGroupIndex
+                                        )
+                                    ] * 2
+                                ) - 1
+                            ] *
+                            getModeAndValue(
+                                calculateIndex(groupIndex, subGroupIndex)
+                            )[1];
+
+                        return (
+                            currentNum > 0 &&
+                            !prevFlags.some(
+                                (f) =>
+                                    f.module_index === t.module_index &&
+                                    f.tube_index === t.tube_index
+                            )
+                        );
+                    });
+
+                    select_tube = [...prevFlags, ...newFlags];
+                } else {
+                    // 如果该模块没有已选中的试管，检查当前试管的体积是否大于 0
+                    const currentNum =
+                        desc[
+                            Math.floor(
+                                value[
+                                    calculateIndex(groupIndex, subGroupIndex)
+                                ] * 2
+                            ) - 1
+                        ] *
+                        getModeAndValue(
+                            calculateIndex(groupIndex, subGroupIndex)
+                        )[1];
+
+                    if (currentNum > 0) {
+                        // 如果体积大于 0，则将当前试管加入到选中列表
+                        if (
+                            !prevFlags.some(
+                                (f) =>
+                                    f.module_index === module &&
+                                    f.tube_index === tube_i
+                            )
+                        ) {
+                            select_tube = [
+                                ...prevFlags,
+                                { module_index: module, tube_index: tube_i },
+                            ];
+                        }
+                    } else {
+                        // 如果体积小于等于 0，保持不变
+                        select_tube = [...prevFlags];
+                    }
+                }
+                select_tube_flag = select_tube;
+                callback(select_tube);
                 return select_tube;
             }
         });
@@ -181,34 +306,6 @@ const App = ({ num, callback, selected, clean_flag }) => {
 
     const combinedGroups = combineGroups(groupsOfTen, 2);
 
-    function findObjectIndex(
-        groupIndex,
-        arrayIndex,
-        groupWithinArray,
-        itemIndex
-    ) {
-        let totalIndex = 0;
-        for (let i = 0; i < groupIndex; i++) {
-            for (let j = 0; j < combinedGroups[i].length; j++) {
-                totalIndex += combinedGroups[i][j].length;
-            }
-        }
-        for (let j = 0; j < arrayIndex; j++) {
-            totalIndex += combinedGroups[groupIndex][j].length;
-        }
-        totalIndex += groupWithinArray * 5;
-        totalIndex += itemIndex;
-        console.log(
-            "groupIndex,arrayIndex,groupWithinArray, itemIndex",
-            groupIndex,
-            arrayIndex,
-            groupWithinArray,
-            itemIndex
-        );
-
-        return totalIndex;
-    }
-
     // 根据索引获取对应的mode和tubeValue
     const getModeAndValue = (index) => {
         // 确保index不超过modeAndValues数组长度
@@ -231,9 +328,21 @@ const App = ({ num, callback, selected, clean_flag }) => {
                                             gutter={0}
                                         >
                                             {row.map((item, index) => {
+                                                let module =
+                                                    groupIndex * 2 +
+                                                    subGroupIndex;
+                                                let tube_i =
+                                                    rowIndex * 5 + index;
                                                 const tube = item.tube;
+
                                                 const isSelected =
-                                                    selectedFlag.includes(tube);
+                                                    selectedFlag.some(
+                                                        (flag) =>
+                                                            flag.module_index ===
+                                                                module &&
+                                                            flag.tube_index ===
+                                                                tube_i
+                                                    );
 
                                                 // num.map((n) => {
                                                 //     groupsOfTen[n.module_index][
@@ -252,11 +361,7 @@ const App = ({ num, callback, selected, clean_flag }) => {
                                                         time_start,
                                                         time_end,
                                                     } = n;
-                                                    let module =
-                                                        groupIndex * 2 +
-                                                        subGroupIndex;
-                                                    let tube =
-                                                        rowIndex * 5 + index;
+
                                                     // 确保 module_index 和 tube_index 在 groupsOfTen 中有效
                                                     if (
                                                         module_index === module
@@ -272,7 +377,8 @@ const App = ({ num, callback, selected, clean_flag }) => {
                                                         ][tube_index].time_end =
                                                             time_end;
                                                         if (
-                                                            tube_index === tube
+                                                            tube_index ===
+                                                            tube_i
                                                         ) {
                                                             isNum = true;
                                                         }
@@ -291,9 +397,14 @@ const App = ({ num, callback, selected, clean_flag }) => {
                                                         buttonDisabled = true;
                                                     }
                                                 }
-                                                if (item.color) {
+                                                let colorTube =
+                                                    findColorByModuleAndTube(
+                                                        module,
+                                                        tube_i
+                                                    );
+                                                if (colorTube) {
                                                     buttonDisabled = true;
-                                                    let colorName = `color${item.color}`;
+                                                    let colorName = `color${colorTube}`;
                                                     buttonColorStyle =
                                                         color[colorName];
                                                 }
@@ -303,7 +414,10 @@ const App = ({ num, callback, selected, clean_flag }) => {
                                                         <div
                                                             onClick={() =>
                                                                 handleButtonClick(
-                                                                    tube
+                                                                    tube_i,
+                                                                    module,
+                                                                    groupIndex,
+                                                                    subGroupIndex
                                                                 )
                                                             }
                                                             className="card_buttton"
