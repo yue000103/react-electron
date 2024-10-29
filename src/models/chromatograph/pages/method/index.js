@@ -81,6 +81,7 @@ const Method = () => {
     const [methodDatas, setMethodDatas] = useState([]);
     const [methodID, setMethodID] = useState();
     const [flowRateDefault, setFlowRateDefault] = useState(0);
+    const [spinning, setSpinning] = React.useState(false);
 
     console.log("basisData :", basisData);
     console.log("elutionData :", elutionData);
@@ -202,6 +203,8 @@ const Method = () => {
         }
     };
     const handleOkMethod = () => {
+        setSpinning(true);
+
         const methodId = localStorage.getItem("methodId");
         let check = [];
         if (value === 1) {
@@ -228,10 +231,12 @@ const Method = () => {
             method: transformedData,
         }).then((response) => {
             console.log("response :", response);
-        });
-        setTimeout(() => {
+            setSpinning(false);
             setOpenMethod(false);
-        }, 2000);
+        });
+        // setTimeout(() => {
+        //     setOpenMethod(false);
+        // }, 2000);
     };
     const showModal = () => {
         setOpen(true);
@@ -567,6 +572,8 @@ const Method = () => {
         setPressure([...newPoints, ...values.users]);
     };
     const handleOk = () => {
+        // setSpinning(true);
+
         setIsMethodName(true);
         setConfirmLoading(true);
         let check = [];
@@ -603,6 +610,7 @@ const Method = () => {
                 }).then((response) => {
                     if (!response.error) {
                         applyMethod(response.data.methods[0]);
+                        // setSpinning(false);
                     }
                 });
             }
@@ -1053,6 +1061,7 @@ const Method = () => {
                         <Collapse accordion items={methodItems} size="large" />
                     </div>
                 </Modal>
+                <Spin spinning={spinning} fullscreen tip="正在保存......" />
             </div>
             {/* </DynamicCard> */}
         </Flex>

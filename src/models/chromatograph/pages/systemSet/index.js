@@ -93,20 +93,20 @@ const App = (props) => {
     const [codes, setCodes] = useState([]);
 
     const [alarmData, setAlarmData] = useState([
-        {
-            key: "1",
-            level: 3,
-            type: "火灾报警",
-            time: "2024-07-19 12:00:00",
-            description: "火灾报警描述",
-        },
-        {
-            key: "2",
-            level: 4,
-            type: "烟雾报警",
-            time: "2024-07-19 12:30:00",
-            description: "烟雾报警描述",
-        },
+        // {
+        //     key: "1",
+        //     level: 3,
+        //     type: "火灾报警",
+        //     time: "2024-07-19 12:00:00",
+        //     description: "火灾报警描述",
+        // },
+        // {
+        //     key: "2",
+        //     level: 4,
+        //     type: "烟雾报警",
+        //     time: "2024-07-19 12:30:00",
+        //     description: "烟雾报警描述",
+        // },
     ]);
 
     const [deviceStatus, setDeviceStatus] = useState({
@@ -373,9 +373,9 @@ const App = (props) => {
             >
                 <Tooltip placement="left" title="帮助">
                     <FloatButton
-                        badge={{
-                            count: 12,
-                        }}
+                        // badge={{
+                        //     count: 12,
+                        // }}
                         icon={<QuestionCircleOutlined />}
                         onClick={showDrawerNotice}
                     />
@@ -383,7 +383,7 @@ const App = (props) => {
                 <Tooltip placement="left" title="警报">
                     <FloatButton
                         badge={{
-                            count: 123,
+                            count: alarmData.length,
                             overflowCount: 999,
                         }}
                         onClick={showDrawerWarning}

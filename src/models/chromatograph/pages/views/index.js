@@ -798,10 +798,10 @@ const App = () => {
     const uploadMethod = async () => {
         try {
             setSpinning(true);
-
             const response = await uploadMethodOperate();
             const responsedata = await uploadMethodFlag();
             const uploadFlag = responsedata.data.upload_flag;
+            // localStorage.setItem("uploadFlag", uploadFlag);
             const equilibrationFlag = responsedata.data.equilibration_flag;
             setUploadFlag(uploadFlag);
             setEquilibrationFlag(equilibrationFlag);
@@ -866,6 +866,8 @@ const App = () => {
 
     useEffect(() => {
         console.log("1029   ", formatTimeWithRegex("00:02:00"));
+        // const uploadFlag = localStorage.getItem("uploadFlag");
+        // setUploadFlag(uploadFlag);
 
         uploadMethodFlag().then((responsedata) => {
             if (!responsedata.error) {

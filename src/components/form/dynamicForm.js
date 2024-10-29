@@ -51,6 +51,25 @@ const App = (props) => {
     };
 
     const submit = () => {
+        const hasZeroTimePoint = lastData.some((point) => point.time === 0);
+
+        if (!hasZeroTimePoint && lastData.length > 0) {
+            // 如果没有 time=0 的点，且数据不为空，则添加一个
+            const zeroTimePoint = {
+                time: 0,
+                pumpB: 0,
+                pumpA: 100,
+                flowRate: flowRateDefault,
+            };
+
+            // 更新表单数据，将新点添加到开头
+            const newData = [zeroTimePoint, ...lastData];
+            form.setFieldsValue({
+                users: newData,
+            });
+            setLastData(newData);
+        }
+
         form.submit();
     };
 
