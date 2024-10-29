@@ -19,3 +19,9 @@
 .point {
   cursor: pointer; /* 鼠标移动到点上时变成小手 */
 }
+
+.contain{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}

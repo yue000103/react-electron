@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Button, Flex, Table, Checkbox } from "antd";
 import { Empty } from "antd";
+import { pauseTube, resumeTube } from "@/models/chromatograph/api/tube";
 
 const columns = [
     {
@@ -74,6 +75,19 @@ const App = (props) => {
     };
     const hasSelected = selectedRowKeys.length > 0;
 
+    const pause = () => {
+        pauseTube().then((res) => {
+            if (!res.error) {
+            }
+        });
+    };
+    const resume = () => {
+        resumeTube().then((res) => {
+            if (!res.error) {
+            }
+        });
+    };
+
     return (
         <Flex gap="middle" vertical>
             {dataSource.length > 0 ? (
@@ -127,12 +141,17 @@ const App = (props) => {
                             </Button>
                             <Button
                                 type="primary"
-                                onClick={deleteTubes}
-                                disabled={!hasSelected}
-                                loading={loading}
+                                onClick={pause}
                                 // style={{backgroundColor: '#ad0202',}}
                             >
                                 暂停
+                            </Button>
+                            <Button
+                                type="primary"
+                                onClick={resume}
+                                // style={{backgroundColor: '#ad0202',}}
+                            >
+                                继续
                             </Button>
                         </Flex>
                     ) : (

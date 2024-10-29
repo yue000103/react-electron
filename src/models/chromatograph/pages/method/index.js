@@ -30,14 +30,8 @@ import {
 } from "@ant-design/icons";
 
 import "./index.css";
-import Line from "@components/d3/line";
 import DynamicLine from "@components/d3/dynamicLine";
-import FormStatus from "@components/formStatus/index";
-import DynamicTable from "@components/table/dynamicTable";
 import DynamicForm from "@components/form/dynamicForm";
-import DynamicCard from "@components/cards/dynamicCard";
-
-import { getDeviceStatus, postDeviceStatus } from "../../api/status";
 import {
     postMethodOperate,
     getAllMethodOperate,
@@ -46,45 +40,24 @@ import {
     deleteMethodOperate,
     setCurrentMethodOperate,
     updateMethodOperate,
+    getNewMethodId,
 } from "../../api/methods";
 
-import p7ConBg from "@/assets/image/image.png"; // 使用 import 引入图片
-import res from "antd-mobile-icons/es/AaOutline";
+import Buttons from "./buttonTube";
 
-const text = "您确定要删除这个方法？";
-let num = [
-    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 1 },
-    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 2 },
-    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 3 },
-    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 4 },
-];
-let selected_tubes = [];
-let clean_flag = 1;
-// let linePoint = [
-// { time: "00:01:20", value: 81.41712213857508 },
-// { time: "00:01:20", value: 88.51848125394666 },
-// { time: "00:01:30", value: 88.51848125394666 },
-// { time: "00:01:40", value: 20.51848125394666 },
-// ];
-let lineFlag = 1;
-const handleUpdatePoint = () => {};
+import p7ConBg from "@/assets/image/image.png"; // 使用 import 引入图片
+
+let method = {};
 
 const Method = () => {
-    const [data, setData] = useState([]);
-    const [spinning, setSpinning] = React.useState(false);
-    const [percent, setPercent] = React.useState(0);
     const [messageApi, contextHolder] = message.useMessage();
-    const [linePoint, setLinePoint] = useState([]);
 
     const [value, setValue] = useState(1);
     const onChange = (e) => {
         console.log("radio checked", e.target.value);
         setValue(e.target.value);
     };
-    const [peristaltic, setPeristalic] = useState({});
-    const [spray, setSpray] = useState({});
-    const [runningFlag, setRunningFlag] = useState(0);
-    const [pumpStatus, setPumpStatus] = useState({});
+
     const [widthLine, setWidthLine] = useState(270);
     const [heightLine, setHeightLine] = useState(230);
     const [formBasis] = Form.useForm();
@@ -117,40 +90,92 @@ const Method = () => {
         { title: "泵A浓度", dataIndex: "pumpA" },
         { title: "泵B浓度", dataIndex: "pumpB" },
     ];
-    useEffect(() => {
-        const socket = io("http://localhost:5000"); // 确保 URL 正确
-        socket.on("connect", () => {
-            // console.log("Connected to WebSocket server");
-        });
 
-        socket.on("new_curve_point", (responseData) => {
-            console.log("responseData", responseData);
-            setData((prevData) => [...prevData, responseData.point]);
-        });
+    const indexedDBMethod = (method, methodId) => {
+        console.log("1023  item", method);
+        console.log("1023  item.methodId", method["methodId"]);
 
-        socket.on("disconnect", () => {
-            console.log("Disconnected from WebSocket server");
-        });
+        const request = indexedDB.open("MyDatabase", 1);
 
-        // Clean up the connection on component unmount
-        return () => {
-            socket.disconnect();
-        };
-    }, []);
-
-    const getStatus = () => {
-        getDeviceStatus().then((responseData) => {
-            if (!responseData.error) {
-                console.log("getStatus   responseData :", responseData.data);
-                let status = JSON.parse(responseData.data.pump_status);
-                console.log("getStatus status :", status);
-                setPumpStatus(status);
-                console.log("getStatus pumpStatus :", pumpStatus);
-                setSpray(status.spray);
-                setPeristalic(status.peristaltic);
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            // 创建对象存储空间，确保使用 methodID 作为主键
+            if (!db.objectStoreNames.contains("method")) {
+                db.createObjectStore("method", { keyPath: "methodId" });
             }
-        });
+        };
+
+        request.onsuccess = (event) => {
+            const db = event.target.result;
+            console.log("IndexedDB 数据库打开成功", db);
+
+            // 存储对象
+            const transaction = db.transaction("method", "readwrite");
+            const objectStore = transaction.objectStore("method");
+            // 查询该 methodId 是否存在
+            const getRequest = objectStore.get(methodId);
+            getRequest.onsuccess = () => {
+                const existingItem = getRequest.result;
+
+                const item = {
+                    cleaningCount: method.cleaningCount,
+                    cleaningSpeed: method.cleaningSpeed,
+                    detectorWavelength: method.detectorWavelength,
+                    drainSpeed: method.drainSpeed,
+                    equilibrationColumn: method.equilibrationColumn,
+                    isocratic: method.isocratic,
+                    methodId: Number(methodId), // 确保这个值是有效的
+                    methodName: method.methodName,
+                    pressure: method.pressure,
+                    pumpA: method.pumpA,
+                    pumpB: method.pumpB,
+                    pumpList: method.pumpList,
+                    samplingTime: method.samplingTime,
+                    smiles: method.smiles,
+                    speed: method.speed,
+                    totalFlowRate: method.totalFlowRate,
+                    tubeVolume: method.tubeVolume,
+                };
+                if (existingItem) {
+                    const updateRequest = objectStore.put(item);
+                    updateRequest.onsuccess = () => {
+                        console.log("对象已成功更新到 IndexedDB");
+                    };
+                    updateRequest.onerror = () => {
+                        console.error("更新对象时出错:", updateRequest.error);
+                    };
+                } else {
+                    const addRequest = objectStore.add(item);
+                    addRequest.onsuccess = () => {
+                        console.log("对象已成功存储到 IndexedDB");
+                    };
+                    addRequest.onerror = () => {
+                        console.error("存储对象时出错:", addRequest.error);
+                    };
+                }
+            };
+            getRequest.onerror = () => {
+                console.error("查询对象时出错:", getRequest.error);
+            };
+        };
+
+        request.onerror = (event) => {
+            console.error("打开 IndexedDB 时出错:", event.target.error);
+        };
     };
+    useEffect(() => {
+        console.log("1023  method", method);
+        // indexedDB(method);
+        if (!window.indexedDB) {
+            console.log("1023  该浏览器不支持 IndexedDB");
+        } else {
+            // 你的 IndexedDB 代码
+            if (Object.keys(method).length !== 0) {
+                const methodId = localStorage.getItem("methodId");
+                indexedDBMethod(method, Number(methodId));
+            }
+        }
+    }, [methodID]);
 
     const handleSwitchChange = (checked) => {
         setIsEquilibration(checked);
@@ -192,7 +217,12 @@ const Method = () => {
             { methodName: methodName },
             ...check,
         ];
+        console.log("1023  methodata", methodata);
+
         const transformedData = transformData(methodata);
+        indexedDBMethod(transformedData, methodId);
+
+        console.log("1023  methodata", transformedData);
         updateMethodOperate({
             method_id: methodId,
             method: transformedData,
@@ -293,6 +323,9 @@ const Method = () => {
     };
     const applyMethod = (item) => {
         localStorage.setItem("methodId", item.methodId);
+        setMethodID((preNum) => item.methodId);
+        method = item;
+
         setCurrentMethodOperate({ method_id: Number(item.methodId) }).then(
             (response) => {
                 // console.log("response :", response.data.methods);
@@ -502,8 +535,6 @@ const Method = () => {
         setTime((Number(allValues.time) / 60).toFixed(2));
     };
 
-    const getPressurreData = () => {};
-
     const handleValuesChange = (values) => {
         let newPoints = [];
         if (values.users.length === 0) {
@@ -553,6 +584,7 @@ const Method = () => {
             ...check,
         ];
         const transformedData = transformData(methodata);
+
         postMethodOperate(transformedData).then((response) => {
             console.log("response :", response);
         });
@@ -562,6 +594,19 @@ const Method = () => {
             setOpen(false);
             setConfirmLoading(false);
         }, 2000);
+        getNewMethodId().then((res) => {
+            if (!res.error) {
+                setMethodID(res.data.method_id);
+                indexedDBMethod(transformedData, res.data.method_id);
+                setCurrentMethodOperate({
+                    method_id: Number(res.data.method_id),
+                }).then((response) => {
+                    if (!response.error) {
+                        applyMethod(response.data.methods[0]);
+                    }
+                });
+            }
+        });
     };
 
     const handleCancel = () => {
@@ -612,6 +657,8 @@ const Method = () => {
     };
     useEffect(() => {
         const methodId = localStorage.getItem("methodId");
+        setMethodID((preNum) => methodId);
+
         console.log("methodId :", methodId);
         if (methodId) {
             setCurrentMethodOperate({ method_id: Number(methodId) }).then(
@@ -630,6 +677,7 @@ const Method = () => {
             }
         });
     }, []);
+    const handleReceiveFlags = () => {};
 
     return (
         <Flex
@@ -872,8 +920,20 @@ const Method = () => {
             {/* <DynamicCard position={"top"} title={"洗脱梯度"} height={"400px"}> */}
             <div className="clean">
                 <Row>
-                    <Col span={19}>
+                    <Col span={11}>
+                        <div style={{ marginTop: "2rem" }}>
+                            <Buttons
+                                callback={handleReceiveFlags}
+                                selected={[]}
+                                clean_flag={0}
+                                selectedAllTubes={[]}
+                                reverseFlag={0}
+                            ></Buttons>
+                        </div>
+                    </Col>
+                    <Col span={13}>
                         <Row>
+                            <Col span={3}></Col>
                             <Col span={9}>
                                 <div style={{ marginTop: 13 }}>
                                     <Radio.Group
@@ -894,7 +954,7 @@ const Method = () => {
                                         }}
                                     >
                                         {
-                                            "时间           泵A速度          泵B速度          总流速 "
+                                            "时间    泵A速度    泵B速度    总流速 "
                                         }
                                     </pre>
                                 )}
@@ -929,7 +989,8 @@ const Method = () => {
                         {value === 2 && (
                             <div className="pressure">
                                 <Row>
-                                    <Col span={8}>
+                                    <Col span={2}></Col>
+                                    <Col span={9}>
                                         <div className="dynamic-line">
                                             <DynamicLine
                                                 widthLine={widthLine}
@@ -950,55 +1011,48 @@ const Method = () => {
                             </div>
                         )}
                     </Col>
-
-                    <Col span={3}>
-                        <div className="button-div">
-                            <Modal
-                                open={open}
-                                onOk={handleOk}
-                                confirmLoading={confirmLoading}
-                                onCancel={handleCancel}
-                            >
-                                {/* <p>{modalText}</p> */}
-                                <p>方法名称：</p>
-                                <Input
-                                    disabled={isMethodName}
-                                    value={inputValue}
-                                    onChange={handleInputChange}
-                                />
-                            </Modal>
-                            <Modal
-                                open={openMethod}
-                                onOk={handleOkMethod}
-                                confirmLoading={confirmLoading}
-                                onCancel={handleCancel}
-                            >
-                                <p>是否覆盖---{methodName}---此方法？</p>
-                            </Modal>
-                            <Modal
-                                width="100%"
-                                title={"方法"}
-                                open={openAllMethod}
-                                onCancel={handleCancel}
-                                footer={null}
-                            >
-                                <div
-                                    style={{
-                                        height: "40rem", // 设置折叠面板的固定高度
-                                        overflowY: "auto", // 当内容超出高度时显示滚动条
-                                        padding: "10px",
-                                    }}
-                                >
-                                    <Collapse
-                                        accordion
-                                        items={methodItems}
-                                        size="large"
-                                    />
-                                </div>
-                            </Modal>
-                        </div>
-                    </Col>
                 </Row>
+            </div>
+            <div className="button-div">
+                <Modal
+                    open={open}
+                    onOk={handleOk}
+                    confirmLoading={confirmLoading}
+                    onCancel={handleCancel}
+                >
+                    {/* <p>{modalText}</p> */}
+                    <p>方法名称：</p>
+                    <Input
+                        disabled={isMethodName}
+                        value={inputValue}
+                        onChange={handleInputChange}
+                    />
+                </Modal>
+                <Modal
+                    open={openMethod}
+                    onOk={handleOkMethod}
+                    confirmLoading={confirmLoading}
+                    onCancel={handleCancel}
+                >
+                    <p>是否覆盖---{methodName}---此方法？</p>
+                </Modal>
+                <Modal
+                    width="100%"
+                    title={"方法"}
+                    open={openAllMethod}
+                    onCancel={handleCancel}
+                    footer={null}
+                >
+                    <div
+                        style={{
+                            height: "40rem", // 设置折叠面板的固定高度
+                            overflowY: "auto", // 当内容超出高度时显示滚动条
+                            padding: "10px",
+                        }}
+                    >
+                        <Collapse accordion items={methodItems} size="large" />
+                    </div>
+                </Modal>
             </div>
             {/* </DynamicCard> */}
         </Flex>

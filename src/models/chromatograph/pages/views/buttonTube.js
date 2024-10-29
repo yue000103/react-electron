@@ -100,13 +100,21 @@ const App = ({
         console.log("1018  updatedValue", updatedValue, dividedArray, subGroup);
         console.log("1018  moduleList", moduleList);
     };
+
     if (flag == 0) {
+        console.log("1024   flag", flag);
+
         getAllTubes().then((res) => {
             if (!res.error) {
+                console.log("1024  res", res);
+
                 groupsOrigin = res.data.groups_origin;
+                console.log("1024  groupsOrigin", groupsOrigin);
+
                 modeAndValues = res.data.mode_volume;
             }
         });
+
         flag += 1;
     }
 
@@ -139,7 +147,7 @@ const App = ({
         return () => {
             console.log("组件即将卸载，清除副作用...");
         };
-    }, [num, selected, clean_flag, selectedAllTubes]);
+    }, [num, selected, clean_flag, selectedAllTubes, groupsOrigin]);
 
     useEffect(() => {
         if (reverseFlag === 1) {

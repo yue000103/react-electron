@@ -23,3 +23,11 @@ export function getCodes() {
 export function getAllTubes() {
     return axiosInstance.get("/status/get_all_tubes");
 }
+
+export function switchManualTest(data) {
+    return axiosInstance.post("/status/switch_manual_test", data);
+}
+
+export function pumpOperation(data) {
+    return axiosInstance.post("/status/pump_operation", data);
+}

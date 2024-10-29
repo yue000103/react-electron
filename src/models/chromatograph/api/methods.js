@@ -39,3 +39,7 @@ export function startEquilibration() {
 export function uploadMethodFlag() {
     return axiosInstance.post("/method/upload/flag");
 }
+
+export function getNewMethodId() {
+    return axiosInstance.get("/method/get/new_method_id");
+}

@@ -1,26 +1,44 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Form, Input, Button, Switch, Row, Col } from "antd";
 
 // 翻译映射
 const labelTranslations = {
-    mode_switch: "是否启动手动模式",
+    use_manual: "是否启动手动模式",
     spray_switch: "清洗开关",
     peristaltic_switch: "排液开关",
     drain_speed: "排液速度",
-    spray_speed: "清洗速度",
-    spray_time: "清洗次数",
+    clean_volume: "清洗体积",
+    clean_count: "清洗次数",
     tube_id: "试管id",
+    module_id: "模块id",
 };
 
-const CustomForm = ({ type, data, flag, callback }) => {
-    console.log("1015  data----------- :", data);
+const CustomForm = ({ type, data, decideParameter, callback }) => {
     const [form] = Form.useForm();
+    const [formData, setFormData] = useState(data);
+
+    // 当外部 data 改变时更新表单数据
+    useEffect(() => {
+        setFormData(data);
+        form.setFieldsValue(data);
+        console.log("1023    formData", formData);
+    }, [data, form]);
+
+    // 判断表单项是否应该被禁用
+    const isItemDisabled = (key) => {
+        if (key === decideParameter) return false;
+        return formData[decideParameter] === false;
+    };
+
+    // // 处理表单值变化
+    const handleValuesChange = (changedValues, allValues) => {
+        const newFormData = { ...formData, ...changedValues };
+        setFormData(newFormData);
+    };
 
     // 表单提交处理函数
     const onFinish = (values) => {
-        // console.log("data 表单提交数据:", values);
-        // console.log("data :", data);
-        let status = Object.keys(data).reduce((acc, key) => {
+        const status = Object.keys(data).reduce((acc, key) => {
             if (values[key] === undefined) {
                 acc[key] = data[key];
             } else if (typeof values[key] === "boolean") {
@@ -32,33 +50,29 @@ const CustomForm = ({ type, data, flag, callback }) => {
             }
             return acc;
         }, {});
-        console.log("data status :", status);
-
         callback(type, status);
     };
 
     // 渲染表单项
     const renderFormItems = () => {
         return Object.keys(data).map((key) => {
-            console.log("1015   key", key);
-
             const label = labelTranslations[key] || key;
-            const value = data[key];
-            console.log("value :", value);
-            console.log("data :", data);
-            if (value === 0 || value === 1) {
+            const value = formData[key];
+            const disabled = isItemDisabled(key);
+
+            if (value === true || value === false) {
                 return (
                     <Form.Item
                         key={key}
                         label={label}
                         name={key}
                         valuePropName="checked"
+                        initialValue={value === 1}
                     >
                         <Switch
                             checkedChildren="开"
                             unCheckedChildren="关"
-                            disabled={true}
-                            defaultChecked={value === 1}
+                            disabled={disabled}
                         />
                     </Form.Item>
                 );
@@ -70,7 +84,7 @@ const CustomForm = ({ type, data, flag, callback }) => {
                         name={key}
                         initialValue={value}
                     >
-                        <Input disabled={flag === 1} />
+                        <Input disabled={disabled} />
                     </Form.Item>
                 );
             }
@@ -78,19 +92,22 @@ const CustomForm = ({ type, data, flag, callback }) => {
     };
 
     return (
-        <Form form={form} onFinish={onFinish}>
+        <Form
+            form={form}
+            onFinish={onFinish}
+            onValuesChange={handleValuesChange}
+        >
             {renderFormItems()}
             <Form.Item>
                 <Row>
-                    <Col span={10}></Col>
-                    <Col span={4}>
-                        {/* <Button
+                    <Col span={24} style={{ textAlign: "center" }}>
+                        <Button
                             type="primary"
                             htmlType="submit"
-                            disabled={flag === 1}
+                            disabled={formData[decideParameter] === false}
                         >
                             上传
-                        </Button> */}
+                        </Button>
                     </Col>
                 </Row>
             </Form.Item>
@@ -98,37 +115,13 @@ const CustomForm = ({ type, data, flag, callback }) => {
     );
 };
 
-// 示例数据和 flag
-const data = {
-    mode_switch: 0,
-
-    spray_switch: 0,
-    peristaltic_switch: 0,
-    drain_speed: 1000,
-    spray_speed: 2000,
-    spray_time: 1000,
-    tube_id: 10,
-};
-const flag = 0; // 可以修改，设为1时禁用
-
-const App = (props, callback) => {
-    console.log("props--------- :", props);
-    // const [data, setData] = useState(props.data);
-    console.log("data -------4--------:", data);
-    // const [flag, setFlag] = useState(props.runningFlag);
-    const [type, setType] = useState(props.type);
+const App = (props) => {
     return (
-        <div
-            style={{
-                marginTop: "2rem",
-                marginLeft: "2rem",
-                marginRight: "2rem",
-            }}
-        >
+        <div style={{ padding: "2rem" }}>
             <CustomForm
-                type={type}
-                data={data}
-                flag={flag}
+                type={props.type}
+                data={props.data}
+                decideParameter={props.decideParameter}
                 callback={props.callback}
             />
         </div>

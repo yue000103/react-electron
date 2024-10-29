@@ -40,8 +40,12 @@ import {
     postInitDeviceMode,
     getInitDeviceMode,
     getCodes,
+    switchManualTest,
+    pumpOperation,
 } from "../../api/status";
-import { type } from "@testing-library/user-event/dist/type";
+
+import io from "socket.io-client";
+
 const translateType = (codeInfo) => {
     // 提取 parameter 数组
     const parameters = parameterDescription.error_type.parameter;
@@ -57,7 +61,7 @@ const translateType = (codeInfo) => {
 };
 
 const App = (props) => {
-    console.log("props :", props);
+    // console.log("props :", props);
 
     const [openNotice, setOpenNotice] = useState(false);
     const [openWarning, setOpenWarning] = useState(false);
@@ -66,7 +70,16 @@ const App = (props) => {
     const [size, setSize] = useState();
     const [warningCode, setWarningCode] = useState(0);
     const [peristaltic, setPeristalic] = useState({});
-    const [pump, setPump] = useState({});
+    const [pump, setPump] = useState({
+        use_manual: false,
+        spray_switch: false,
+        peristaltic_switch: false,
+        drain_speed: 1000,
+        clean_volume: 2000,
+        clean_count: 1000,
+        tube_id: 10,
+        module_id: 1,
+    });
     const [runningFlag, setRunningFlag] = useState(0);
     const [dynamicHeight, setDynamicHeight] = useState();
     const [isChecked, setIsChecked] = useState(false);
@@ -95,6 +108,36 @@ const App = (props) => {
             description: "烟雾报警描述",
         },
     ]);
+
+    const [deviceStatus, setDeviceStatus] = useState({
+        PowerStatus: { value: false },
+        CurrentTube: { value: "0-0" },
+        Detector: { value: 0 },
+        PumpASpeed: { value: 0 },
+        PumpBSpeed: { value: 0 },
+    });
+
+    const [operatingTime, setOperatingTime] = useState(0);
+
+    useEffect(() => {
+        const socket = io("http://localhost:5000"); // 确保 URL 正确
+        socket.on("connect", () => {
+            // console.log("Connected to WebSocket server");
+        });
+
+        socket.on("DeviceStatusEnum", (data) => {
+            // console.log("1024   DeviceStatusEnum", data);
+            setDeviceStatus(data.DeviceStatusEnum);
+        });
+        socket.on("OperatingTime", (data) => {
+            setOperatingTime(data.operating_time);
+        });
+
+        // Clean up the connection on component unmount
+        return () => {
+            socket.disconnect();
+        };
+    }, []);
 
     const showDrawerNotice = () => {
         setSize("large");
@@ -174,8 +217,47 @@ const App = (props) => {
     };
 
     const handleStatus = (type, status) => {
-        console.log("handleStatus type :", type);
-        console.log("handleStatus status :", status);
+        console.log("1022   handleStatus type :", type);
+        console.log("1022   handleStatus status :", status);
+        let pumpType = "";
+        switchManualTest({
+            use_manual: status["use_manual"],
+        }).then((response) => {
+            if (!response.error) {
+            }
+        });
+        if (status["peristaltic_switch"]) {
+            pumpType = "abandon";
+            let pumpOperationData = {
+                pump_type: pumpType,
+                pump_status: status["peristaltic_switch"],
+                drain_speed: status["drain_speed"],
+                clean_volume: status["clean_volume"],
+                clean_count: status["clean_count"],
+                tube_id: status["tube_id"],
+                module_id: status["module_id"],
+            };
+            pumpOperation(pumpOperationData).then((response) => {
+                if (!response.error) {
+                }
+            });
+        }
+        if (status["spray_switch"]) {
+            pumpType = "clean";
+            let pumpOperationData = {
+                pump_type: pumpType,
+                pump_status: status["peristaltic_switch"],
+                drain_speed: status["drain_speed"],
+                clean_volume: status["clean_volume"],
+                clean_count: status["clean_count"],
+                tube_id: status["tube_id"],
+                module_id: status["module_id"],
+            };
+            pumpOperation(pumpOperationData).then((response) => {
+                if (!response.error) {
+                }
+            });
+        }
     };
     const handleValuesChange = (values) => {
         let newPoints = [];
@@ -273,6 +355,11 @@ const App = (props) => {
         // console.log("8672 -----------   dynamicHeight :", dynamicHeight);
 
         console.log("props peristaltic :", peristaltic);
+        getDeviceStatus().then((res) => {
+            if (!res.error) {
+                // console.log("1024  getDeviceStatus", res);
+            }
+        });
     }, [props]);
     return (
         <>
@@ -375,7 +462,8 @@ const App = (props) => {
                         <Col span={24} style={{ marginBottom: "2rem" }}>
                             <Card title="泵设置">
                                 <FormStatus
-                                    type={"peristaltic"}
+                                    type={"pump"}
+                                    decideParameter={"use_manual"}
                                     data={pump}
                                     runningFlag={runningFlag}
                                     callback={handleStatus}
@@ -388,45 +476,9 @@ const App = (props) => {
                                     <Row>
                                         <Col span={24}>
                                             <div className="dynamic-line">
-                                                <DynamicLine
-                                                    widthLine={widthLine}
-                                                    heightLine={heightLine}
-                                                    samplingTime={samplingTime}
-                                                    pressure={pressure}
-                                                ></DynamicLine>
+                                                <DynamicLine></DynamicLine>
                                             </div>
                                         </Col>
-                                        {/* <Col span={3}>
-                                            <div style={{ marginTop: "4rem" }}>
-                                                <Input placeholder="时间"></Input>
-                                                <Input
-                                                    placeholder="泵B速度"
-                                                    style={{
-                                                        marginTop: "1rem",
-                                                    }}
-                                                ></Input>
-                                                <Input
-                                                    placeholder="总流速"
-                                                    style={{
-                                                        marginTop: "1rem",
-                                                    }}
-                                                ></Input>
-                                                <Button
-                                                    style={{
-                                                        marginTop: "1rem",
-                                                    }}
-                                                >
-                                                    添加
-                                                </Button>
-                                                <Button
-                                                    style={{
-                                                        marginTop: "1rem",
-                                                    }}
-                                                >
-                                                    删除
-                                                </Button>
-                                            </div>
-                                        </Col> */}
                                     </Row>
                                 </div>{" "}
                             </Card>
@@ -436,8 +488,12 @@ const App = (props) => {
                                 <Row gutter={16} style={{ margin: "1rem" }}>
                                     <Col span={12}>
                                         <Statistic
-                                            title="电源状态"
-                                            value={"接通"}
+                                            title="设备状态"
+                                            value={
+                                                deviceStatus?.PowerStatus?.value
+                                                    ? "接通"
+                                                    : "断开"
+                                            }
                                             prefix={<ApiOutlined />}
                                             suffix=""
                                         />
@@ -445,7 +501,7 @@ const App = (props) => {
                                     <Col span={12}>
                                         <Statistic
                                             title="运行时间"
-                                            value={5.9}
+                                            value={operatingTime} // 固定值，根据需要调整
                                             prefix={
                                                 <RadiusBottomleftOutlined />
                                             }
@@ -455,7 +511,10 @@ const App = (props) => {
                                     <Col span={12}>
                                         <Statistic
                                             title="泵A速度"
-                                            value={80.0}
+                                            value={(
+                                                deviceStatus?.PumpASpeed
+                                                    ?.value / 1000
+                                            ).toFixed(2)} // 假设需要转换为 ml/s
                                             prefix={<SlidersOutlined />}
                                             suffix="ml/s"
                                         />
@@ -463,7 +522,10 @@ const App = (props) => {
                                     <Col span={12}>
                                         <Statistic
                                             title="泵B速度"
-                                            value={20.0}
+                                            value={(
+                                                deviceStatus?.PumpBSpeed
+                                                    ?.value / 1000
+                                            ).toFixed(2)} // 假设需要转换为 ml/s
                                             prefix={<SlidersOutlined />}
                                             suffix="ml/s"
                                         />
@@ -471,7 +533,9 @@ const App = (props) => {
                                     <Col span={12}>
                                         <Statistic
                                             title="检测器"
-                                            value={25.99}
+                                            value={
+                                                deviceStatus?.Detector?.value
+                                            }
                                             prefix={<LineChartOutlined />}
                                             suffix=""
                                         />
@@ -479,7 +543,9 @@ const App = (props) => {
                                     <Col span={12}>
                                         <Statistic
                                             title="当前试管"
-                                            value={5}
+                                            value={
+                                                deviceStatus?.CurrentTube?.value
+                                            }
                                             prefix={<ApartmentOutlined />}
                                             suffix="号"
                                         />

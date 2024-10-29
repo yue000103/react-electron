@@ -277,6 +277,16 @@ const renderLine = (
     xScale
 ) => {
     console.log("1012 linePointChange :", linePointChange);
+    linePointChange?.sort((a, b) => {
+        // 将时间字符串转换为秒数进行比较
+        const timeA = a.time
+            .split(":")
+            .reduce((acc, time) => 60 * acc + +time, 0);
+        const timeB = b.time
+            .split(":")
+            .reduce((acc, time) => 60 * acc + +time, 0);
+        return timeA - timeB; // 从小到大排序
+    });
     const parsedData = linePointChange?.map((d) => ({
         ...d,
         time: parseTime(d.time),
@@ -515,10 +525,14 @@ const LineChart = (props) => {
 
     // 在组件挂载时设置linePointChange的初始值
     useEffect(() => {
-        if (linePointChange.length === 0) {
-            setlinePointChange(linePoint);
-        }
-    }, [linePointChange, linePoint]); // 依赖项数组包含需要触发effect的变量
+        console.log("1029  props.linePoint", props.linePoint);
+
+        setlinePointChange((pre) => props.linePoint);
+
+        // if (linePointChange.length === 0) {
+        //     setlinePointChange(linePoint);
+        // }
+    }, [props.linePoint]); // 依赖项数组包含需要触发effect的变量
     const setHight = () => {
         const headerDiv = document.querySelector(".headerStyle");
         const resizeObserver = new ResizeObserver((entries) => {
@@ -606,9 +620,10 @@ const LineChart = (props) => {
 
     useEffect(() => {
         console.log("1014    props", props);
+        setlinePointChange((pre) => props.linePoint);
 
         drawChart();
-    }, [drawChart, props.samplingTime]);
+    }, [drawChart, props.samplingTime, props.linePoint]);
     // useEffect(() => {
     //     if (svgRef.current) {
     //         drawChart();

@@ -21,7 +21,7 @@ import Line from "@components/d3/line";
 import Buttons from "./buttonTube";
 import TaskList from "@components/taskList/index";
 import FloatB from "../systemSet/index";
-import TaskTable from "@components/table/taskTable";
+import TaskTable from "./taskTable";
 import TaskStep from "@components/steps/taskStep";
 import DynamicCard from "@components/cards/dynamicCard";
 
@@ -421,7 +421,7 @@ const App = () => {
         if (selected_tube.length > 0) {
             let consecutiveArrays = selected_tube.map((tube) => ({
                 ...tube,
-                status: "retain",
+                status: "abandon",
             }));
             selected_tube = consecutiveArrays;
 
@@ -610,13 +610,10 @@ const App = () => {
         updateEluentLine({
             point: Object.values(newPoints),
             start_time: startTime,
-        })
-            .then((responseData) => {
-                console.log("responseData :", responseData);
-            })
-            .catch((error) => {
-                console.log(error);
-            });
+        }).then((responseData) => {
+            if (!responseData.error) {
+            }
+        });
         getEluentCurve({ start_time: startTime })
             .then((responseData) => {})
             .catch((error) => {
@@ -631,9 +628,83 @@ const App = () => {
         terminateEluentLine().then((responseData) => {});
     };
 
+    function formatTimeWithRegex(timeStr) {
+        return timeStr.replace(/^(\d):/, "0$1:");
+    }
+
     const pause = () => {
         setLineLoading(false);
         pauseEluentLine().then((responseData) => {});
+        const lastDataPoint = data[data.length - 1];
+        const lastTime = lastDataPoint.time;
+        console.log("1029   lastTime", lastTime);
+
+        // 找到适合插值的点
+        let previousPoint = null;
+        let nextPoint = null;
+
+        for (let i = 0; i < newPoints.length; i++) {
+            if (newPoints[i].time <= lastTime) {
+                previousPoint = newPoints[i];
+            } else {
+                nextPoint = newPoints[i];
+                break;
+            }
+        }
+        console.log("1029   previousPoint", previousPoint);
+        console.log("1029   nextPoint", nextPoint);
+
+        if (previousPoint && nextPoint) {
+            // 计算插值，假设线性插值
+            const startValue = previousPoint.value;
+            const endValue = nextPoint.value;
+
+            // 计算时间差（单位：秒）
+            const timeDiff =
+                (new Date(
+                    `1970-01-01T${formatTimeWithRegex(nextPoint.time)}Z`
+                ) -
+                    new Date(
+                        `1970-01-01T${formatTimeWithRegex(previousPoint.time)}Z`
+                    )) /
+                1000;
+            console.log("1029   timeDiff", timeDiff);
+
+            let k = (endValue - startValue) / timeDiff;
+            let b =
+                endValue -
+                (k *
+                    new Date(
+                        `1970-01-01T${formatTimeWithRegex(nextPoint.time)}Z`
+                    )) /
+                    1000;
+            console.log("1029   k,b", k, b);
+            // 在时间区间内插值
+            const value =
+                (k * new Date(`1970-01-01T${formatTimeWithRegex(lastTime)}Z`)) /
+                    1000 +
+                b;
+            console.log("1029   value", value);
+
+            // 添加到newpoints
+            newPoints.push({
+                flow_rate: previousPoint.flow_rate,
+                time: lastTime,
+                value: Math.round(value), // 根据需要四舍五入
+            });
+        }
+
+        startTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+        setLine(newPoints);
+
+        updateEluentLine({
+            point: Object.values(newPoints),
+            start_time: startTime,
+        }).then((responseData) => {
+            if (!responseData.error) {
+            }
+        });
+        console.log("1029    new", newPoints);
     };
     const clearData = () => {
         setExcutedTubes((prevExcutedTubes) => []);
@@ -794,6 +865,8 @@ const App = () => {
     };
 
     useEffect(() => {
+        console.log("1029   ", formatTimeWithRegex("00:02:00"));
+
         uploadMethodFlag().then((responsedata) => {
             if (!responsedata.error) {
                 setUploadFlag(responsedata.data.upload_flag);
@@ -990,7 +1063,7 @@ const App = () => {
                                 height={"300px"}
                             >
                                 {/* <div className="buttonTitle">试管列表</div> */}
-                                {num.length >= 0 ? (
+                                {num.length >= 0 && methodFlag !== 0 ? (
                                     <div className="buttonTubeFun">
                                         <Buttons
                                             num={num}
@@ -1010,12 +1083,11 @@ const App = () => {
                                                     onClick={() =>
                                                         retainFlags()
                                                     }
-                                                    disabled={
-                                                        clean_flag === 1 ||
-                                                        methodFlag === 0
-                                                            ? false
-                                                            : false
-                                                    }
+                                                    // disabled={
+                                                    //     methodFlag === 0
+                                                    //         ? true
+                                                    //         : false
+                                                    // }
                                                 >
                                                     保留
                                                 </Button>
@@ -1028,11 +1100,11 @@ const App = () => {
                                                     onClick={() =>
                                                         abandonFlags()
                                                     }
-                                                    disabled={
-                                                        methodFlag === 0
-                                                            ? true
-                                                            : false
-                                                    }
+                                                    // disabled={
+                                                    //     methodFlag === 0
+                                                    //         ? true
+                                                    //         : false
+                                                    // }
                                                 >
                                                     废弃
                                                 </Button>
@@ -1046,11 +1118,11 @@ const App = () => {
                                                         reverseFlags()
                                                     }
                                                     className={`button button3`}
-                                                    disabled={
-                                                        methodFlag === 0
-                                                            ? true
-                                                            : false
-                                                    }
+                                                    // disabled={
+                                                    //     methodFlag === 0
+                                                    //         ? true
+                                                    //         : false
+                                                    // }
                                                 >
                                                     反转
                                                 </Button>
@@ -1061,11 +1133,11 @@ const App = () => {
                                                     type="primary"
                                                     onClick={() => clean()}
                                                     className={`button button4`}
-                                                    disabled={
-                                                        methodFlag === 0
-                                                            ? true
-                                                            : false
-                                                    }
+                                                    // disabled={
+                                                    //     methodFlag === 0
+                                                    //         ? true
+                                                    //         : false
+                                                    // }
                                                 >
                                                     清洗
                                                 </Button>
