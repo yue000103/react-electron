@@ -51,6 +51,7 @@ import moment from "moment";
 import { getTube } from "@/models/chromatograph/api/tube";
 
 import io from "socket.io-client";
+import useIndexedDB from "../../hooks/useIndexedDB";
 
 const { Header, Sider, Content } = Layout;
 

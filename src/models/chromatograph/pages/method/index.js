@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import io from "socket.io-client";
+import createDB from "../../hooks/createDB";
 
 import {
     Form,
@@ -82,6 +83,9 @@ const Method = () => {
     const [methodID, setMethodID] = useState();
     const [flowRateDefault, setFlowRateDefault] = useState(0);
     const [spinning, setSpinning] = React.useState(false);
+    const [cleanList, setCleanList] = useState([]);
+    const [retainList, setRetainList] = useState([]);
+    const { storeData } = createDB("MyDatabase", "method", "methodId");
 
     console.log("basisData :", basisData);
     console.log("elutionData :", elutionData);
@@ -92,81 +96,15 @@ const Method = () => {
         { title: "泵B浓度", dataIndex: "pumpB" },
     ];
 
-    const indexedDBMethod = (method, methodId) => {
-        console.log("1023  item", method);
-        console.log("1023  item.methodId", method["methodId"]);
-
-        const request = indexedDB.open("MyDatabase", 1);
-
-        request.onupgradeneeded = (event) => {
-            const db = event.target.result;
-            // 创建对象存储空间，确保使用 methodID 作为主键
-            if (!db.objectStoreNames.contains("method")) {
-                db.createObjectStore("method", { keyPath: "methodId" });
-            }
-        };
-
-        request.onsuccess = (event) => {
-            const db = event.target.result;
-            console.log("IndexedDB 数据库打开成功", db);
-
-            // 存储对象
-            const transaction = db.transaction("method", "readwrite");
-            const objectStore = transaction.objectStore("method");
-            // 查询该 methodId 是否存在
-            const getRequest = objectStore.get(methodId);
-            getRequest.onsuccess = () => {
-                const existingItem = getRequest.result;
-
-                const item = {
-                    cleaningCount: method.cleaningCount,
-                    cleaningSpeed: method.cleaningSpeed,
-                    detectorWavelength: method.detectorWavelength,
-                    drainSpeed: method.drainSpeed,
-                    equilibrationColumn: method.equilibrationColumn,
-                    isocratic: method.isocratic,
-                    methodId: Number(methodId), // 确保这个值是有效的
-                    methodName: method.methodName,
-                    pressure: method.pressure,
-                    pumpA: method.pumpA,
-                    pumpB: method.pumpB,
-                    pumpList: method.pumpList,
-                    samplingTime: method.samplingTime,
-                    smiles: method.smiles,
-                    speed: method.speed,
-                    totalFlowRate: method.totalFlowRate,
-                    tubeVolume: method.tubeVolume,
-                };
-                if (existingItem) {
-                    const updateRequest = objectStore.put(item);
-                    updateRequest.onsuccess = () => {
-                        console.log("对象已成功更新到 IndexedDB");
-                    };
-                    updateRequest.onerror = () => {
-                        console.error("更新对象时出错:", updateRequest.error);
-                    };
-                } else {
-                    const addRequest = objectStore.add(item);
-                    addRequest.onsuccess = () => {
-                        console.log("对象已成功存储到 IndexedDB");
-                    };
-                    addRequest.onerror = () => {
-                        console.error("存储对象时出错:", addRequest.error);
-                    };
-                }
-            };
-            getRequest.onerror = () => {
-                console.error("查询对象时出错:", getRequest.error);
-            };
-        };
-
-        request.onerror = (event) => {
-            console.error("打开 IndexedDB 时出错:", event.target.error);
-        };
+    const indexedDBMethod = async (method, methodId) => {
+        try {
+            const result = await storeData(method, methodId);
+            console.log(result.message); // "数据更新成功" 或 "数据添加成功"
+        } catch (error) {
+            console.error(error.message);
+        }
     };
     useEffect(() => {
-        console.log("1023  method", method);
-        // indexedDB(method);
         if (!window.indexedDB) {
             console.log("1023  该浏览器不支持 IndexedDB");
         } else {
@@ -220,12 +158,15 @@ const Method = () => {
             { methodName: methodName },
             ...check,
         ];
-        console.log("1023  methodata", methodata);
+        methodata.push({ cleanList: cleanList });
+        methodata.push({ retainList: retainList });
 
         const transformedData = transformData(methodata);
         indexedDBMethod(transformedData, methodId);
 
-        console.log("1023  methodata", transformedData);
+        console.log("1030  methodata", methodata);
+        console.log("1030  transformedData", transformedData);
+
         updateMethodOperate({
             method_id: methodId,
             method: transformedData,
@@ -234,42 +175,14 @@ const Method = () => {
             setSpinning(false);
             setOpenMethod(false);
         });
-        // setTimeout(() => {
-        //     setOpenMethod(false);
-        // }, 2000);
+        setTimeout(() => {
+            setOpenMethod(false);
+        }, 2000);
     };
     const showModal = () => {
         setOpen(true);
     };
-    const showLoader = () => {
-        setSpinning(true);
-        let ptg = -10;
-        const interval = setInterval(() => {
-            ptg += 5;
-            setPercent(ptg);
-            if (ptg > 120) {
-                clearInterval(interval);
-                setSpinning(false);
-                setPercent(0);
-                messageApi.open({
-                    type: "success",
-                    content: "上传成功！",
-                });
-            }
-        }, 100);
-    };
-    const uploadMethod = () => {
-        // localStorage.setItem("methodId", methodID);
-        showLoader();
-        uploadMethodOperate().then((response) => {});
-    };
 
-    const handleMethodOk = () => {
-        setConfirmLoading(true);
-        setTimeout(() => {
-            setConfirmLoading(false);
-        }, 2000);
-    };
     const allMethod = () => {
         getAllMethodOperate().then((response) => {
             console.log("response :", response.data);
@@ -366,15 +279,8 @@ const Method = () => {
             setValue(2);
             setPressure(JSON.parse(item.pumpList));
         }
-        // const pumpDatas = {
-        //     spray_ready_time: item.spray_ready_time,
-        //     spray_start_time: item.spray_start_time,
-        //     spray_stop_time: item.spray_stop_time,
-        //     peristaltic_velocity: item.peristaltic_velocity,
-        //     peristaltic_acceleration: item.peristaltic_acceleration,
-        //     peristaltic_deceleration: item.peristaltic_deceleration,
-        // };
-        // formPump.setFieldsValue(pumpDatas);
+        setCleanList(JSON.parse(item.cleanList));
+        setRetainList(JSON.parse(item.retainList));
     };
 
     const methodItems = methodDatas.map((item) => ({
@@ -590,12 +496,15 @@ const Method = () => {
             { methodName: inputValue },
             ...check,
         ];
+        methodata.push({ cleanList: cleanList });
+        methodata.push({ retainList: retainList });
         const transformedData = transformData(methodata);
 
         postMethodOperate(transformedData).then((response) => {
             console.log("response :", response);
         });
         console.log("8672  methodata :", methodata);
+        console.log("8672  transformedData :", transformedData);
         setTimeout(() => {
             setIsMethodName(false);
             setOpen(false);
@@ -640,6 +549,8 @@ const Method = () => {
             cleaningCount: null,
             drainSpeed: null,
             smiles: null,
+            cleanList: null,
+            retainList: null,
         };
 
         data.forEach((item) => {
@@ -685,7 +596,12 @@ const Method = () => {
             }
         });
     }, []);
-    const handleReceiveFlags = () => {};
+    const handleReceiveFlags = (cleanList, retainList) => {
+        console.log("1030   retainList", retainList);
+        setCleanList(cleanList);
+        setRetainList(retainList);
+        console.log("1030   cleanList", cleanList);
+    };
 
     return (
         <Flex
@@ -810,79 +726,7 @@ const Method = () => {
                             </Row>
                         </Form>
                     </Col>
-                    <Col span={0}>
-                        <Form
-                            form={formPump}
-                            labelCol={{
-                                span: 10,
-                            }}
-                            wrapperCol={{
-                                span: 20,
-                            }}
-                            layout="inline"
-                            initialValues={{
-                                size: "lager",
-                                maxwidth: "none",
-                            }}
-                            // size="small"
-                            onFinish={onFinishPump}
-                        >
-                            {/* <Form.Item
-                                label="喷雾准备时间"
-                                name="spray_ready_time"
-                            >
-                                <Input />
-                            </Form.Item>
-                            <Form.Item
-                                label="喷雾开始时间"
-                                name="spray_start_time"
-                            >
-                                <Input />
-                            </Form.Item>
-                            <Form.Item
-                                label="喷雾停止时间"
-                                name="spray_stop_time"
-                            >
-                                <Input />
-                            </Form.Item>
-                            <Form.Item
-                                label="蠕动泵速度"
-                                name="peristaltic_velocity"
-                            >
-                                <Input />
-                            </Form.Item>
-                            <Form.Item
-                                label="蠕动泵加速度"
-                                name="peristaltic_acceleration"
-                            >
-                                <Input />
-                            </Form.Item>
-                            <Form.Item
-                                label="蠕动泵减速度"
-                                name="peristaltic_deceleration"
-                            >
-                                <Input />
-                            </Form.Item> */}
-                            {/* <Form.Item
-                                label="清洗速度"
-                                name="peristaltic_deceleration"
-                            >
-                                <Input />
-                            </Form.Item>
-                            <Form.Item
-                                label="清洗次数"
-                                name="peristaltic_deceleration"
-                            >
-                                <Input />
-                            </Form.Item>
-                            <Form.Item
-                                label="排液速度"
-                                name="peristaltic_deceleration"
-                            >
-                                <Input />
-                            </Form.Item> */}
-                        </Form>
-                    </Col>
+
                     <Col span={3}>
                         <Row>
                             <Button
@@ -931,11 +775,9 @@ const Method = () => {
                     <Col span={11}>
                         <div style={{ marginTop: "2rem" }}>
                             <Buttons
+                                cleanListDy={cleanList}
+                                retainListDy={retainList}
                                 callback={handleReceiveFlags}
-                                selected={[]}
-                                clean_flag={0}
-                                selectedAllTubes={[]}
-                                reverseFlag={0}
                             ></Buttons>
                         </div>
                     </Col>

@@ -7,6 +7,7 @@ import { convertLegacyProps } from "antd/es/button";
 import { HeartOutlined, AliyunOutlined } from "@ant-design/icons";
 import { UpdateModuleListAPI } from "../../api/eluent_curve";
 import { linkHorizontal } from "d3";
+import useIndexedDB from "../../hooks/useIndexedDB";
 
 let select_tube = [];
 let groupsOrigin = [
@@ -71,6 +72,8 @@ const App = ({
     const [forceUpdate, setForceUpdate] = useState(0);
     const [groupsOfTen, setGroupsOfTen] = useState(_.cloneDeep(groupsOrigin));
     const [value, setValue] = useState([]);
+    const storedMethodId = Number(localStorage.getItem("methodId")); // 转换为数字
+    const { data, loading, error } = useIndexedDB(storedMethodId); // 使用 Hook
 
     const handleRateChange = (newValue, index, subGroup) => {
         const updatedValue = [...value];
@@ -103,7 +106,6 @@ const App = ({
 
     if (flag == 0) {
         console.log("1024   flag", flag);
-
         getAllTubes().then((res) => {
             if (!res.error) {
                 console.log("1024  res", res);
@@ -112,9 +114,9 @@ const App = ({
                 console.log("1024  groupsOrigin", groupsOrigin);
 
                 modeAndValues = res.data.mode_volume;
+                console.log("1030  getAllTubes  modeAndValues", modeAndValues);
             }
         });
-
         flag += 1;
     }
 
@@ -184,6 +186,46 @@ const App = ({
             });
         }
     }, [reverseFlag]);
+
+    useEffect(() => {
+        console.log("1030  data", data);
+        let _retain_ = [];
+        if (data) {
+            console.log(
+                "1030  typeof data.retainList :",
+                typeof data.retainList
+            );
+
+            if (typeof data.retainList === "string") {
+                _retain_ = JSON.parse(data.retainList);
+            } else {
+                _retain_ = data.retainList;
+            }
+            console.log("1030   _retain_", _retain_);
+            calculateRetainValues(setValue, _retain_);
+        }
+    }, [data, modeAndValues]);
+    const calculateRetainValues = (set, ListDy) => {
+        let _value_ = [];
+        console.log("1030  ListDy", ListDy);
+        console.log("1030  modeAndValues", modeAndValues);
+        if (modeAndValues.length > 0) {
+            ListDy?.forEach((c) => {
+                let mode = modeAndValues.filter(
+                    (item) => item[0] === c["module_id"]
+                );
+                console.log("1030  mode", mode);
+
+                if (mode.length > 0) {
+                    _value_[mode[0][0] - 1] =
+                        c["liquid_volume"] / (mode[0][1] / 5);
+                }
+            });
+            console.log("1030   value", _value_);
+        }
+
+        set(_value_);
+    };
 
     const handleButtonClick = (tube_i, module, groupIndex, subGroupIndex) => {
         console.log("1021  Receive tube", module, tube_i);

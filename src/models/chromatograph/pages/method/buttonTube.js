@@ -59,21 +59,20 @@ let modeAndValues = [
 let moduleList = [];
 let flag = 0;
 
-const App = ({ callback, clean_flag, selectedAllTubes }) => {
+const App = ({ cleanListDy, retainListDy, callback }) => {
     const _ = require("lodash");
 
-    const [selectedFlag, setSelectedFlags] = useState([]);
-    const [cleanFlag, setCleanFlag] = useState(0);
     const [groupsOfTen, setGroupsOfTen] = useState(_.cloneDeep(groupsOrigin));
     const [value, setValue] = useState([]);
     const [valueClean, setValueClean] = useState([]);
     const [modeAndValues, setModeAndValues] = useState([]);
+    const [cleanList, setCleanList] = useState([]);
+    const [retainList, setRetainList] = useState([]);
 
     const handleRetainChange = (newValue, index, subGroup) => {
         const updatedValue = [...value];
         updatedValue[index] = newValue;
         setValue(updatedValue);
-
         const dividedArray = updatedValue.map((u) => u / 5);
         moduleList = dividedArray
             .map((value, index) => {
@@ -83,7 +82,7 @@ const App = ({ callback, clean_flag, selectedAllTubes }) => {
 
                 // 根据 subGroup 长度生成 tube_id
                 const tubeId = Array.from(
-                    { length: groupsOrigin[index].length },
+                    { length: groupsOfTen[index].length },
                     (_, i) => i + 1
                 );
                 return {
@@ -93,14 +92,16 @@ const App = ({ callback, clean_flag, selectedAllTubes }) => {
                 };
             })
             .filter((item) => item.liquid_volume > 0);
+        setRetainList((pre) => moduleList);
         UpdateModuleListAPI({ module_list: moduleList }).then(() => {});
-        console.log("1018  updatedValue", updatedValue, dividedArray, subGroup);
-        console.log("1018  moduleList", moduleList);
+
+        callback(cleanList, moduleList);
     };
 
     const handleCleanChange = (newValue, index, subGroup) => {
         const updatedValue = [...valueClean];
         updatedValue[index] = newValue;
+
         setValueClean(updatedValue);
 
         const dividedArray = updatedValue.map((u) => u / 5);
@@ -114,7 +115,7 @@ const App = ({ callback, clean_flag, selectedAllTubes }) => {
 
                 // 根据 subGroup 长度生成 tube_id
                 const tubeId = Array.from(
-                    { length: groupsOrigin[index].length },
+                    { length: groupsOfTen[index].length },
                     (_, i) => i + 1
                 );
                 return {
@@ -124,25 +125,20 @@ const App = ({ callback, clean_flag, selectedAllTubes }) => {
                 };
             })
             .filter((item) => item.liquid_volume > 0);
+        setCleanList((pre) => moduleList);
+
         UpdateCleanListAPI({ module_list: moduleList }).then(() => {});
-        console.log("1018  updatedValue", updatedValue, dividedArray, subGroup);
-        console.log("1018  moduleList", moduleList);
+
+        callback(moduleList, retainList);
     };
-
-    function findColorByModuleAndTube(module_index, tube_index) {
-        const matchingObject = selectedAllTubes.find(
-            (item) =>
-                item.module_index === module_index &&
-                item.tube_index_list.includes(tube_index)
-        );
-
-        // 如果找到匹配对象，返回 color，否则返回 null
-        return matchingObject ? matchingObject.color : null;
-    }
+    useEffect(() => {
+        calculateRetainValues(setValue, retainListDy);
+        calculateRetainValues(setValueClean, cleanListDy);
+        setRetainList(retainListDy);
+        setCleanList(cleanListDy);
+    }, [cleanListDy, retainListDy]);
 
     useEffect(() => {
-        setCleanFlag(clean_flag);
-
         getAllTubes().then((res) => {
             if (!res.error) {
                 console.log("1024  res", res);
@@ -156,7 +152,22 @@ const App = ({ callback, clean_flag, selectedAllTubes }) => {
             }
         });
     }, [groupsOrigin]);
+    const calculateRetainValues = (set, ListDy) => {
+        let _value_ = [];
 
+        ListDy.forEach((c) => {
+            let mode = modeAndValues.filter(
+                (item) => item[0] === c["module_id"]
+            );
+            if (mode.length > 0) {
+                _value_[mode[0][0] - 1] = c["liquid_volume"] / (mode[0][1] / 5);
+            } else {
+                _value_[mode[0][0] - 1] = undefined;
+            }
+        });
+
+        set(_value_);
+    };
     const handleButtonClick = (tube_i, module, groupIndex, subGroupIndex) => {
         console.log("1021  Receive tube", module, tube_i);
         setSelectedFlags((prevFlags) => {
@@ -327,45 +338,7 @@ const App = ({ callback, clean_flag, selectedAllTubes }) => {
                                                             index;
                                                         const tube = item.tube;
 
-                                                        const isSelected =
-                                                            selectedFlag.some(
-                                                                (flag) =>
-                                                                    flag.module_index ===
-                                                                        module &&
-                                                                    flag.tube_index ===
-                                                                        tube_i
-                                                            );
-
-                                                        let isNum = false;
-
-                                                        let buttonColorStyle =
-                                                            {};
-                                                        let buttonDisabled = false;
-
-                                                        if (cleanFlag == 1) {
-                                                            buttonDisabled = false;
-                                                        } else {
-                                                            if (!isNum) {
-                                                                buttonColorStyle =
-                                                                    color[
-                                                                        "colorEight"
-                                                                    ];
-                                                                buttonDisabled = true;
-                                                            }
-                                                        }
-                                                        let colorTube =
-                                                            findColorByModuleAndTube(
-                                                                module,
-                                                                tube_i
-                                                            );
-                                                        if (colorTube) {
-                                                            buttonDisabled = true;
-                                                            let colorName = `color${colorTube}`;
-                                                            buttonColorStyle =
-                                                                color[
-                                                                    colorName
-                                                                ];
-                                                        }
+                                                        let buttonDisabled = true;
 
                                                         return (
                                                             <Col key={index}>
@@ -386,16 +359,6 @@ const App = ({ callback, clean_flag, selectedAllTubes }) => {
                                                                         disabled={
                                                                             buttonDisabled
                                                                         }
-                                                                        style={{
-                                                                            backgroundColor:
-                                                                                isSelected
-                                                                                    ? "#d5d5f5"
-                                                                                    : "",
-                                                                            color: isSelected
-                                                                                ? "white"
-                                                                                : "black",
-                                                                            ...buttonColorStyle,
-                                                                        }}
                                                                     >
                                                                         {tube}
                                                                     </Button>
