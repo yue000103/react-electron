@@ -61,7 +61,7 @@ const translateType = (codeInfo) => {
 };
 
 const App = (props) => {
-    // console.log("props :", props);
+    // console.log("1030 props :", props);
 
     const [openNotice, setOpenNotice] = useState(false);
     const [openWarning, setOpenWarning] = useState(false);
@@ -176,6 +176,8 @@ const App = (props) => {
     };
     const onCloseSetting = () => {
         setOpenSetting(false);
+        let flag = 1
+        props.callback(flag);
     };
 
     const alarmColumns = [
@@ -226,7 +228,9 @@ const App = (props) => {
             if (!response.error) {
             }
         });
-        if (status["peristaltic_switch"]) {
+        console.log("1022    status[peristaltic_switch]",status["peristaltic_switch"]);
+        console.log("1022    status[spray_switch]",status["spray_switch"]);
+
             pumpType = "abandon";
             let pumpOperationData = {
                 pump_type: pumpType,
@@ -241,10 +245,9 @@ const App = (props) => {
                 if (!response.error) {
                 }
             });
-        }
-        if (status["spray_switch"]) {
+       
             pumpType = "clean";
-            let pumpOperationData = {
+            let pumpOperationData2 = {
                 pump_type: pumpType,
                 pump_status: status["peristaltic_switch"],
                 drain_speed: status["drain_speed"],
@@ -253,11 +256,11 @@ const App = (props) => {
                 tube_id: status["tube_id"],
                 module_id: status["module_id"],
             };
-            pumpOperation(pumpOperationData).then((response) => {
+            pumpOperation(pumpOperationData2).then((response) => {
                 if (!response.error) {
                 }
             });
-        }
+        
     };
     const handleValuesChange = (values) => {
         let newPoints = [];

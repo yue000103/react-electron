@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button, Flex, Table, Checkbox } from "antd";
 import { Empty } from "antd";
 import { pauseTube, resumeTube } from "@/models/chromatograph/api/tube";
+import { logDOM } from "@testing-library/react";
 
 const columns = [
     {
@@ -23,7 +24,9 @@ const App = (props) => {
     const [loading, setLoading] = useState(false);
     const [buttonFlag, setButtonFlag] = useState(props.buttonFlag);
     const [allSelected, setAllSelected] = useState(false); // 新增状态
-    const dataSource = selectedAllTubes.map((tube, i) => ({
+    const dataSource = selectedAllTubes
+    .filter(tube => !isNaN(tube.module_index)) // 过滤掉module_index为NaN的值
+    .map((tube, i) => ({
         key: i,
         status:
             tube.status === "abandon"
@@ -37,11 +40,12 @@ const App = (props) => {
             .map((index) => index + 1)
             .join(", ")}`,
     }));
+    console.log("0926    selected",selectedAllTubes);
+    
     const runTubes = () => {
         const selectedData = dataSource.filter((item) =>
             selectedRowKeys.includes(item.key)
         );
-
         console.log("9012   选中的信息：", selectedData);
         const result = selectedData.map((item, index) => {
             return { flag: "run", index: item.key };
@@ -53,10 +57,12 @@ const App = (props) => {
         const selectedData = dataSource.filter((item) =>
             selectedRowKeys.includes(item.key)
         );
-
+        console.log("1030   selectedData",selectedData);
         const result = selectedData.map((item, index) => {
-            return { flag: "delete", index: index };
+            return { flag: "delete", index: item.key };
         });
+        console.log("1030   result",result);
+
         callback(result);
     };
     const onSelectChange = (newSelectedRowKeys) => {

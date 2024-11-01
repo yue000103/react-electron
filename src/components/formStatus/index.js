@@ -104,7 +104,7 @@ const CustomForm = ({ type, data, decideParameter, callback }) => {
                         <Button
                             type="primary"
                             htmlType="submit"
-                            disabled={formData[decideParameter] === false}
+                            // disabled={formData[decideParameter] === false}
                         >
                             上传
                         </Button>

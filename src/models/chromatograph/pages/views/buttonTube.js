@@ -126,7 +126,6 @@ const App = ({
                 item.module_index === module_index &&
                 item.tube_index_list.includes(tube_index)
         );
-
         // 如果找到匹配对象，返回 color，否则返回 null
         return matchingObject ? matchingObject.color : null;
     }

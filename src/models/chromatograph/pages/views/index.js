@@ -255,8 +255,8 @@ const App = () => {
         console.log("0913 -------8------ excutedTubes", excutedTubes);
     }, [currentTubeId, currentTaskId, excuteTaskFlag]);
     const handleReceiveFlags = (select_tubes, groupsOrigin) => {
-        console.log("1021  Receive select_tubes", select_tubes);
-        console.log("1021-2  Receive groupsOrigin", groupsOrigin);
+        console.log("0926  Receive select_tubes", select_tubes);
+        console.log("0926-2  Receive groupsOrigin", groupsOrigin);
 
         selected_tube = select_tubes;
         if (groupsOrigin?.length === 0) {
@@ -294,26 +294,38 @@ const App = () => {
 
     // flag  ： undefined  没被选中   true  保留  false  废弃
     const process_data_flag = (selected_tube, flag, color) => {
-        let newTubes = [
-            ...selected_tube.map((tube) => ({
-                ...tube,
-                flag: flag,
-                color: color,
-            })),
-        ];
+        console.log("0926   groupedData   selectTubeTransfer", selectTubeTransfer);
+        let newTubes = []
+        if (selected_tube.length > 0) {
+            newTubes = [
+                ...selected_tube.map((tube) => ({
+                    ...tube,
+                    flag: flag,
+                    color: color,
+                })),
+            ];
+        }
+        
+        console.log("0926   groupedData   newTubes", newTubes);
         selectTubeTransfer = [...selectTubeTransfer, ...newTubes];
+
+
         if (clean_flag !== 1) {
             setSelectedAllTubes((prevNum) => {
                 return processGroupedData(selectTubeTransfer);
             });
         }
+
         setSelectedTask((prevNum) => {
             return processGroupedData(selectTubeTransfer);
         });
+        console.log("0926   selectedTask",selectedTask);
+        
     };
 
     const processGroupedData = (data) => {
         const groupedData = {};
+        console.log("0926   groupedData   data", data);
 
         data.forEach((item) => {
             const key = `${item.module_index}-${item.flag}-${item.color}-${item.status}`;
@@ -324,15 +336,13 @@ const App = () => {
 
             groupedData[key].push(item.tube_index);
         });
-
+        console.log("0926   groupedData", groupedData);
+        
         let result = [];
-
         Object.keys(groupedData).forEach((key) => {
             console.log("1021   key", key);
-
             const [module_index, flag, color, status] = key.split("-");
             const tube_indices = groupedData[key].sort((a, b) => a - b);
-
             let current_list = [tube_indices[0]];
 
             for (let i = 1; i < tube_indices.length; i++) {
@@ -391,11 +401,13 @@ const App = () => {
                 entry.time_end = end_time;
             }
         });
+        console.log("0926    res",result);
+
 
         return result;
     };
     const retainFlags = () => {
-        console.log("1021   selected_tube", selected_tube);
+        console.log("0926   selected_tube", selected_tube);
 
         if (selected_tube.length > 0) {
             let consecutiveArrays = selected_tube.map((tube) => ({
@@ -408,7 +420,7 @@ const App = () => {
             } else {
                 colorNum = 1;
             }
-            console.log("1021   selected_tube   ---2", selected_tube);
+            console.log("0926   selected_tube   ---2", selected_tube);
 
             process_data_flag(selected_tube, true, colorMap[colorNum]);
             setSelectedReverse([]);
@@ -425,9 +437,7 @@ const App = () => {
                 status: "abandon",
             }));
             selected_tube = consecutiveArrays;
-
             let color = 0;
-
             process_data_flag(selected_tube, false, colorMap[color]);
             setSelectedReverse([]);
             selected_tube = [];
@@ -511,6 +521,7 @@ const App = () => {
             indexesToDelete.forEach((index) => {
                 if (selectedAllTubes.length > 0) {
                     const tubeList = selectedAllTubes[index].tube_index_list;
+                    console.log("0926    tubeList",tubeList);
 
                     process_data_flag(tubeList, undefined);
                     setSelectedAllTubes(
@@ -518,15 +529,27 @@ const App = () => {
                             return !indexesToDelete.has(index);
                         })
                     );
+                    selectTubeTransfer = selectTubeTransfer.filter((item, index) => {return !indexesToDelete.has(index);})
+
+                    console.log("0926    selectedAllTubes",selectedAllTubes);
+                    
                 } else {
                     const tubeList = selectedTask[index].tube_index_list;
+                    console.log("0926   22222  tubeList",tubeList);
+
+                    console.log("0926  indexesToDelete  11   selectTubeTransfer",selectTubeTransfer);
+                    selectTubeTransfer = selectTubeTransfer.filter((item, index) => {return !indexesToDelete.has(index);})
+                    console.log("0926 indexesToDelete  22   selectTubeTransfer",selectTubeTransfer);
 
                     process_data_flag(tubeList, undefined);
+                    
                     setSelectedTask(
                         selectedTask.filter((item, index) => {
                             return !indexesToDelete.has(index);
                         })
                     );
+                    console.log("0926    selectedTask",selectedTask);
+
                 }
             });
         }
@@ -836,20 +859,21 @@ const App = () => {
     const clean = () => {
         setData(() => []);
         setSelectedReverse([]);
-
         setNum([]);
-
         setCleanFlag(1);
         console.log("clean_flag--- :", clean_flag);
+
         if (selected_tube.length > 0) {
             // let consecutiveArrays = splitConsecutive(selected_tube);
-            console.log("clean_flag selected_tube :", selected_tube);
+            console.log("0926  clean_flag selected_tube :", selected_tube);
 
             let consecutiveArrays = selected_tube.map((tube) => ({
                 ...tube,
                 status: "clean",
             }));
             selected_tube = consecutiveArrays;
+            console.log("0926  selected_tube :", selected_tube);
+
             // if (colorNum != 9) {
             //     colorNum++;
             // } else {
@@ -932,6 +956,43 @@ const App = () => {
             resizeObserver.disconnect();
         };
     }, [samplingTime, uploadFlag]);
+    const handleDynamicLine = (flag) => {
+        console.log("1030   flag",flag);
+        getEluentLine().then((responseData) => {
+            if (!responseData.error) {
+                if (responseData.data.point.length === 0) {
+                    setMethodFlag(0);
+                } else {
+                    const methodId = localStorage.getItem("methodId");
+                    if (methodId) {
+                        setCurrentMethodOperate({
+                            method_id: Number(methodId),
+                        }).then((response) => {
+                            console.log(
+                                "0909 ------response :",
+                                response.data.methods
+                            );
+                            setCurrentMethod(response.data.methods[0]);
+                        });
+                    }
+                    setMethodFlag(1);
+                    setLine(responseData.data.point);
+                    newPoints = responseData.data.point;
+                    // console.log(
+                    //     "samplingTime  responseData.data :",
+                    //     responseData.data
+                    // );
+                    setSamplingTime(responseData.data.sampling_time);
+                    // console.log(
+                    //     "samplingTime responseData.data.sampling_time :",
+                    //     responseData.data.sampling_time
+                    // );
+                    // console.log("samplingTime ------------:", samplingTime);
+                }
+            }
+        });
+            
+    }
 
     return (
         <Flex gap="middle" wrap className="flex">
@@ -939,6 +1000,7 @@ const App = () => {
             <FloatB
                 warningCode={warningCode}
                 dynamicHeight={dimensions.height}
+                callback={handleDynamicLine}
             />
 
             <Layout>
