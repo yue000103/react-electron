@@ -269,7 +269,7 @@ const App = () => {
     };
     // 把梯度曲线的value值转换成数字
     const convertNonNumericValues = (data) => {
-        const updatedData = { ...data };
+        const updatedData = [...data];
 
         Object.keys(updatedData).forEach((key) => {
             const entry = updatedData[key];
@@ -289,6 +289,7 @@ const App = () => {
         );
         newPoints = convertNonNumericValues(linePointChange);
         console.log("linePointChange  newPoints :", newPoints);
+        setLine(newPoints);
         // newPoints = linePointChange;
     };
 
@@ -737,13 +738,13 @@ const App = () => {
         startTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
         setLine(newPoints);
 
-        updateEluentLine({
-            point: Object.values(newPoints),
-            start_time: startTime,
-        }).then((responseData) => {
-            if (!responseData.error) {
-            }
-        });
+        // updateEluentLine({
+        //     point: Object.values(newPoints),
+        //     start_time: startTime,
+        // }).then((responseData) => {
+        //     if (!responseData.error) {
+        //     }
+        // });
         console.log("1029    new", newPoints);
     };
     const clearData = () => {

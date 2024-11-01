@@ -276,7 +276,7 @@ const renderLine = (
     lineFlag,
     xScale
 ) => {
-    console.log("1012 linePointChange :", linePointChange);
+    console.log("1012 time linePointChange :", linePointChange);
     linePointChange?.sort((a, b) => {
         // 将时间字符串转换为秒数进行比较
         const timeA = a.time
@@ -291,6 +291,7 @@ const renderLine = (
         ...d,
         time: parseTime(d.time),
     }));
+    console.log("1012 time parsedData :", parsedData);
 
     // const drag = d3
     //     .drag()
@@ -302,7 +303,8 @@ const renderLine = (
     let newD = [];
     let ifMove = [];
     console.log("8672   ----samplingTime ---- ", samplingTime);
-
+    svg.selectAll("path.line").remove();
+    svg.selectAll("circle.point").remove();
     // endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
 
     // const x2Scale = d3.scaleLinear().domain([now, endTime]).range([0, width]);
@@ -323,37 +325,93 @@ const renderLine = (
         .attr("y", 0)
         .style("text-anchor", "end"); // 右对齐文本
 
-    svg.selectAll("circle")
+    const line2 = d3
+        .line()
+        .x((d) => xScale(d.time))
+        .y((d) => yScale(d.value))
+        .curve(d3.curveLinear); // 使用 Cardinal 曲线插值
+    console.log("8672 parsedData", parsedData);
+    // 绘制折线路径
+    svg.append("path")
+        .attr("class", "line")
+        .datum(parsedData)
+        .attr("fill", "none")
+        .attr("stroke", "blue")
+        .attr("stroke-width", 2)
+        .attr("d", line2)
+        .style("pointer-events", "none"); // 确保线不会阻挡点的事件
+
+    // svg.selectAll("circle")
+    //     .data(parsedData)
+    //     .enter()
+    //     .append("circle")
+    //     .attr("cx", (d) => xScale(d.time))
+    //     .attr("cy", (d) => yScale(d.value))
+    //     .attr("r", 8) // 设置圆点半径
+    //     .attr("fill", "blue")
+    //     .on("mouseover", function (event, d) {
+    //         // d3.select(this).style("opacity", 1); // 鼠标移入时显示圆点
+    //         const [time, value] = d3.pointer(event, svgRef.current);
+    //         console.log("time :", d.time);
+    //         const dateObj = new Date(d.time);
+    //         const timeStr = dateObj.toTimeString().split(" ")[0];
+    //         // 获取鼠标位置
+    //         svg.append("text")
+    //             .attr("class", "coordinate-text")
+    //             .attr("x", time + 10)
+    //             .attr("y", value - 10)
+    //             .text(`(${timeStr}, ${d.value})`)
+    //             .attr("font-size", "12px")
+    //             .attr("fill", "black")
+    //             .attr("pointer-events", "none"); // 防止文字影响鼠标事件
+    //     })
+    //     .on("mouseout", function () {
+    //         svg.selectAll(".coordinate-text").remove(); // 移除显示的坐标信息
+    //     })
+    //     .on("click", function (event, d) {
+    //         handleClick(event, d);
+    //     })
+    //     .on("mousedown", prepareDrag);
+    const points = svg
+        .selectAll("circle.point")
         .data(parsedData)
-        .enter()
-        .append("circle")
+        .join("circle") // 使用 join 代替 enter().append()
+        .attr("class", "point")
         .attr("cx", (d) => xScale(d.time))
         .attr("cy", (d) => yScale(d.value))
-        .attr("r", 7) // 设置圆点半径
+        .attr("r", 8)
+        .style("opacity", 1)
         .attr("fill", "blue")
-        .on("mouseover", function (event, d) {
-            d3.select(this).style("opacity", 1); // 鼠标移入时显示圆点
-            const [time, value] = d3.pointer(event, svgRef.current);
-            console.log("time :", d.time);
-            const dateObj = new Date(d.time);
-            const timeStr = dateObj.toTimeString().split(" ")[0];
-            // 获取鼠标位置
-            svg.append("text")
-                .attr("class", "coordinate-text")
-                .attr("x", time + 10)
-                .attr("y", value - 10)
-                .text(`(${timeStr}, ${d.value})`)
-                .attr("font-size", "12px")
-                .attr("fill", "black")
-                .attr("pointer-events", "none"); // 防止文字影响鼠标事件
-        })
-        .on("mouseout", function () {
-            svg.selectAll(".coordinate-text").remove(); // 移除显示的坐标信息
-        })
-        .on("click", function (event, d) {
-            handleClick(event, d);
-        })
-        .on("mousedown", prepareDrag);
+        .style("cursor", "pointer") // 添加鼠标指针样式
+        .style("pointer-events", "all"); // 确保点可以接收事件
+    points.each(function () {
+        // 使用 each 来确保每个点都绑定了事件
+        const point = d3.select(this);
+        point
+            .on("mouseover", function (event, d) {
+                console.log("1101   event", event, d);
+
+                // d3.select(this).style("opacity", 1);
+                const dateObj = new Date(d.time);
+                const timeStr = dateObj.toTimeString().split(" ")[0];
+
+                svg.append("text")
+                    .attr("class", "coordinate-text")
+                    .attr("x", xScale(d.time) + 10)
+                    .attr("y", yScale(d.value) - 10)
+                    .text(`(${timeStr}, ${d.value})`)
+                    .attr("font-size", "12px")
+                    .attr("fill", "black")
+                    .style("pointer-events", "none");
+            })
+            .on("mouseout", function () {
+                svg.selectAll(".coordinate-text").remove();
+            })
+            .on("click", function (event, d) {
+                handleClick(event, d);
+            });
+    });
+
     // .call(drag); // 应用拖拽行为
     const handleClick = (event, d) => {
         // console.log("lineFlag", lineFlag);
@@ -371,19 +429,7 @@ const renderLine = (
         // }
     };
     // 折线生成器
-    const line2 = d3
-        .line()
-        .x((d) => xScale(d.time))
-        .y((d) => yScale(d.value))
-        .curve(d3.curveLinear); // 使用 Cardinal 曲线插值
-    console.log("8672 parsedData", parsedData);
-    // 绘制折线路径
-    svg.append("path")
-        .datum(parsedData)
-        .attr("fill", "none")
-        .attr("stroke", "blue")
-        .attr("stroke-width", 2)
-        .attr("d", line2);
+
     const dragThreshold = 300; // 拖拽启动阈值，单位为像素
     let startX, startY;
     let isDragging = false;
@@ -731,7 +777,12 @@ const LineChart = (props) => {
             }}
         >
             <Spin spinning={lineLoading} delay={500}>
-                <svg ref={svgRef} width="100%" height="20rem"></svg>
+                <svg
+                    ref={svgRef}
+                    width="100%"
+                    height="20rem"
+                    style={{ position: "relative", zIndex: 1 }}
+                ></svg>
             </Spin>
 
             <div
@@ -739,24 +790,35 @@ const LineChart = (props) => {
                     position: "absolute",
                     top: "10rem",
                     width: "100%",
+                    zIndex: 2,
+                    pointerEvents: "none",
+                    height: "0px",
                 }}
             >
                 <Row>
-                    <Col span={17}></Col>
-                    <Col span={2}>
+                    <Col span={17} style={{ height: "0rem" }}></Col>
+                    <Col span={2} style={{ height: "0rem" }}>
                         {" "}
                         <Button
                             icon={<PlusOutlined />}
                             onClick={handleZoomIn}
+                            style={{ pointerEvents: "auto" }}
                         />
                         <Button
-                            style={{ marginLeft: "10px" }}
+                            style={{
+                                marginLeft: "10px",
+                                pointerEvents: "auto",
+                            }}
                             icon={<MinusOutlined />}
                             onClick={handleZoomOut}
                         />
                     </Col>
-                    <Col span={4}>
+                    <Col
+                        span={4}
+                        style={{ pointerEvents: "auto", height: "0rem" }}
+                    >
                         <CustomScrollbar
+                            style={{ pointerEvents: "auto" }}
                             scrollPosition={scrollPosition}
                             maxScrollPosition={maxScrollPosition}
                             onScrollChange={handleScrollChange}
