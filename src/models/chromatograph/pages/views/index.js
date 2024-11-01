@@ -294,8 +294,9 @@ const App = () => {
 
     // flag  ： undefined  没被选中   true  保留  false  废弃
     const process_data_flag = (selected_tube, flag, color) => {
-        console.log("0926   groupedData   selectTubeTransfer", selectTubeTransfer);
-        let newTubes = []
+        console.log("1101   selected_tube", selected_tube);
+        console.log("1101   selectTubeTransfer", selectTubeTransfer);
+        let newTubes = [];
         if (selected_tube.length > 0) {
             newTubes = [
                 ...selected_tube.map((tube) => ({
@@ -305,27 +306,24 @@ const App = () => {
                 })),
             ];
         }
-        
-        console.log("0926   groupedData   newTubes", newTubes);
-        selectTubeTransfer = [...selectTubeTransfer, ...newTubes];
+        console.log("1101   newTubes", newTubes);
 
-
+        selectTubeTransfer = [...newTubes];
+        console.log("1101   selectTubeTransfer  2  ", selectTubeTransfer);
         if (clean_flag !== 1) {
             setSelectedAllTubes((prevNum) => {
-                return processGroupedData(selectTubeTransfer);
+                return [...prevNum, ...processGroupedData(selectTubeTransfer)];
             });
         }
 
         setSelectedTask((prevNum) => {
-            return processGroupedData(selectTubeTransfer);
+            return [...prevNum, ...processGroupedData(selectTubeTransfer)];
         });
-        console.log("0926   selectedTask",selectedTask);
-        
     };
 
     const processGroupedData = (data) => {
+        setReverseFlag(0);
         const groupedData = {};
-        console.log("0926   groupedData   data", data);
 
         data.forEach((item) => {
             const key = `${item.module_index}-${item.flag}-${item.color}-${item.status}`;
@@ -336,8 +334,8 @@ const App = () => {
 
             groupedData[key].push(item.tube_index);
         });
-        console.log("0926   groupedData", groupedData);
-        
+        console.log("1101   groupedData", groupedData);
+
         let result = [];
         Object.keys(groupedData).forEach((key) => {
             console.log("1021   key", key);
@@ -401,8 +399,8 @@ const App = () => {
                 entry.time_end = end_time;
             }
         });
-        console.log("0926    res",result);
 
+        console.log("1101    result", result);
 
         return result;
     };
@@ -450,6 +448,7 @@ const App = () => {
         // console.log("1021-2 selected_tube :", selected_tube);
         // console.log("1021-2  groupsOrigin :", groupsOrigin);
         setReverseFlag(1);
+
         // if (selected_tubes.length > 0) {
         //     setSelectedReverse(selected_tubes);
         //     let reverse = num.filter(
@@ -521,7 +520,7 @@ const App = () => {
             indexesToDelete.forEach((index) => {
                 if (selectedAllTubes.length > 0) {
                     const tubeList = selectedAllTubes[index].tube_index_list;
-                    console.log("0926    tubeList",tubeList);
+                    console.log("0926    tubeList", tubeList);
 
                     process_data_flag(tubeList, undefined);
                     setSelectedAllTubes(
@@ -529,27 +528,44 @@ const App = () => {
                             return !indexesToDelete.has(index);
                         })
                     );
-                    selectTubeTransfer = selectTubeTransfer.filter((item, index) => {return !indexesToDelete.has(index);})
-
-                    console.log("0926    selectedAllTubes",selectedAllTubes);
-                    
-                } else {
-                    const tubeList = selectedTask[index].tube_index_list;
-                    console.log("0926   22222  tubeList",tubeList);
-
-                    console.log("0926  indexesToDelete  11   selectTubeTransfer",selectTubeTransfer);
-                    selectTubeTransfer = selectTubeTransfer.filter((item, index) => {return !indexesToDelete.has(index);})
-                    console.log("0926 indexesToDelete  22   selectTubeTransfer",selectTubeTransfer);
-
-                    process_data_flag(tubeList, undefined);
-                    
+                    selectTubeTransfer = selectTubeTransfer.filter(
+                        (item, index) => {
+                            return !indexesToDelete.has(index);
+                        }
+                    );
                     setSelectedTask(
                         selectedTask.filter((item, index) => {
                             return !indexesToDelete.has(index);
                         })
                     );
-                    console.log("0926    selectedTask",selectedTask);
 
+                    console.log("0926    selectedAllTubes", selectedAllTubes);
+                } else {
+                    // const tubeList = selectedTask[index].tube_index_list;
+                    // console.log("0926   22222  tubeList", tubeList);
+
+                    // console.log(
+                    //     "0926  indexesToDelete  11   selectTubeTransfer",
+                    //     selectTubeTransfer
+                    // );
+                    // selectTubeTransfer = selectTubeTransfer.filter(
+                    //     (item, index) => {
+                    //         return !indexesToDelete.has(index);
+                    //     }
+                    // );
+                    // console.log(
+                    //     "0926 indexesToDelete  22   selectTubeTransfer",
+                    //     selectTubeTransfer
+                    // );
+
+                    // process_data_flag(tubeList, undefined);
+
+                    setSelectedTask(
+                        selectedTask.filter((item, index) => {
+                            return !indexesToDelete.has(index);
+                        })
+                    );
+                    console.log("1101    selectedTask", selectedTask);
                 }
             });
         }
@@ -558,7 +574,7 @@ const App = () => {
     const error = () => {
         messageApi.open({
             type: "error",
-            content: "请选择试管 !",
+            content: "请选择试管!",
             duration: 2,
         });
     };
@@ -566,7 +582,7 @@ const App = () => {
         if (uploadFlag === 0) {
             messageApi.open({
                 type: "error",
-                content: "没有上传方法 !",
+                content: "没有上传方法",
                 duration: 2,
             });
         } else {
@@ -862,6 +878,7 @@ const App = () => {
         setNum([]);
         setCleanFlag(1);
         console.log("clean_flag--- :", clean_flag);
+        console.log("1101   selected_tube", selected_tube);
 
         if (selected_tube.length > 0) {
             // let consecutiveArrays = splitConsecutive(selected_tube);
@@ -872,7 +889,6 @@ const App = () => {
                 status: "clean",
             }));
             selected_tube = consecutiveArrays;
-            console.log("0926  selected_tube :", selected_tube);
 
             // if (colorNum != 9) {
             //     colorNum++;
@@ -957,7 +973,7 @@ const App = () => {
         };
     }, [samplingTime, uploadFlag]);
     const handleDynamicLine = (flag) => {
-        console.log("1030   flag",flag);
+        console.log("1030   flag", flag);
         getEluentLine().then((responseData) => {
             if (!responseData.error) {
                 if (responseData.data.point.length === 0) {
@@ -991,8 +1007,7 @@ const App = () => {
                 }
             }
         });
-            
-    }
+    };
 
     return (
         <Flex gap="middle" wrap className="flex">

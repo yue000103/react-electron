@@ -130,6 +130,8 @@ const App = (props) => {
             setDeviceStatus(data.DeviceStatusEnum);
         });
         socket.on("OperatingTime", (data) => {
+            // console.log("1024   OperatingTime", data);
+
             setOperatingTime(data.operating_time);
         });
 
@@ -176,7 +178,7 @@ const App = (props) => {
     };
     const onCloseSetting = () => {
         setOpenSetting(false);
-        let flag = 1
+        let flag = 1;
         props.callback(flag);
     };
 
@@ -228,39 +230,41 @@ const App = (props) => {
             if (!response.error) {
             }
         });
-        console.log("1022    status[peristaltic_switch]",status["peristaltic_switch"]);
-        console.log("1022    status[spray_switch]",status["spray_switch"]);
+        console.log(
+            "1022    status[peristaltic_switch]",
+            status["peristaltic_switch"]
+        );
+        console.log("1022    status[spray_switch]", status["spray_switch"]);
 
-            pumpType = "abandon";
-            let pumpOperationData = {
-                pump_type: pumpType,
-                pump_status: status["peristaltic_switch"],
-                drain_speed: status["drain_speed"],
-                clean_volume: status["clean_volume"],
-                clean_count: status["clean_count"],
-                tube_id: status["tube_id"],
-                module_id: status["module_id"],
-            };
-            pumpOperation(pumpOperationData).then((response) => {
-                if (!response.error) {
-                }
-            });
-       
-            pumpType = "clean";
-            let pumpOperationData2 = {
-                pump_type: pumpType,
-                pump_status: status["peristaltic_switch"],
-                drain_speed: status["drain_speed"],
-                clean_volume: status["clean_volume"],
-                clean_count: status["clean_count"],
-                tube_id: status["tube_id"],
-                module_id: status["module_id"],
-            };
-            pumpOperation(pumpOperationData2).then((response) => {
-                if (!response.error) {
-                }
-            });
-        
+        pumpType = "abandon";
+        let pumpOperationData = {
+            pump_type: pumpType,
+            pump_status: status["peristaltic_switch"],
+            drain_speed: status["drain_speed"],
+            clean_volume: status["clean_volume"],
+            clean_count: status["clean_count"],
+            tube_id: status["tube_id"],
+            module_id: status["module_id"],
+        };
+        pumpOperation(pumpOperationData).then((response) => {
+            if (!response.error) {
+            }
+        });
+
+        pumpType = "clean";
+        let pumpOperationData2 = {
+            pump_type: pumpType,
+            pump_status: status["peristaltic_switch"],
+            drain_speed: status["drain_speed"],
+            clean_volume: status["clean_volume"],
+            clean_count: status["clean_count"],
+            tube_id: status["tube_id"],
+            module_id: status["module_id"],
+        };
+        pumpOperation(pumpOperationData2).then((response) => {
+            if (!response.error) {
+            }
+        });
     };
     const handleValuesChange = (values) => {
         let newPoints = [];
@@ -308,12 +312,14 @@ const App = (props) => {
                             type: "success",
                             content: "当前是离线模式",
                         });
+                        localStorage.setItem("useMock", true);
                     }
                     if (response.data["message"] === "False") {
                         messageApi.open({
                             type: "success",
                             content: "当前是联机模式",
                         });
+                        localStorage.setItem("useMock", false);
                     }
                     setSpinning(false);
                     setIsChecked(checked);
@@ -363,6 +369,8 @@ const App = (props) => {
                 // console.log("1024  getDeviceStatus", res);
             }
         });
+        const useMock = localStorage.getItem("useMock");
+        setIsChecked(useMock);
     }, [props]);
     return (
         <>

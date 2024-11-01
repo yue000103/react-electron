@@ -25,23 +25,23 @@ const App = (props) => {
     const [buttonFlag, setButtonFlag] = useState(props.buttonFlag);
     const [allSelected, setAllSelected] = useState(false); // 新增状态
     const dataSource = selectedAllTubes
-    .filter(tube => !isNaN(tube.module_index)) // 过滤掉module_index为NaN的值
-    .map((tube, i) => ({
-        key: i,
-        status:
-            tube.status === "abandon"
-                ? "废弃"
-                : tube.status === "clean"
-                ? "清洗"
-                : tube.status === "retain"
-                ? "保留"
-                : tube.status,
-        tube_list: `${tube.module_index + 1} - ${tube.tube_index_list
-            .map((index) => index + 1)
-            .join(", ")}`,
-    }));
-    console.log("0926    selected",selectedAllTubes);
-    
+        .filter((tube) => !isNaN(tube.module_index)) // 过滤掉module_index为NaN的值
+        .map((tube, i) => ({
+            key: i,
+            status:
+                tube.status === "abandon"
+                    ? "废弃"
+                    : tube.status === "clean"
+                    ? "清洗"
+                    : tube.status === "retain"
+                    ? "保留"
+                    : tube.status,
+            tube_list: `${tube.module_index + 1} - ${tube.tube_index_list
+                .map((index) => index + 1)
+                .join(", ")}`,
+        }));
+    console.log("1101    selectedAllTubes", selectedAllTubes);
+
     const runTubes = () => {
         const selectedData = dataSource.filter((item) =>
             selectedRowKeys.includes(item.key)
@@ -57,11 +57,11 @@ const App = (props) => {
         const selectedData = dataSource.filter((item) =>
             selectedRowKeys.includes(item.key)
         );
-        console.log("1030   selectedData",selectedData);
+        console.log("1030   selectedData", selectedData);
         const result = selectedData.map((item, index) => {
             return { flag: "delete", index: item.key };
         });
-        console.log("1030   result",result);
+        console.log("1030   result", result);
 
         callback(result);
     };

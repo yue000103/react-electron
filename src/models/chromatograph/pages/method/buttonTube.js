@@ -155,23 +155,30 @@ const App = ({ cleanListDy, retainListDy, callback }) => {
     const calculateRetainValues = (set, ListDy) => {
         let _value_ = [];
         let index = 0;
-        if (ListDy && ListDy.length>0){
+        if (ListDy && ListDy.length > 0) {
             ListDy.forEach((c) => {
                 let mode = modeAndValues.filter(
                     (item) => item[0] === c["module_id"]
                 );
 
                 if (mode.length > 0) {
-                    _value_[mode[0][0] - 1] = c["liquid_volume"] / (mode[0][1] / 5);
+                    _value_[mode[0][0] - 1] =
+                        c["liquid_volume"] / (mode[0][1] / 5);
                 } else {
-                    _value_[modeAndValues[index][0] - 1] = undefined;
+                    if (modeAndValues.length > 0) {
+                        _value_[modeAndValues[index][0] - 1] = undefined;
+                    }
+                    console.log("1101   modeAndValues", modeAndValues);
+                    console.log("1101   index", index);
+                    console.log("1101   modeAndValues", modeAndValues[index]);
                 }
-                index += 1
+                if (index < modeAndValues.length - 1) {
+                    index += 1;
+                }
             });
-    
+
             set(_value_);
         }
-        
     };
     const handleButtonClick = (tube_i, module, groupIndex, subGroupIndex) => {
         console.log("1021  Receive tube", module, tube_i);

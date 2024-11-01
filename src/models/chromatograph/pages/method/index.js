@@ -174,10 +174,15 @@ const Method = () => {
             console.log("response :", response);
             setSpinning(false);
             setOpenMethod(false);
+            messageApi.open({
+                type: "success",
+                content: "更新方法成功",
+                duration: 2,
+            });
         });
-        setTimeout(() => {
-            setOpenMethod(false);
-        }, 2000);
+        // setTimeout(() => {
+        //     setOpenMethod(false);
+        // }, 2000);
     };
     const showModal = () => {
         setOpen(true);
