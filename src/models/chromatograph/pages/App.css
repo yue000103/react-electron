@@ -84,7 +84,7 @@
 
 .custom-anchor .ant-anchor-ink {
   display: none ; /* 隐藏默认的锚点滑动条 */
-  background-color:#9b0000 !;
+  background-color:#9b0000 !important ;
 }
 
 .anchor-item {
@@ -106,8 +106,10 @@
 }
 
 .custom-anchor .ant-anchor-link{
-  padding-inline:0 !important
+  padding-inline:0 !important;
+  background-color:#fff !important
 }
+
 
 .anchor-item:hover {
   background-color: #9b0000; /* 鼠标悬停时的背景颜色 */

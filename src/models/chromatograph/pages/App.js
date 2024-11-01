@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import logo from "./logo.svg";
 import "./App.css";
@@ -18,10 +18,15 @@ function App() {
     const [showExperiment, setShowExperiment] = useState(false);
     const [showMethod, setShowMethod] = useState(true);
     const [showHistorical, setShowHistorical] = useState(false);
+    const [activeLink, setActiveLink] = useState("#1"); // 设置默认激活的链接
 
     const handleClick = (e, link) => {
         e.preventDefault();
-        console.log(link);
+        console.log("1101  link", link);
+        console.log("1101  e", e);
+        const anchorKey = link["href"];
+        setActiveLink(anchorKey);
+
         if (Number(link["href"].substring(1)) === 1) {
             setShowMethod(true);
             setShowExperiment(false);
@@ -36,6 +41,14 @@ function App() {
             setShowHistorical(true);
         }
     };
+
+    // 获取当前激活的锚点
+    const getCurrentAnchor = () => {
+        return activeLink;
+    };
+    useEffect(() => {
+        getCurrentAnchor();
+    });
 
     return (
         <Flex gap="middle" wrap className="container">
@@ -57,9 +70,12 @@ function App() {
                         <Anchor
                             affix={true}
                             onClick={handleClick}
-                            getCurrentAnchor="red"
+                            getCurrentAnchor={getCurrentAnchor}
                             className="custom-anchor"
-                            defaultActiveKey="1" // 设置初始高亮的锚点
+                            // defaultActiveKey="#1" // 设置初始高亮的锚点
+                            // defaultSelectedKeys={["1"]}
+                            // getCurrentAnchor={() => currentAnchor} // 使用 currentAnchor 控制当前选中项
+                            targetOffset={0}
                             items={[
                                 {
                                     key: "1",
