@@ -44,6 +44,26 @@ const GradientCurveSettings = () => {
     const dragTimerRef = useRef(null);
     let addFlag = 0; //0表示还未清空，1表示已清空
 
+    const updateLineFlag = localStorage.getItem("updateLineFlag");
+
+    useEffect(()=>{
+        const updateLineFlag = localStorage.getItem("updateLineFlag");   
+             
+        if (updateLineFlag == "true"){
+            getEluentLine().then((responseData) => {
+                if (!responseData.error) {
+                    const updatedPoints = responseData.data.point?.map((p) => ({
+                        ...p,
+                        time: convertTimeToMinutes(p.time), // 转换时间为分钟
+                    }));
+                    setPoints((prevNum) => updatedPoints);
+                }
+            });
+            localStorage.setItem('updateLineFlag', false);
+        }
+    })
+
+
     useEffect(() => {
         // 从 localStorage 获取 methodId
         const storedMethodId = Number(localStorage.getItem("methodId")); // 转换为数字
@@ -52,17 +72,7 @@ const GradientCurveSettings = () => {
         }
     }, []); // 只在组件挂载时运行
 
-    useEffect(() => {
-        getEluentLine().then((responseData) => {
-            if (!responseData.error) {
-                const updatedPoints = responseData.data.point?.map((p) => ({
-                    ...p,
-                    time: convertTimeToMinutes(p.time), // 转换时间为分钟
-                }));
-                setPoints((prevNum) => updatedPoints);
-            }
-        });
-    }, []);
+   
 
     useEffect(() => {
         drawChart();

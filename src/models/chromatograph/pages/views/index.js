@@ -290,6 +290,7 @@ const App = () => {
         newPoints = convertNonNumericValues(linePointChange);
         console.log("linePointChange  newPoints :", newPoints);
         setLine(newPoints);
+        
         // newPoints = linePointChange;
     };
 
@@ -591,10 +592,18 @@ const App = () => {
                 setOpenStart(true);
             } else {
                 setLineLoading(true);
-
                 startEluentLine().then((responsedata) => {
                     // console.log("responsedata :", responsedata);
                 });
+                updateEluentLine({
+                    point: Object.values(newPoints),
+                    start_time: startTime,
+                }).then((responseData) => {
+                    if (!responseData.error) {
+                    }
+                });
+                localStorage.setItem("updateLineFlag", true);
+
             }
         }
         `                                                    `;
@@ -648,13 +657,7 @@ const App = () => {
         }
         console.log("0919  ----------3------", flagStartTime);
 
-        updateEluentLine({
-            point: Object.values(newPoints),
-            start_time: startTime,
-        }).then((responseData) => {
-            if (!responseData.error) {
-            }
-        });
+        
         getEluentCurve({ start_time: startTime })
             .then((responseData) => {})
             .catch((error) => {
@@ -1017,6 +1020,7 @@ const App = () => {
                 warningCode={warningCode}
                 dynamicHeight={dimensions.height}
                 callback={handleDynamicLine}
+
             />
 
             <Layout>

@@ -36,9 +36,6 @@ import parameterDescription from "../config/parameter_description.json";
 
 import {
     getDeviceStatus,
-    postDeviceStatus,
-    postInitDeviceMode,
-    getInitDeviceMode,
     getCodes,
     switchManualTest,
     pumpOperation,
@@ -59,6 +56,7 @@ const translateType = (codeInfo) => {
 
     // 匹配并返回对应的中文描述
 };
+let lineFlag = 0
 
 const App = (props) => {
     // console.log("1030 props :", props);
@@ -85,12 +83,7 @@ const App = (props) => {
     const [isChecked, setIsChecked] = useState(false);
     const [messageApi, contextHolder] = message.useMessage();
     const [spinning, setSpinning] = React.useState(false);
-    const [widthLine, setWidthLine] = useState(500);
-    const [heightLine, setHeightLine] = useState(300);
-    const [samplingTime, setSamplingTime] = useState(10);
-    const [pressure, setPressure] = useState([]);
-    const [flowRateDefault, setFlowRateDefault] = useState(0);
-    const [codes, setCodes] = useState([]);
+   
 
     const [alarmData, setAlarmData] = useState([
         // {
@@ -140,6 +133,7 @@ const App = (props) => {
             socket.disconnect();
         };
     }, []);
+    
 
     const showDrawerNotice = () => {
         setSize("large");
@@ -254,7 +248,7 @@ const App = (props) => {
         pumpType = "clean";
         let pumpOperationData2 = {
             pump_type: pumpType,
-            pump_status: status["peristaltic_switch"],
+            pump_status: status["spray_switch"],
             drain_speed: status["drain_speed"],
             clean_volume: status["clean_volume"],
             clean_count: status["clean_count"],
@@ -266,67 +260,7 @@ const App = (props) => {
             }
         });
     };
-    const handleValuesChange = (values) => {
-        let newPoints = [];
-        if (values.users.length === 0) {
-            newPoints = [
-                { time: 0, pumpB: 0, pumpA: 100, flowRate: 100 },
-                {
-                    time: samplingTime,
-                    pumpB: 0,
-                    pumpA: 100,
-                    flowRate: 100,
-                },
-            ];
-        } else {
-            for (var i = 0; i < values.users.length; i++) {
-                if (!values.users[i].flowRate) {
-                    values.users[i].flowRate = Number(flowRateDefault);
-                }
-            }
-            // if()
-            // const lastPoint = values.users[values.users.length - 1];
-            // newPoints = [
-            //     { time: 0, pumpB: 0, pumpA: 100 },
-            //     {
-            //         time: samplingTime,
-            //         pumpB: lastPoint.pumpB,
-            //         pumpA: lastPoint.pumpA,
-            //     },
-            // ];
-        }
-        setPressure([...newPoints, ...values.users]);
-    };
-    const handleOffline = (checked) => {
-        postInitDeviceMode({ use_mock: checked }).then((response) => {
-            if (!response.error) {
-            }
-        });
-        setSpinning(true);
-        setTimeout(() => {
-            getInitDeviceMode().then((response) => {
-                if (!response.error) {
-                    console.log("1015----------response", response.data);
-                    if (response.data["message"] === "True") {
-                        messageApi.open({
-                            type: "success",
-                            content: "当前是离线模式",
-                        });
-                        localStorage.setItem("useMock", true);
-                    }
-                    if (response.data["message"] === "False") {
-                        messageApi.open({
-                            type: "success",
-                            content: "当前是联机模式",
-                        });
-                        localStorage.setItem("useMock", false);
-                    }
-                    setSpinning(false);
-                    setIsChecked(checked);
-                }
-            });
-        }, 1000);
-    };
+  
     useEffect(() => {
         if (props.warningCode.code !== warningCode) {
             showDrawerWarning();
@@ -455,7 +389,7 @@ const App = (props) => {
             >
                 <Spin spinning={spinning}>
                     <Row>
-                        <Col span={24} style={{ marginBottom: "2rem" }}>
+                        {/* <Col span={24} style={{ marginBottom: "2rem" }}>
                             <Card title="是否开启离线模式">
                                 <Switch
                                     checkedChildren="开启"
@@ -469,7 +403,7 @@ const App = (props) => {
                                     }}
                                 />
                             </Card>
-                        </Col>
+                        </Col> */}
                         <Col span={24} style={{ marginBottom: "2rem" }}>
                             <Card title="泵设置">
                                 <FormStatus
