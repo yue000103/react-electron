@@ -581,6 +581,8 @@ const App = () => {
         });
     };
     const showModal = () => {
+        localStorage.setItem("updateLineFlag", true);
+
         if (uploadFlag === 0) {
             messageApi.open({
                 type: "error",
@@ -590,6 +592,7 @@ const App = () => {
         } else {
             if (flagStartTime == 1) {
                 setOpenStart(true);
+
             } else {
                 setLineLoading(true);
                 startEluentLine().then((responsedata) => {
@@ -602,7 +605,6 @@ const App = () => {
                     if (!responseData.error) {
                     }
                 });
-                localStorage.setItem("updateLineFlag", true);
 
             }
         }
@@ -955,6 +957,8 @@ const App = () => {
                 }
             }
         });
+        localStorage.setItem("updateLineFlag", true);
+
         const handleResize = () => {
             setDimensions({
                 width: window.innerWidth,

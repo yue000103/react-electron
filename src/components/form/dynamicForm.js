@@ -31,7 +31,7 @@ const App = (props) => {
         if (changedValues.users) {
             const index = changedValues.users.findIndex((item) => item);
             if (index !== -1) {
-                console.log("0920 index :", index);
+                console.log("1104    index :", index);
                 const field = changedValues.users[index];
                 const key = Object.keys(field)[0];
 
@@ -52,7 +52,8 @@ const App = (props) => {
 
     const submit = () => {
         const hasZeroTimePoint = lastData.some((point) => point.time === 0);
-
+        console.log("1104   hasZeroTimePoint",hasZeroTimePoint);
+        
         if (!hasZeroTimePoint && lastData.length > 0) {
             // 如果没有 time=0 的点，且数据不为空，则添加一个
             const zeroTimePoint = {
