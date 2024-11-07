@@ -39,6 +39,8 @@ import {
     getCodes,
     switchManualTest,
     pumpOperation,
+    postInitDeviceMode,
+    getInitDeviceMode,
 } from "../../api/status";
 
 import io from "socket.io-client";
@@ -56,7 +58,7 @@ const translateType = (codeInfo) => {
 
     // 匹配并返回对应的中文描述
 };
-let lineFlag = 0
+let lineFlag = 0;
 
 const App = (props) => {
     // console.log("1030 props :", props);
@@ -83,7 +85,6 @@ const App = (props) => {
     const [isChecked, setIsChecked] = useState(false);
     const [messageApi, contextHolder] = message.useMessage();
     const [spinning, setSpinning] = React.useState(false);
-   
 
     const [alarmData, setAlarmData] = useState([
         // {
@@ -133,7 +134,6 @@ const App = (props) => {
             socket.disconnect();
         };
     }, []);
-    
 
     const showDrawerNotice = () => {
         setSize("large");
@@ -260,7 +260,37 @@ const App = (props) => {
             }
         });
     };
-  
+    const handleOffline = (checked) => {
+        postInitDeviceMode({ use_mock: checked }).then((response) => {
+            if (!response.error) {
+            }
+        });
+        setSpinning(true);
+        setTimeout(() => {
+            getInitDeviceMode().then((response) => {
+                if (!response.error) {
+                    console.log("1015----------response", response.data);
+                    if (response.data["message"] === "True") {
+                        messageApi.open({
+                            type: "success",
+                            content: "当前是离线模式",
+                        });
+                        localStorage.setItem("useMock", true);
+                    }
+                    if (response.data["message"] === "False") {
+                        messageApi.open({
+                            type: "success",
+                            content: "当前是联机模式",
+                        });
+                        localStorage.setItem("useMock", false);
+                    }
+                    setSpinning(false);
+                    setIsChecked(checked);
+                }
+            });
+        }, 1000);
+    };
+
     useEffect(() => {
         if (props.warningCode.code !== warningCode) {
             showDrawerWarning();
@@ -389,7 +419,7 @@ const App = (props) => {
             >
                 <Spin spinning={spinning}>
                     <Row>
-                        {/* <Col span={24} style={{ marginBottom: "2rem" }}>
+                        <Col span={24} style={{ marginBottom: "2rem" }}>
                             <Card title="是否开启离线模式">
                                 <Switch
                                     checkedChildren="开启"
@@ -403,7 +433,7 @@ const App = (props) => {
                                     }}
                                 />
                             </Card>
-                        </Col> */}
+                        </Col>
                         <Col span={24} style={{ marginBottom: "2rem" }}>
                             <Card title="泵设置">
                                 <FormStatus
