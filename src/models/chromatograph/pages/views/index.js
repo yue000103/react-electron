@@ -290,7 +290,7 @@ const App = () => {
         newPoints = convertNonNumericValues(linePointChange);
         console.log("linePointChange  newPoints :", newPoints);
         setLine(newPoints);
-        
+
         // newPoints = linePointChange;
     };
 
@@ -449,8 +449,11 @@ const App = () => {
     const reverseFlags = () => {
         // console.log("1021-2 selected_tube :", selected_tube);
         // console.log("1021-2  groupsOrigin :", groupsOrigin);
+        // if (reverseFlag == 1) {
+        //     setReverseFlag(0);
+        // } else {
         setReverseFlag(1);
-
+        // }
         // if (selected_tubes.length > 0) {
         //     setSelectedReverse(selected_tubes);
         //     let reverse = num.filter(
@@ -592,7 +595,6 @@ const App = () => {
         } else {
             if (flagStartTime == 1) {
                 setOpenStart(true);
-
             } else {
                 setLineLoading(true);
                 startEluentLine().then((responsedata) => {
@@ -605,7 +607,6 @@ const App = () => {
                     if (!responseData.error) {
                     }
                 });
-
             }
         }
         `                                                    `;
@@ -659,7 +660,6 @@ const App = () => {
         }
         console.log("0919  ----------3------", flagStartTime);
 
-        
         getEluentCurve({ start_time: startTime })
             .then((responseData) => {})
             .catch((error) => {
@@ -1024,7 +1024,6 @@ const App = () => {
                 warningCode={warningCode}
                 dynamicHeight={dimensions.height}
                 callback={handleDynamicLine}
-
             />
 
             <Layout>

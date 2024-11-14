@@ -87,13 +87,13 @@ const App = (props) => {
     const [spinning, setSpinning] = React.useState(false);
 
     const [alarmData, setAlarmData] = useState([
-        // {
-        //     key: "1",
-        //     level: 3,
-        //     type: "火灾报警",
-        //     time: "2024-07-19 12:00:00",
-        //     description: "火灾报警描述",
-        // },
+        {
+            key: "1",
+            level: 3,
+            type: "火灾报警",
+            time: "2024-07-19 12:00:00",
+            description: "火灾报警描述",
+        },
         // {
         //     key: "2",
         //     level: 4,

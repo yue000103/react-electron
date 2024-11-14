@@ -154,7 +154,6 @@ const App = ({
         if (reverseFlag === 1) {
             console.log("1021  select_tube_flag", select_tube_flag);
             console.log("1021  groupsOrigin", groupsOrigin);
-
             setSelectedFlags((prevFlags) => {
                 let filteredData = groupsOrigin.map(
                     (moduleData, moduleIndex) => {
@@ -180,7 +179,6 @@ const App = ({
                 console.log("1021  filteredData", filteredData);
                 console.log("1021  result", result);
                 callback(result);
-
                 return result;
             });
         }
