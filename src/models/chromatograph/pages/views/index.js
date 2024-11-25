@@ -585,6 +585,8 @@ const App = () => {
     };
     const showModal = () => {
         localStorage.setItem("updateLineFlag", true);
+        // setUploadFlag(localStorage.getItem("uploadFlag"));
+        console.log("----upload_flag---", uploadFlag);
 
         if (uploadFlag === 0) {
             messageApi.open({
@@ -609,7 +611,6 @@ const App = () => {
                 });
             }
         }
-        `                                                    `;
     };
     const handleStart = () => {
         form.validateFields()
@@ -847,7 +848,7 @@ const App = () => {
             const response = await uploadMethodOperate();
             const responsedata = await uploadMethodFlag();
             const uploadFlag = responsedata.data.upload_flag;
-            // localStorage.setItem("uploadFlag", uploadFlag);
+            localStorage.setItem("uploadFlag", uploadFlag);
             const equilibrationFlag = responsedata.data.equilibration_flag;
             setUploadFlag(uploadFlag);
             setEquilibrationFlag(equilibrationFlag);
@@ -859,6 +860,7 @@ const App = () => {
                     type: "success",
                     content: "上传成功！",
                 });
+                // localStorage.setItem("uploadMethodFlag", true);
             } else if (uploadFlag === 0) {
                 // 上传失败的情况
                 setSpinning(false);
@@ -913,8 +915,6 @@ const App = () => {
 
     useEffect(() => {
         console.log("1029   ", formatTimeWithRegex("00:02:00"));
-        // const uploadFlag = localStorage.getItem("uploadFlag");
-        // setUploadFlag(uploadFlag);
 
         uploadMethodFlag().then((responsedata) => {
             if (!responsedata.error) {
@@ -922,6 +922,8 @@ const App = () => {
                 setEquilibrationFlag(responsedata.data.equilibration_flag);
             }
         });
+        console.log("----upload_flag---", uploadFlag);
+
         clearData();
         // setData([])
         getEluentLine().then((responseData) => {

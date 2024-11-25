@@ -142,6 +142,7 @@ const Method = () => {
     };
     const handleOkMethod = () => {
         setSpinning(true);
+        localStorage.setItem("uploadFlag", 0);
 
         const methodId = localStorage.getItem("methodId");
         let check = [];
@@ -166,14 +167,14 @@ const Method = () => {
 
         console.log("1030  methodata", methodata);
         console.log("1030  transformedData", transformedData);
-
+        setOpenMethod(false);
         updateMethodOperate({
             method_id: methodId,
             method: transformedData,
         }).then((response) => {
             console.log("response :", response);
             setSpinning(false);
-            setOpenMethod(false);
+
             messageApi.open({
                 type: "success",
                 content: "更新方法成功",
@@ -484,6 +485,7 @@ const Method = () => {
     };
     const handleOk = () => {
         // setSpinning(true);
+        localStorage.setItem("uploadFlag", 0);
 
         setIsMethodName(true);
         setConfirmLoading(true);
@@ -506,7 +508,9 @@ const Method = () => {
         const transformedData = transformData(methodata);
 
         postMethodOperate(transformedData).then((response) => {
-            console.log("response :", response);
+            if (!response.error) {
+                console.log("response :", response);
+            }
         });
         console.log("8672  methodata :", methodata);
         console.log("8672  transformedData :", transformedData);
@@ -525,6 +529,11 @@ const Method = () => {
                     if (!response.error) {
                         applyMethod(response.data.methods[0]);
                         // setSpinning(false);
+                        messageApi.open({
+                            type: "success",
+                            content: "保存方法成功",
+                            duration: 2,
+                        });
                     }
                 });
             }
@@ -674,28 +683,13 @@ const Method = () => {
                             <Row gutter={16}>
                                 <Col span={6}>
                                     <Form.Item
-                                        label="清洗速度ml/s"
-                                        name="cleaningSpeed"
-                                    >
-                                        <Input />
-                                    </Form.Item>
-                                </Col>
-                                <Col span={6}>
-                                    <Form.Item
                                         label="清洗次数"
                                         name="cleaningCount"
                                     >
                                         <Input />
                                     </Form.Item>
                                 </Col>
-                                <Col span={6}>
-                                    <Form.Item
-                                        label="排液速度ml/s"
-                                        name="drainSpeed"
-                                    >
-                                        <Input />
-                                    </Form.Item>
-                                </Col>
+
                                 <Col span={6}>
                                     <Form.Item
                                         label="目标化合物SMILES"
