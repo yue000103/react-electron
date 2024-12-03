@@ -52,7 +52,22 @@ const App = () => {
             .get(swaggerUrl)
             .then((response) => {
                 console.log("response:", response);
-                setSwaggerData(response.data);
+                // 过滤掉以 /auto/ 开头的路径
+                const filteredPaths = {};
+                Object.entries(response.data.paths).forEach(
+                    ([path, methods]) => {
+                        if (!path.startsWith("/auto/")) {
+                            filteredPaths[path] = methods;
+                        }
+                    }
+                );
+
+                const filteredData = {
+                    ...response.data,
+                    paths: filteredPaths,
+                };
+
+                setSwaggerData(filteredData);
             })
             .catch((error) =>
                 console.error("Error fetching Swagger data:", error)
@@ -507,7 +522,7 @@ const App = () => {
                     ))
                 )}
             </Flex>
-            <div className="formValue">
+            {/* <div className="formValue">
                 <Row gutter={4} justify="center">
                     <Col span={12}>
                         <Card
@@ -548,7 +563,7 @@ const App = () => {
                         </Col>
                     </Card>
                 </Row>
-            </div>
+            </div> */}
         </div>
     );
 };
