@@ -3,6 +3,8 @@ import { Button, Flex, Table, Checkbox } from "antd";
 import { Empty } from "antd";
 import { pauseTube, resumeTube } from "@/models/chromatograph/api/tube";
 import { logDOM } from "@testing-library/react";
+import { postStartRotary } from "../../api/xuanzheng";
+
 
 const columns = [
     {
@@ -93,6 +95,12 @@ const App = (props) => {
             }
         });
     };
+    const startRotary = () => {
+        postStartRotary().then((res) => {
+            if (!res.error) {
+            }
+        });
+    };
 
     return (
         <Flex gap="middle" vertical>
@@ -150,7 +158,7 @@ const App = (props) => {
                                 onClick={pause}
                                 // style={{backgroundColor: '#ad0202',}}
                             >
-                                暂停
+                                暂停11
                             </Button>
                             <Button
                                 type="primary"
@@ -158,6 +166,13 @@ const App = (props) => {
                                 // style={{backgroundColor: '#ad0202',}}
                             >
                                 继续
+                            </Button>
+                            <Button
+                                type="primary"
+                                onClick={startRotary}
+                                // style={{backgroundColor: '#ad0202',}}
+                            >
+                                开始旋蒸
                             </Button>
                         </Flex>
                     ) : (
