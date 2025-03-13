@@ -765,6 +765,7 @@ const App = () => {
         setData(() => []);
         setNum(() => []);
         setSelectedReverse([]);
+        setSelectedAllTubes([]);
         selected_tubes = [];
     };
     const saveExcute = (experimentId) => {
