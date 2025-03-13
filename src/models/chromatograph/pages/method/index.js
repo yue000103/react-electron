@@ -29,6 +29,7 @@ import {
     DeleteOutlined,
     SelectOutlined,
 } from "@ant-design/icons";
+import { uploadMethodFlag } from "../../api/methods";
 
 import "./index.css";
 import DynamicLine from "@components/d3/dynamicLine";
@@ -86,6 +87,7 @@ const Method = () => {
     const [cleanList, setCleanList] = useState([]);
     const [retainList, setRetainList] = useState([]);
     const { storeData } = createDB("MyDatabase", "method", "methodId");
+    const [uploadFlag, setUploadFlag] = useState(0);
 
     console.log("basisData :", basisData);
     console.log("elutionData :", elutionData);
@@ -175,15 +177,16 @@ const Method = () => {
             console.log("response :", response);
             setSpinning(false);
 
-            messageApi.open({
-                type: "success",
-                content: "更新方法成功",
-                duration: 2,
-            });
+            // messageApi.open({
+            //     type: "success",
+            //     content: "更新方法成功",
+            //     duration: 2,
+            // });
         });
         // setTimeout(() => {
         //     setOpenMethod(false);
         // }, 2000);
+        uploadMethod();
     };
     const showModal = () => {
         setOpen(true);
@@ -588,6 +591,40 @@ const Method = () => {
             }
         });
     };
+    const uploadMethod = async () => {
+        try {
+            setSpinning(true);
+            const response = await uploadMethodOperate();
+            const responsedata = await uploadMethodFlag();
+            const uploadFlag = responsedata.data.upload_flag;
+            localStorage.setItem("uploadFlag", uploadFlag);
+            setUploadFlag(uploadFlag);
+
+            if (uploadFlag === 1) {
+                // 上传成功的情况
+                messageApi.open({
+                    type: "success",
+                    content: "上传成功！",
+                });
+                // localStorage.setItem("uploadMethodFlag", true);
+            } else if (uploadFlag === 0) {
+                // 上传失败的情况
+                messageApi.open({
+                    type: "error",
+                    content: "上传失败，请重新保存！",
+                });
+            }
+        } catch (error) {
+            // 错误处理
+            setSpinning(false);
+            messageApi.open({
+                type: "error",
+                content: "发生错误，请稍后重试！",
+            });
+            console.error(error);
+        }
+    };
+
     useEffect(() => {
         const methodId = localStorage.getItem("methodId");
         setMethodID((preNum) => methodId);

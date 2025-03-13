@@ -5,7 +5,6 @@ import { pauseTube, resumeTube } from "@/models/chromatograph/api/tube";
 import { logDOM } from "@testing-library/react";
 import { postStartRotary } from "../../api/xuanzheng";
 
-
 const columns = [
     {
         title: "操作",
@@ -158,7 +157,7 @@ const App = (props) => {
                                 onClick={pause}
                                 // style={{backgroundColor: '#ad0202',}}
                             >
-                                暂停11
+                                暂停
                             </Button>
                             <Button
                                 type="primary"
@@ -166,13 +165,6 @@ const App = (props) => {
                                 // style={{backgroundColor: '#ad0202',}}
                             >
                                 继续
-                            </Button>
-                            <Button
-                                type="primary"
-                                onClick={startRotary}
-                                // style={{backgroundColor: '#ad0202',}}
-                            >
-                                开始旋蒸
                             </Button>
                         </Flex>
                     ) : (

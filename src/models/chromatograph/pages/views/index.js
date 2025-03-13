@@ -36,6 +36,7 @@ import {
     terminateEluentLine,
     initLine,
     UpdateModuleListAPI,
+    SetSampleStatusAPI,
 } from "../../api/eluent_curve";
 import {
     startEquilibration,
@@ -129,8 +130,8 @@ const App = () => {
 
     const [samplingTime, setSamplingTime] = useState(10);
 
-    const [uploadFlag, setUploadFlag] = useState(0);
-    const [equilibrationFlag, setEquilibrationFlag] = useState(0);
+    const [uploadFlag, setUploadFlag] = useState(1);
+    const [equilibrationFlag, setEquilibrationFlag] = useState(1);
 
     const [dimensions, setDimensions] = useState({
         width: window.innerWidth,
@@ -914,6 +915,12 @@ const App = () => {
         // }
     };
 
+    const setSampleStatus = () => {
+        SetSampleStatusAPI().then((responsedata) => {
+            // console.log("responsedata :", responsedata);
+        });
+    };
+
     useEffect(() => {
         console.log("1029   ", formatTimeWithRegex("00:02:00"));
 
@@ -1097,7 +1104,7 @@ const App = () => {
                                         >
                                             复位
                                         </Button>
-                                        <Button
+                                        {/* <Button
                                             type="primary  "
                                             size="large"
                                             className={`button button5`}
@@ -1107,6 +1114,17 @@ const App = () => {
                                             }
                                         >
                                             上传
+                                        </Button> */}
+                                        <Button
+                                            type="primary  "
+                                            size="large"
+                                            className={`button button5`}
+                                            onClick={() => setSampleStatus()}
+                                            disabled={
+                                                methodFlag === 0 ? true : false
+                                            }
+                                        >
+                                            上样
                                         </Button>
                                     </div>
                                 </Col>

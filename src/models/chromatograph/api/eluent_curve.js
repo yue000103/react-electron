@@ -39,3 +39,7 @@ export function UpdateModuleListAPI(data) {
 export function UpdateCleanListAPI(data) {
     return axiosInstance.post("/eluent_curve/update_clean_list", data);
 }
+
+export function SetSampleStatusAPI() {
+    return axiosInstance.post("/eluent_curve/set_sample_valve");
+}
