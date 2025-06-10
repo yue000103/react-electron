@@ -1,0 +1,12 @@
+{
+    "name": "chromatograph",
+    "version": "1.0.0",
+    "description": "test",
+    "main": "main.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "package": "electron-packager ./ testapp --platform=win32 --arch=x64 --out ./outputs --overwrite"
+    },
+    "author": "",
+    "license": "MIT"
+}

@@ -5,6 +5,9 @@
     "main": "main.js",
     "homepage": "./",
     "dependencies": {
+        "@mantine/core": "^7.12.2",
+        "@mantine/dates": "^7.12.2",
+        "@mantine/hooks": "^7.12.2",
         "@testing-library/jest-dom": "^5.17.0",
         "@testing-library/react": "^13.4.0",
         "@testing-library/user-event": "^13.5.0",
@@ -14,13 +17,17 @@
         "axios": "^1.7.2",
         "cross-env": "^7.0.3",
         "d3": "^7.9.0",
+        "lodash": "^4.17.21",
         "moment": "^2.30.1",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "react-scripts": "5.0.1",
+        "react-simple-keyboard": "^3.7.144",
         "react-window": "^1.8.10",
         "socket.io-client": "^4.7.5",
-        "web-vitals": "^2.1.4"
+        "styled-components": "^6.1.13",
+        "web-vitals": "^2.1.4",
+        "yarn": "^1.22.22"
     },
     "scripts": {
         "start": "react-app-rewired start",
@@ -29,12 +36,12 @@
         "test": "react-scripts test",
         "eject": "react-app-rewired eject",
         "start:test": "cross-env MODEL_NAME=test react-app-rewired start",
-        "start:chromatograph": "cross-env MODEL_NAME=chromatograph react-app-rewired start",
-        "build:chromatograph": "cross-env MODEL_NAME=chromatograph react-app-rewired build",
+        "start:chromatograph": "cross-env MODEL_NAME=chromatograph DISABLE_ESLINT_PLUGIN=true react-app-rewired start",
+        "build:chromatograph": "cross-env MODEL_NAME=chromatograph DISABLE_ESLINT_PLUGIN=true react-app-rewired build",
         "start:AI4Fiber": "cross-env MODEL_NAME=AI4Fiber react-app-rewired start",
-        "build:AI4Fiber": "cross-env MODEL_NAME=AI4Fiber react-app-rewired build",
+        "build:AI4Fiber": "cross-env MODEL_NAME=AI4Fiber DISABLE_ESLINT_PLUGIN=true react-app-rewired build",
         "start:swagger-ui": "cross-env MODEL_NAME=swagger-ui react-app-rewired start",
-        "build:swagger-ui": "cross-env MODEL_NAME=swagger-ui react-app-rewired build"
+        "build:swagger-ui": "cross-env MODEL_NAME=swagger-ui DISABLE_ESLINT_PLUGIN=true react-app-rewired build"
     },
     "eslintConfig": {
         "extends": [
@@ -61,7 +68,7 @@
         "babel-loader": "^9.1.3",
         "css-loader": "^7.1.2",
         "customize-cra": "^1.0.0",
-        "electron": "^30.0.1",
+        "eslint-config-react-app": "^7.0.1",
         "less": "^4.2.0",
         "less-loader": "^12.2.0",
         "react-app-rewired": "^2.2.1",

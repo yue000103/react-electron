@@ -1,0 +1,83 @@
+.line{
+  padding:2rem
+}
+
+.method{
+  /* height: 2rem; */
+  margin-top: 4rem;
+  margin-left: 1rem;
+}
+.button{
+  /* margin-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem; */
+  
+}
+.button1{
+  background-color: #597099;
+}
+
+.button-div{
+  height: 100%;
+  /* display: flex;
+  justify-content: center;
+  align-items: center;   
+  text-align: center; */
+}
+
+.isocratic{
+  /* background-color: aqua; */
+  height: 20rem;
+  width: 20rem;
+  margin-top: 1.5rem;
+}
+
+.pressure{
+  margin-top: 0rem;
+  /* width: 36rem; */
+  /* height: 10rem; */
+}
+
+.pressure-line{
+  height: 100%;
+}
+
+.dynamic-line{
+  height: 100%;
+
+  padding-top: 2rem;
+}
+
+.clean{
+  margin: 20px;
+  margin-left: 1rem;
+
+}
+
+.ant-form-inline .ant-form-item {
+  margin-bottom: 1rem; /* 设置行间距 */
+}
+
+.basis{
+  /* background-color: #e4e6ea50; */
+  border-radius: 2%;
+}
+
+.background-container {
+  position: relative; /* 确保背景图片在最底层 */
+  z-index: 1; /* 设置 z-index，确保其他内容在上面 */
+  background-size:cover;
+}
+
+/* .background-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url(${p7ConBg});
+  background-size: cover; 
+  background-position: center; 
+  z-index: -1; 
+} */

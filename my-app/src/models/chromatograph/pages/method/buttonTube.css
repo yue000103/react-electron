@@ -1,0 +1,78 @@
+.buttonTubes{
+  margin: 2px; 
+}
+
+
+.colorOne{
+  background-color: #f3c3d1;
+  color: white,
+}
+
+.colorTwo{
+  background-color: #f5e9d5;
+  color: white,
+  
+}
+
+.colorThere{background-color: #e7f5d5;
+  color: white,
+  
+}.colorFour{background-color: #d5f5e3;
+  color: white,
+  
+}.colorFive{background-color: #d5ecf5;
+  color: white,
+  
+}.colorSix{background-color: #d5d5f5;
+  color: white,
+  
+}.colorSeven{background-color: #efd5f5;
+  color: white,
+  
+}.colorEight{background-color: #e4e2e2;
+  color: rgb(252, 252, 252),
+  
+}
+
+.card{
+  border: 2px solid #e6e0e0;
+  margin-right: 0.5rem;
+  margin-left: 0.8rem;
+  margin-top: 0.5rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(78, 77, 77, 0.1);
+  display: flex; /* 使用Flexbox */
+  flex-direction: column; /* 垂直排列子元素 */
+  justify-content: center; /* 垂直居中 */
+  align-items: center; /* 水平居中 */
+  width: 45%;
+
+}
+.card-button{
+  cursor: pointer;
+}
+.statusClass{
+  font-size: 20px;
+  font-weight: 500;
+}
+.listClass{
+  font-size: 20px;  font-weight: 500;
+
+}
+.ant-rate{
+  color:#8b9cbbb5;
+  font-size: 18px;
+
+}
+.background-text {
+  position: absolute; /* 绝对定位 */
+  top: 50%; /* 垂直居中 */
+  left: 50%; /* 水平居中 */
+  transform: translate(-50%, -50%); /* 调整位置 */
+  font-size: 3rem; /* 字体大小 */
+  color: rgba(128, 128, 128, 0.5); /* 灰色且半透明 */
+  pointer-events: none; /* 不影响其他元素的点击 */
+}
+.button-div{
+  width: 100%;
+}

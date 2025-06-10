@@ -27,3 +27,32 @@ export function startEluentLine() {
 export function terminateEluentLine() {
     return axiosInstance.get("/eluent_curve/update_line_terminate");
 }
+
+export function initLine(data) {
+    return axiosInstance.post("/eluent_curve/init", data);
+}
+
+export function UpdateModuleListAPI(data) {
+    return axiosInstance.post("/eluent_curve/update_module_list", data);
+}
+
+export function UpdateCleanListAPI(data) {
+    return axiosInstance.post("/eluent_curve/update_clean_list", data);
+}
+
+export function SetSampleStatusAPI() {
+    return axiosInstance.post("/eluent_curve/set_sample_valve");
+}
+
+export function SetManualHoldAPI(data) {
+    return axiosInstance.post("/eluent_curve/set_manual_hold", data);
+}
+
+export function UpdateLinePointAPI(data) {
+    return axiosInstance.post("/eluent_curve/update_line_point", data);
+}
+
+export function SetManualCutTubeAPI() {
+  return axiosInstance.post("/eluent_curve/set_manual_cut_tube");
+}
+

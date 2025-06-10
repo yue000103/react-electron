@@ -43,16 +43,17 @@ function App() {
     //         behavior: "smooth",
     //     });
     // };
-    const handleClick = () => {
-        document.querySelector(".App").scroll(0, 0);
-    };
+    // const handleClick = () => {
+    //     document.querySelector(".App").scroll(0, 0);
+    // };
 
     return (
         <div className="App" style={{ height: "100%", overflow: "scroll" }}>
             <FloatButton.Group shape="circle">
                 <FloatButton.BackTop
-                    visibilityHeight={0}
-                    onClick={handleClick}
+                // visibilityHeight={0}
+                // onClick={handleClick}
+                // duration={900}
                 />
             </FloatButton.Group>
             <header className="App-header">

@@ -7,3 +7,27 @@ export function getDeviceStatus() {
 export function postDeviceStatus(data) {
     return axiosInstance.post("/status/get_device_status", data);
 }
+
+export function postInitDeviceMode(data) {
+    return axiosInstance.post("/status/init_device", data);
+}
+
+export function getInitDeviceMode() {
+    return axiosInstance.get("/status/init_device");
+}
+
+export function getCodes() {
+    return axiosInstance.get("/status/get_codes");
+}
+
+export function getAllTubes() {
+    return axiosInstance.get("/status/get_all_tubes");
+}
+
+export function switchManualTest(data) {
+    return axiosInstance.post("/status/switch_manual_test", data);
+}
+
+export function pumpOperation(data) {
+    return axiosInstance.post("/status/pump_operation", data);
+}
