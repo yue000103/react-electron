@@ -17,6 +17,8 @@
 .keyBoard {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  margin-top: 1rem;
+  /* width: 20rem; */
 
   > div {
     border: 0.1px solid rgba(92, 175, 162, 0.1);

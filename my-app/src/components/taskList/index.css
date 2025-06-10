@@ -1,10 +1,12 @@
 .statusClass{
   margin-right: 1rem;
+  width: 4rem;
 
 }
 
 .listClass{
   /* background-color:rgba(24, 68, 99, 0.2) ; */
+  width: 20rem;
 
 }
 .button{

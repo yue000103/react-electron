@@ -37,7 +37,7 @@ endTime = new Date(now.getTime() + 5 * 60 * 1000);
 // now.setHours(1, 0, 0);
 // const endTime = new Date(now.getTime() + 5 * 60 * 1000);
 
-const renderCurve = (svg, width, height, margin) => {
+const renderCurve = (svg, width, height, margin, cleanFlag) => {
     // console.log("data", data);
     //data{time: '17:46:47', value: 81.41712213857508}
 
@@ -45,27 +45,13 @@ const renderCurve = (svg, width, height, margin) => {
         ...d,
         time: parseTime(d.time),
     }));
-
-    // if (data.length > 0) {
-    //     const timeString = data[0].time;
-    //     // now = new Date(timeString);
-    //     now = new Date();
-    //     const [hours, minutes, seconds] = timeString.split(":").map(Number);
-    //     console.log("hours", hours);
-    //     console.log("minutsecondses", seconds);
-
-    //     now.setHours(hours, minutes, seconds);
-    // } else {
-    //     now = new Date();
-    // }
-    // console.log("parse", parsedData);
-    //洗脱液的曲线图
+    console.log("data--------------------", parsedData);
     const xScale = d3.scaleTime().domain([now, endTime]).range([0, width]);
-    const yScale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
+    const yScale = d3.scaleLinear().domain([0, 0.5]).range([height, 0]);
     const xAxis = d3.axisTop(xScale);
     const yAxis = d3
         .axisRight(yScale)
-        .tickFormat((d) => (d === 0 || d === 100 ? "" : d));
+        .tickFormat((d) => (d === 0 || d === 0.5 ? "" : d));
     svg.append("g")
         .attr("transform", `translate(0, ${height - 1})`)
         .style("color", "red")
@@ -99,14 +85,19 @@ const renderCurve = (svg, width, height, margin) => {
     //     .attr("stroke-width", 2)
     //     .attr("d", lineX);
     renderVertical(svg, xScale, height);
-    renderArea(svg, xScale, yScale, height);
+    console.log("cleanFlag", cleanFlag);
+    if (cleanFlag == 0) {
+        renderArea(svg, xScale, yScale, height);
+    }
 };
 
 const renderVertical = (svg, xScale, height) => {
+    // console.log("num-----------", num);
+
     const parsedData = num?.map((d) => ({
         ...d,
-        timeStart: parseTime(d.timeStart),
-        timeEnd: parseTime(d.timeEnd),
+        timeStart: parseTime(d.time_start),
+        timeEnd: parseTime(d.time_end),
     }));
     // 生成垂直虚线的路径生成器
     const lineVertical = (d) => {
@@ -147,15 +138,15 @@ const renderArea = (svg, xScale, yScale, height) => {
         .y0(height)
         .y1((d) => yScale(d.value))
         .curve(d3.curveLinear);
-
+    console.log("num:", num);
     const getXandY = (tube) => {
         const selectedTube = num.find((item) => item.tube === tube);
-        console.log("selectedTube---------- :", selectedTube);
+        // console.log("selectedTube---------- :", selectedTube);
 
         if (selectedTube) {
             return {
-                x1: selectedTube.timeStart,
-                x2: selectedTube.timeEnd,
+                x1: selectedTube.time_start,
+                x2: selectedTube.time_end,
                 color: selectedTube.color,
             };
         } else {
@@ -165,17 +156,23 @@ const renderArea = (svg, xScale, yScale, height) => {
     selected.forEach((selectTube) => {
         console.log("selectTube", selectTube["tube_list"]);
         let fillColor = "";
+        // console.log("selectTube :", selectTube);
         selectTube["tube_list"].forEach((tube) => {
+            // console.log("tube :", tube);
+
             const xy = getXandY(tube);
-            console.log("xy", xy);
+            // console.log("xy", xy);
             if (xy) {
                 const { x1, x2, color } = xy;
-                console.log("x1, x2, color :", x1, x2, color);
+                // console.log("x1, x2, color :", x1, x2, color);
                 fillColor = color;
+                // console.log("data :", data);
+
                 let fillArea = data.filter((item) => {
                     return item.time >= x1 && item.time <= x2;
                 });
                 fillAreaData = [...fillAreaData, ...fillArea];
+                // console.log("fillAreaData :", fillAreaData);
             }
         });
         const { x1, x2, color } = selectTube["tube_list"][0]
@@ -191,15 +188,15 @@ const renderArea = (svg, xScale, yScale, height) => {
         //     value: fillAreaData[fillAreaData.length - 1].value,
         // });
         fillAreaData = fillAreaData.sort((a, b) => a.time - b.time);
-        console.log("fillAreaData :", fillAreaData);
+        // console.log("fillAreaData :", fillAreaData);
         let fill = { area: fillAreaData, color: fillColor };
         fillAreaDatas = [...fillAreaDatas, fill];
         fillAreaData = [];
     });
 
-    console.log("fillAreaDatas :", fillAreaDatas);
+    // console.log("fillAreaDatas :", fillAreaDatas);
     fillAreaDatas.forEach((fill) => {
-        console.log("fill :", fill);
+        // console.log("fill :", fill);
         const parsedData = fill.area?.map((d) => ({
             ...d,
             time: parseTime(d.time),
@@ -221,8 +218,10 @@ const parseTime = (timeString) => {
     // 解析时间字符串
     // console.log("timeString", timeString);
     const [hours, minutes, seconds] = timeString.split(":").map(Number);
+
     const parsedTime = new Date();
     parsedTime.setHours(hours, minutes, seconds, 0);
+    // console.log("parsedTime", parsedTime);
     // console.log("endTime", endTime);
     // console.log("startTime", startTime);
     // 计算相对于起始时间的差值（毫秒）
@@ -256,13 +255,15 @@ const renderLine = (
     setInputValues,
     setIsModalVisible,
     linePointChange,
-    setlinePointChange
+    setlinePointChange,
+    callback
 ) => {
     console.log("linePointChange :", linePointChange);
     const parsedData = linePointChange?.map((d) => ({
         ...d,
         time: parseTime(d.time),
     }));
+    console.log("parseLine", parsedData);
     //洗脱液的折线图
     // 定义拖拽行为
     const drag = d3
@@ -303,12 +304,15 @@ const renderLine = (
         .on("mouseover", function (event, d) {
             d3.select(this).style("opacity", 1); // 鼠标移入时显示圆点
             const [time, value] = d3.pointer(event, svgRef.current);
+            console.log("time :", d.time);
+            const dateObj = new Date(d.time);
+            const timeStr = dateObj.toTimeString().split(" ")[0];
             // 获取鼠标位置
             svg.append("text")
                 .attr("class", "coordinate-text")
                 .attr("x", time + 10)
                 .attr("y", value - 10)
-                .text(`(${d.time}, ${d.value})`)
+                .text(`(${timeStr}, ${d.value})`)
                 .attr("font-size", "12px")
                 .attr("fill", "black")
                 .attr("pointer-events", "none"); // 防止文字影响鼠标事件
@@ -319,10 +323,10 @@ const renderLine = (
         .on("click", function (event, d) {
             handleClick(event, d);
         })
-        .on("mousedown", prepareDrag)
-        .call(drag); // 应用拖拽行为
+        .on("mousedown", prepareDrag);
+    // .call(drag); // 应用拖拽行为
     const handleClick = (event, d) => {
-        console.log("lineFlag", lineFlag);
+        // console.log("lineFlag", lineFlag);
         if (lineFlag == 1) {
             setSelectedPoint({
                 time: parseTimeString(d.time),
@@ -338,7 +342,7 @@ const renderLine = (
         .x((d) => x2Scale(d.time))
         .y((d) => y2Scale(d.value))
         .curve(d3.curveLinear); // 使用 Cardinal 曲线插值
-    console.log("parsedData", parsedData);
+    // console.log("parsedData", parsedData);
     // 绘制折线路径
     svg.append("path")
         .datum(parsedData)
@@ -366,14 +370,14 @@ const renderLine = (
     // 拖拽过程中的处理函数
     function dragged(event, d) {
         const dx = event.x - startX;
-        console.log("dx :", dx);
+        // console.log("dx :", dx);
         const dy = event.y - startY;
-        console.log("dy :", dy);
+        // console.log("dy :", dy);
         const distance = Math.sqrt(dx * dx + dy * dy);
-        console.log("distance :", distance);
+        // console.log("distance :", distance);
 
         if (distance > dragThreshold) {
-            console.log("dragged :");
+            // console.log("dragged :");
             isDragging = true;
 
             d3.select(this)
@@ -384,7 +388,7 @@ const renderLine = (
                 return !_.isEqual(delD, point);
             });
             setlinePointChange(newLinePoint);
-            console.log("setlinePointChange :", newLinePoint);
+            // console.log("setlinePointChange :", newLinePoint);
         } else {
             d3.select(this).raise().classed("active", false);
         }
@@ -399,14 +403,15 @@ const renderLine = (
         // }, 100);
         //判断是否是拖拽行为
         if (isDragging) {
-            console.log("isDragging :", isDragging);
+            // console.log("isDragging :", isDragging);
 
             var date = new Date(x2Scale.invert(d.time));
             d3.select(this).classed("active", false);
             newD = {
                 time: parseTimeString(date),
-                value: y2Scale.invert(d.value),
+                value: parseFloat(y2Scale.invert(d.value).toFixed(2)),
             };
+            console.log("newD", newD);
             if (!_.isEqual(newD, delD)) {
                 let newLinePoint = linePointChange.filter((point) => {
                     return !_.isEqual(delD, point);
@@ -416,20 +421,18 @@ const renderLine = (
                     (a, b) => parseTime(a.time) - parseTime(b.time)
                 );
                 setlinePointChange(newLinePoint);
+                console.log("newLinePoint :", newLinePoint);
                 console.log("linePointChange :", linePointChange);
+                callback(newLinePoint);
             }
         } else {
-            console.log("isDragging :", isDragging);
+            // console.log("isDragging :", isDragging);
 
             handleClick(event, d);
         }
     }
 };
 
-const handleReceiveFlags = (inputNumber) => {
-    // inputNumber
-    console.log("inputNumber :", inputNumber);
-};
 const LineChart = (props) => {
     const svgRef = useRef(null);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -441,8 +444,9 @@ const LineChart = (props) => {
     data = props.data;
     // console.log("data.props", props.data);
     num = props.num;
+    let cleanFlag = props.clean_flag;
     linePoint = props.linePoint;
-    console.log("props :", props);
+    // console.log("props :", props);
     lineFlag = props.lineFlag;
     // if (linePointChange.length == 0) {
     //     setlinePointChange(linePoint);
@@ -473,15 +477,15 @@ const LineChart = (props) => {
 
         // 数据
         const svg = d3.select(svgRef.current);
-        console.log(
-            "-------------------------------bianle----------------------------------"
-        );
+        // console.log(
+        //     "-------------------------------bianle----------------------------------"
+        // );
         // SVG 宽度和高度
         const width = dimensions.width;
         const height = dimensions.height;
         const margin = { top: 20, right: width, bottom: 10, left: 0 };
 
-        renderCurve(svg, width, height, margin, num, selected);
+        renderCurve(svg, width, height, margin, cleanFlag);
         renderLine(
             width,
             height,
@@ -492,7 +496,9 @@ const LineChart = (props) => {
             setInputValues,
             setIsModalVisible,
             linePointChange,
-            setlinePointChange
+            setlinePointChange,
+            props.callback,
+            cleanFlag
         );
     }, [data, dimensions, num, selected, linePoint, linePointChange]);
     const handleOk = () => {
@@ -507,7 +513,7 @@ const LineChart = (props) => {
         );
         newData = newData.sort((a, b) => parseTime(a.time) - parseTime(b.time));
         setlinePointChange(newData);
-
+        props.callback(newData); // 确保调用了回调函数
         // console.log("linePoint----------- :", linePoint);
         setIsModalVisible(false);
     };
@@ -519,7 +525,33 @@ const LineChart = (props) => {
     const handleInputChange = (e) => {
         let time = e.$d ? e.$d : inputValues.time;
         let value = e.$d ? inputValues.value : e;
-        setInputValues({ time: time, value: value });
+        console.log("inputNumber value :", value);
+
+        setInputValues({ time: time, value: inputValues.value });
+    };
+    const inputRef = useRef(null);
+    const timeRef = useRef(null);
+
+    const handleReceiveFlags = (inputNumber) => {
+        // inputNumber
+        console.log("inputRef.current :", inputRef.current);
+        console.log("inputRef.timeRef :", timeRef.current);
+        if (inputRef.current) {
+            inputRef.current.focus();
+            let result = NaN;
+            if (typeof inputNumber !== "number") {
+                const concatenatedStr = inputNumber.join(""); // 拼接数组中的字符串
+                result = concatenatedStr; // 将拼接后的字符串转换为数字
+            } else {
+                result = inputNumber;
+            }
+            setInputValues({ time: inputValues.time, value: result });
+        }
+        // if (timeRef.current) {
+        //     timeRef.current.focus();
+        // }
+
+        // setInputValues({ value: result });
     };
 
     return (
@@ -535,41 +567,37 @@ const LineChart = (props) => {
         >
             <svg ref={svgRef} width="100%" height="100%"></svg>
             <Modal
-                title="Edit Point"
+                title="梯度曲线"
                 open={isModalVisible}
                 onOk={handleOk}
                 onCancel={handleCancel}
+                width={400}
             >
-                {/* <Input
-                    name="time"
-                    value={inputValues.time}
-                    onChange={handleInputChange}
-                    placeholder="time"
-                /> */}
                 <TimePicker
+                    className="input-time"
+                    ref={timeRef}
                     value={dayjs(parseTimeString(inputValues.time), "HH:mm:ss")}
                     onChange={handleInputChange}
+                    allowClear={false}
+                    showNow={false}
                 />
-                {/* <Input
-                    name="value"
-                    value={inputValues.value}
-                    onChange={handleInputChange}
-                    placeholder="value"
-                /> */}
-                <InputNumber
+
+                <Input
+                    ref={inputRef}
                     className="input-number"
                     value={inputValues.value}
                     min={0}
                     max={100}
-                    formatter={(value) => `${value}%`}
-                    parser={(value) => value?.replace("%", "")}
-                    onChange={handleInputChange}
-                    controls={{
-                        upIcon: <PlusOutlined />,
-                        downIcon: <MinusOutlined />,
-                    }}
+                    // formatter={(value) => `${value}%`}
+                    // parser={(value) => value?.replace("%", "")}
+                    // onChange={handleInputChange}
+                    controls={false}
                 />
-                <KeyboardNumber callback={handleReceiveFlags}></KeyboardNumber>
+                <KeyboardNumber
+                    className="input-keyboard"
+                    value={inputValues.value}
+                    callback={handleReceiveFlags}
+                ></KeyboardNumber>
             </Modal>
         </div>
     );
