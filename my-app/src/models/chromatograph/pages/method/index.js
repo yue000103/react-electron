@@ -123,7 +123,7 @@ const Method = () => {
         if (!checked) {
             formBasis.setFieldsValue({
                 speed: "",
-                totalFlowRate: "",
+                equilibrationTime: "",
             });
         }
     };
@@ -268,6 +268,7 @@ const Method = () => {
             detectorWavelength: item.detectorWavelength,
             equilibrationColumn: item.equilibrationColumn === 1 ? true : false,
             speed: item.speed,
+            equilibrationTime: item.equilibrationTime,
             totalFlowRate: item.totalFlowRate,
             cleaningSpeed: item.cleaningSpeed,
             cleaningCount: item.cleaningCount,
@@ -316,6 +317,8 @@ const Method = () => {
                             <td>{item.detectorWavelength}</td>
                             <td>试管容积:</td>
                             <td>{item.tubeVolume}</td>
+                            <td>总流速:</td>
+                            <td>{item.totalFlowRate}</td>
                             <td>平衡柱子:</td>
                             <td>
                                 {item.equilibrationColumn == 1 ? "是" : "否"}
@@ -329,8 +332,8 @@ const Method = () => {
                                 <tr>
                                     <td>速度:</td>
                                     <td>{item.speed}</td>
-                                    <td>总流速:</td>
-                                    <td>{item.totalFlowRate}</td>
+                                    <td>润柱时间:</td>
+                                    <td>{item.equilibrationTime}</td>
                                 </tr>
                             </>
                         ) : (
@@ -557,6 +560,7 @@ const Method = () => {
             detectorWavelength: null,
             equilibrationColumn: null,
             speed: null,
+            equilibrationTime: null,
             totalFlowRate: null,
             pumpA: null,
             pumpB: null,
@@ -735,11 +739,19 @@ const Method = () => {
                                         <Input type="text" />
                                     </Form.Item>
                                 </Col>
+                                <Col span={6}>
+                                    <Form.Item
+                                        label="总流速"
+                                        name="totalFlowRate"
+                                    >
+                                        <Input />
+                                    </Form.Item>
+                                </Col>
                             </Row>
                             <Row gutter={16}>
                                 <Col span={6}>
                                     <Form.Item
-                                        label="平衡柱子"
+                                        label="润柱"
                                         name="equilibrationColumn"
                                         valuePropName="checked"
                                     >
@@ -753,8 +765,8 @@ const Method = () => {
                                 </Col>
                                 <Col span={6}>
                                     <Form.Item
-                                        label="总流速"
-                                        name="totalFlowRate"
+                                        label="润柱时间/分钟"
+                                        name="equilibrationTime"
                                     >
                                         <Input disabled={!isEquilibration} />
                                     </Form.Item>

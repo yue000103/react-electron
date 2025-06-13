@@ -107,6 +107,29 @@ const renderCurve = (
         .style("color", "red")
         .call(yAxis);
 
+    // 添加横线网格
+    const gridLines = svg
+        .append("g")
+        .attr("class", "grid-lines")
+        .attr("transform", `translate(0, 0)`);
+
+    // 生成刻度值
+    const ticks = d3.range(-2.5, 105, 2.5); // 从0到100，间隔为5
+
+    // 绘制横线
+    gridLines
+        .selectAll("line")
+        .data(ticks)
+        .enter()
+        .append("line")
+        .attr("x1", 0)
+        .attr("x2", width)
+        .attr("y1", (d) => yScale(d))
+        .attr("y2", (d) => yScale(d))
+        .attr("stroke", "blue")
+        .attr("stroke-width", 0.5)
+        .attr("stroke-dasharray", "5,5"); // 设置虚线样式
+
     const line = d3
         .line()
         .x((d) => xScale(d.time))
@@ -306,11 +329,11 @@ const renderLine = (
     // endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
 
     // const x2Scale = d3.scaleLinear().domain([now, endTime]).range([0, width]);
-    const yScale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
+    const yScale = d3.scaleLinear().domain([0, 105]).range([height, 0]);
     // const x2Axis = d3.axisTop(xScale);
     const y2Axis = d3
         .axisLeft(yScale)
-        .tickFormat((d) => (d === 0 || d === 100 ? "" : d));
+        .tickFormat((d) => (d === 0 || d === 105 ? "" : d));
 
     const yAxisG = svg
         .append("g")
