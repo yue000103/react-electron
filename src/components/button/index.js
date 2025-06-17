@@ -74,6 +74,7 @@ const App = ({ num, callback, selected, clean_flag }) => {
         updatedValue[index] = newValue;
         setValue(updatedValue);
     };
+    console.log("0609     num", num);
 
     useEffect(() => {
         setCleanFlag(clean_flag);

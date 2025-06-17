@@ -289,10 +289,10 @@ const renderLine = (
     
 
 
-    const yScale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
+    const yScale = d3.scaleLinear().domain([0, 105]).range([height, 0]);
     const y2Axis = d3
         .axisLeft(yScale)
-        .tickFormat((d) => (d === 0 || d === 100 ? "" : d));
+        .tickFormat((d) => (d === 0 || d === 110 ? "" : d));
 
     const yAxisG = svg
         .append("g")
@@ -311,7 +311,7 @@ const renderLine = (
         .append("circle")
         .attr("cx", (d) => xScale(d.time))
         .attr("cy", (d) => yScale(d.value))
-        .attr("r", 7) // 设置圆点半径
+        .attr("r", 1) // 设置圆点半径
         .attr("fill", "blue")
         .on("mouseover", function (event, d) {
             d3.select(this).style("opacity", 1); // 鼠标移入时显示圆点

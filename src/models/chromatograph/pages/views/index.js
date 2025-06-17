@@ -37,12 +37,19 @@ import {
     initLine,
     UpdateModuleListAPI,
     SetSampleStatusAPI,
+    UpdateLinePointAPI,
+    SetManualHoldAPI,
+    SetManualCutTubeAPI
 } from "../../api/eluent_curve";
 import {
     startEquilibration,
     setCurrentMethodOperate,
     uploadMethodOperate,
 } from "../../api/methods";
+import {
+  columnEquilibration,
+  stopColumnEquilibration
+} from "../../api/column";
 
 import { saveExperimentData, executionMethod } from "../../api/experiment";
 
@@ -162,6 +169,14 @@ const App = () => {
     const [inputModuleId, setInputModuleId] = useState(minModuleId);
 
     const [openReset, setOpenReset] = useState(false);
+    const [openPause, setOpenPause] = useState(false);
+    const [pauseForm] = Form.useForm();
+
+    const [openManualHold, setOpenManualHold] = useState(false);
+
+    const [openEquilibration, setOpenEquilibration] = useState(false);
+    const [equilibrationLoading, setEquilibrationLoading] = useState(false);
+    const [equilibrationStatus, setEquilibrationStatus] = useState(false);
 
     const handleInputNumberChange = (value) => {
         setInputTubeId(value);
@@ -189,6 +204,11 @@ const App = () => {
 
         socket.on("new_curve_point", (responseData) => {
             console.log("9090   responseData", responseData);
+            getEluentLine().then((responseData) => {
+              if (!responseData.error) {
+                  setLine(responseData.data.point);
+              }
+            });
             // if (responseData.point["value"] == 0) {
             //     // messageApi.open({
             //     //     type: "error",
@@ -233,8 +253,14 @@ const App = () => {
         });
         socket.on("equilibration_flag", (responseData) => {
             if (responseData.flag === 1) {
-                clearData();
-                flagStartTime = 0;
+                setEquilibrationLoading(false);
+                setOpenEquilibration(false);
+                setEquilibrationStatus(false);
+                clearInterval(checkInterval);
+                messageApi.open({
+                    type: 'success',
+                    content: '润柱完成！',
+                });
             }
         });
         socket.on("module_flag", (responseData) => {
@@ -683,77 +709,38 @@ const App = () => {
     const pause = () => {
         setLineLoading(false);
         pauseEluentLine().then((responseData) => {});
-        const lastDataPoint = data[data.length - 1];
-        const lastTime = lastDataPoint.time;
-        console.log("1029   lastTime", lastTime);
-
-        // 找到适合插值的点
-        let previousPoint = null;
-        let nextPoint = null;
-
-        for (let i = 0; i < newPoints.length; i++) {
-            if (newPoints[i].time <= lastTime) {
-                previousPoint = newPoints[i];
-            } else {
-                nextPoint = newPoints[i];
-                break;
-            }
-        }
-        console.log("1029   previousPoint", previousPoint);
-        console.log("1029   nextPoint", nextPoint);
-
-        if (previousPoint && nextPoint) {
-            // 计算插值，假设线性插值
-            const startValue = previousPoint.value;
-            const endValue = nextPoint.value;
-
-            // 计算时间差（单位：秒）
-            const timeDiff =
-                (new Date(
-                    `1970-01-01T${formatTimeWithRegex(nextPoint.time)}Z`
-                ) -
-                    new Date(
-                        `1970-01-01T${formatTimeWithRegex(previousPoint.time)}Z`
-                    )) /
-                1000;
-            console.log("1029   timeDiff", timeDiff);
-
-            let k = (endValue - startValue) / timeDiff;
-            let b =
-                endValue -
-                (k *
-                    new Date(
-                        `1970-01-01T${formatTimeWithRegex(nextPoint.time)}Z`
-                    )) /
-                    1000;
-            console.log("1029   k,b", k, b);
-            // 在时间区间内插值
-            const value =
-                (k * new Date(`1970-01-01T${formatTimeWithRegex(lastTime)}Z`)) /
-                    1000 +
-                b;
-            console.log("1029   value", value);
-
-            // 添加到newpoints
-            newPoints.push({
-                flow_rate: previousPoint.flow_rate,
-                time: lastTime,
-                value: Math.round(value), // 根据需要四舍五入
+        // 获取linePoint最后一个点的value值
+        const lastPoint = linePoint[linePoint.length - 1];
+        if (lastPoint) {
+            pauseForm.setFieldsValue({
+                value: lastPoint.value,
+                new_rate: 0
             });
         }
-
-        startTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
-        setLine(newPoints);
-
-        // updateEluentLine({
-        //     point: Object.values(newPoints),
-        //     start_time: startTime,
-        // }).then((responseData) => {
-        //     if (!responseData.error) {
-        //     }
-        // });
-        console.log("1029    new", newPoints);
+        setOpenPause(true);
     };
+
+    const handlePauseOk = () => {
+        pauseForm.validateFields().then((values) => {
+            UpdateLinePointAPI({
+                value: values.value,
+                new_rate: values.new_rate
+            }).then((response) => {
+                if (!response.error) {
+                    messageApi.open({
+                        type: 'success',
+                        content: '更新成功！',
+                    });
+                }
+            });
+            setOpenPause(false);
+        });
+    };
+
+    const handlePauseCancel = () => {
+        setOpenPause(false);
+    };
+
     const clearData = () => {
         setExcutedTubes((prevExcutedTubes) => []);
         setCleanFlag(0);
@@ -805,12 +792,8 @@ const App = () => {
                 })
                 .filter(Boolean); // 过滤掉 null 值
             const experiment_data = {
-                method_id: Number(methodId),
                 experiment_id: Number(experimentId),
-                curve_data: data,
-                vertical_data: filteredNum,
-                task_list: filteredExcute,
-                sampling_time: samplingTime,
+        
             };
 
             saveExperimentData(experiment_data).then((res) => {
@@ -936,9 +919,9 @@ const App = () => {
         // setData([])
         getEluentLine().then((responseData) => {
             if (!responseData.error) {
-                if (responseData.data.point.length === 0) {
-                    setMethodFlag(0);
-                } else {
+                // if (responseData.data.point.length === 0) {
+                //     setMethodFlag(0);
+                // } else {
                     const methodId = localStorage.getItem("methodId");
                     if (methodId) {
                         setCurrentMethodOperate({
@@ -965,7 +948,7 @@ const App = () => {
                     // );
                     // console.log("samplingTime ------------:", samplingTime);
                 }
-            }
+            // }
         });
         localStorage.setItem("updateLineFlag", true);
 
@@ -1027,6 +1010,29 @@ const App = () => {
         });
     };
 
+    const handleEquilibrationStart = () => {
+        setEquilibrationLoading(true);
+        columnEquilibration().then((response) => {
+            if (!response.error) {
+                setEquilibrationStatus(true);
+            }
+        });
+    };
+
+    const handleEquilibrationStop = () => {
+        stopColumnEquilibration().then((response) => {
+            if (!response.error) {
+                setEquilibrationLoading(false);
+                setOpenEquilibration(false);
+                setEquilibrationStatus(false);
+                messageApi.open({
+                    type: 'info',
+                    content: '已停止润柱！',
+                });
+            }
+        });
+    };
+
     return (
         <Flex gap="middle" wrap className="flex">
             {contextHolder}
@@ -1045,87 +1051,114 @@ const App = () => {
                     }}
                 >
                     <Row>
-                        <Col span={2}>
+                        <Col span={3}>
                             <Row>
                                 <Col span={24}>
                                     <div className="buttonStyle">
-                                        <Button
-                                            type="primary"
-                                            size="large"
-                                            danger
-                                            className={`button`} // 使用模板字符串
-                                            onClick={() => showModal()}
-                                            disabled={
-                                                clean_flag === 1 ||
-                                                methodFlag === 0
-                                                    ? true
-                                                    : false
-                                            }
-                                        >
-                                            开始
-                                        </Button>
-                                        <Button
-                                            type="primary"
-                                            size="large"
-                                            className={`button button2`}
-                                            onClick={() => pause()}
-                                            disabled={
-                                                clean_flag === 1 ||
-                                                methodFlag === 0
-                                                    ? true
-                                                    : false
-                                            }
-                                        >
-                                            暂停
-                                        </Button>
-
-                                        <Button
-                                            type="primary  "
-                                            size="large"
-                                            className={`button button1`}
-                                            onClick={() => terminate()}
-                                            disabled={
-                                                clean_flag === 1 ||
-                                                methodFlag === 0
-                                                    ? true
-                                                    : false
-                                            }
-                                        >
-                                            终止
-                                        </Button>
-                                        <Button
-                                            type="primary  "
-                                            size="large"
-                                            className={`button button4`}
-                                            onClick={() => reset()}
-                                            disabled={
-                                                methodFlag === 0 ? true : false
-                                            }
-                                        >
-                                            复位
-                                        </Button>
-                                        {/* <Button
-                                            type="primary  "
-                                            size="large"
-                                            className={`button button5`}
-                                            onClick={() => uploadMethod()}
-                                            disabled={
-                                                methodFlag === 0 ? true : false
-                                            }
-                                        >
-                                            上传
-                                        </Button> */}
-                                        <Button
-                                            type="primary  "
-                                            size="large"
-                                            className={`button button5`}
-                                            onClick={() => setSampleStatus()}
-                                            disabled={
-                                                methodFlag === 0 ? true : false
-                                            }
-                                        >
-                                            上样
-                                        </Button>
+                                        <Row gutter={[8, 8]}>
+                                        <Col span={24}>
+                                                <Button
+                                                    type="primary"
+                                                    size="large"
+                                                    className={`button button7`}
+                                                    onClick={() => setOpenEquilibration(true)}
+                                                    disabled={methodFlag === 0 ? true : false}
+                                                >
+                                                    润柱
+                                                </Button>
+                                            </Col>
+                                            <Col span={12}>
+                                                <Button
+                                                    type="primary"
+                                                    size="large"
+                                                    danger
+                                                    className={`button`}
+                                                    onClick={() => showModal()}
+                                                    disabled={
+                                                        clean_flag === 1 ||
+                                                        methodFlag === 0
+                                                            ? true
+                                                            : false
+                                                    }
+                                                >
+                                                    开始
+                                                </Button>
+                                            </Col>
+                                            <Col span={12}>
+                                                <Button
+                                                    type="primary"
+                                                    size="large"
+                                                    className={`button button2`}
+                                                    onClick={() => pause()}
+                                                    disabled={
+                                                        clean_flag === 1 ||
+                                                        methodFlag === 0
+                                                            ? true
+                                                            : false
+                                                    }
+                                                >
+                                                    暂停
+                                                </Button>
+                                            </Col>
+                                            <Col span={12}>
+                                                <Button
+                                                    type="primary"
+                                                    size="large"
+                                                    className={`button button1`}
+                                                    onClick={() => terminate()}
+                                                    disabled={
+                                                        clean_flag === 1 ||
+                                                        methodFlag === 0
+                                                            ? true
+                                                            : false
+                                                    }
+                                                >
+                                                    终止
+                                                </Button>
+                                            </Col>
+                                            <Col span={24}>
+                                                <Button
+                                                    type="primary"
+                                                    size="large"
+                                                    className={`button button4`}
+                                                    onClick={() => reset()}
+                                                    disabled={
+                                                        methodFlag === 0 ? true : false
+                                                    }
+                                                >
+                                                    复位
+                                                </Button>
+                                            </Col>
+                                           
+                                            <Col span={24}>
+                                                <Button
+                                                    type="primary"
+                                                    size="large"
+                                                    className={`button button5`}
+                                                    onClick={() => setOpenManualHold(true)}
+                                                    disabled={
+                                                        methodFlag === 0 ? true : false
+                                                    }
+                                                >
+                                                    手动保持
+                                                </Button>
+                                            </Col>
+                                            <Col span={24}>
+                                                <Button
+                                                    type="primary"
+                                                    size="large"
+                                                    className={`button button6`}
+                                                    onClick={() => {
+                                                        SetManualCutTubeAPI().then(() => {
+                                                            messageApi.open({ type: 'success', content: '切换试管成功' });
+                                                        });
+                                                    }}
+                                                    disabled={methodFlag === 0 ? true : false}
+                                                >
+                                                    切换试管
+                                                </Button>
+                                            </Col>
+                                        </Row>
                                     </div>
                                 </Col>
                             </Row>
@@ -1371,6 +1404,87 @@ const App = () => {
                 cancelText="不保存" // 修改取消按钮文字
             >
                 <p>是否保存实验数据?</p>
+            </Modal>
+            <Modal
+                title="暂停设置"
+                open={openPause}
+                onOk={handlePauseOk}
+                onCancel={handlePauseCancel}
+            >
+                <Form
+                    form={pauseForm}
+                    layout="vertical"
+                >
+                    <Form.Item
+                        label="Value"
+                        name="value"
+                        rules={[{ required: true, message: '请输入value值' }]}
+                    >
+                        <InputNumber style={{ width: '100%' }} />
+                    </Form.Item>
+                    <Form.Item
+                        label="New Rate"
+                        name="new_rate"
+                        rules={[{ required: true, message: '请输入new_rate值' }]}
+                    >
+                        <InputNumber style={{ width: '100%' }} />
+                    </Form.Item>
+                </Form>
+            </Modal>
+            <Modal
+                title="手动保持"
+                open={openManualHold}
+                onCancel={() => setOpenManualHold(false)}
+                footer={null}
+            >
+                <p>是否启用手动保持？</p>
+                <div style={{ textAlign: 'right' }}>
+                    <Button
+                        type="primary"
+                        onClick={() => {
+                            SetManualHoldAPI({ hold_enabled: true }).then(() => {
+                                messageApi.open({ type: 'success', content: '已启用手动保持' });
+                                setOpenManualHold(false);
+                            });
+                        }}
+                        style={{ marginRight: 8 }}
+                    >
+                        是
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            SetManualHoldAPI({ hold_enabled: false }).then(() => {
+                                messageApi.open({ type: 'success', content: '已关闭手动保持' });
+                                setOpenManualHold(false);
+                            });
+                        }}
+                    >
+                        否
+                    </Button>
+                </div>
+            </Modal>
+            <Modal
+                title="润柱"
+                open={openEquilibration}
+                onCancel={handleEquilibrationStop}
+                footer={null}
+            >
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                    <p>是否开始润柱？</p>
+                    <div style={{ marginTop: '20px' }}>
+                        <Button
+                            type="primary"
+                            onClick={handleEquilibrationStart}
+                            loading={equilibrationLoading}
+                            style={{ marginRight: '10px' }}
+                        >
+                            开始
+                        </Button>
+                        <Button onClick={handleEquilibrationStop}>
+                            结束
+                        </Button>
+                    </div>
+                </div>
             </Modal>
         </Flex>
     );

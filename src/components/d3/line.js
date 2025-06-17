@@ -107,6 +107,29 @@ const renderCurve = (
         .style("color", "red")
         .call(yAxis);
 
+    // 添加横线网格
+    const gridLines = svg
+        .append("g")
+        .attr("class", "grid-lines")
+        .attr("transform", `translate(0, 0)`);
+
+    // 生成刻度值
+    const ticks = d3.range(-2.5, 105, 2.5); // 从0到100，间隔为5
+
+    // 绘制横线
+    gridLines
+        .selectAll("line")
+        .data(ticks)
+        .enter()
+        .append("line")
+        .attr("x1", 0)
+        .attr("x2", width)
+        .attr("y1", (d) => yScale(d))
+        .attr("y2", (d) => yScale(d))
+        .attr("stroke", "blue")
+        .attr("stroke-width", 0.5)
+        .attr("stroke-dasharray", "5,5"); // 设置虚线样式
+
     const line = d3
         .line()
         .x((d) => xScale(d.time))
@@ -291,7 +314,6 @@ const renderLine = (
         ...d,
         time: parseTime(d.time),
     }));
-    console.log("1012 time parsedData :", parsedData);
 
     // const drag = d3
     //     .drag()
@@ -302,17 +324,16 @@ const renderLine = (
     let delD = [];
     let newD = [];
     let ifMove = [];
-    console.log("8672   ----samplingTime ---- ", samplingTime);
     svg.selectAll("path.line").remove();
     svg.selectAll("circle.point").remove();
     // endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
 
     // const x2Scale = d3.scaleLinear().domain([now, endTime]).range([0, width]);
-    const yScale = d3.scaleLinear().domain([0, 100]).range([height, 0]);
+    const yScale = d3.scaleLinear().domain([0, 105]).range([height, 0]);
     // const x2Axis = d3.axisTop(xScale);
     const y2Axis = d3
         .axisLeft(yScale)
-        .tickFormat((d) => (d === 0 || d === 100 ? "" : d));
+        .tickFormat((d) => (d === 0 || d === 105 ? "" : d));
 
     const yAxisG = svg
         .append("g")
@@ -341,37 +362,9 @@ const renderLine = (
         .attr("d", line2)
         .style("pointer-events", "none"); // 确保线不会阻挡点的事件
 
-    // svg.selectAll("circle")
-    //     .data(parsedData)
-    //     .enter()
-    //     .append("circle")
-    //     .attr("cx", (d) => xScale(d.time))
-    //     .attr("cy", (d) => yScale(d.value))
-    //     .attr("r", 8) // 设置圆点半径
-    //     .attr("fill", "blue")
-    //     .on("mouseover", function (event, d) {
-    //         // d3.select(this).style("opacity", 1); // 鼠标移入时显示圆点
-    //         const [time, value] = d3.pointer(event, svgRef.current);
-    //         console.log("time :", d.time);
-    //         const dateObj = new Date(d.time);
-    //         const timeStr = dateObj.toTimeString().split(" ")[0];
-    //         // 获取鼠标位置
-    //         svg.append("text")
-    //             .attr("class", "coordinate-text")
-    //             .attr("x", time + 10)
-    //             .attr("y", value - 10)
-    //             .text(`(${timeStr}, ${d.value})`)
-    //             .attr("font-size", "12px")
-    //             .attr("fill", "black")
-    //             .attr("pointer-events", "none"); // 防止文字影响鼠标事件
-    //     })
-    //     .on("mouseout", function () {
-    //         svg.selectAll(".coordinate-text").remove(); // 移除显示的坐标信息
-    //     })
-    //     .on("click", function (event, d) {
-    //         handleClick(event, d);
-    //     })
-    //     .on("mousedown", prepareDrag);
+   
+
+
     const points = svg
         .selectAll("circle.point")
         .data(parsedData)
@@ -379,7 +372,7 @@ const renderLine = (
         .attr("class", "point")
         .attr("cx", (d) => xScale(d.time))
         .attr("cy", (d) => yScale(d.value))
-        .attr("r", 8)
+        .attr("r", 1)
         .style("opacity", 1)
         .attr("fill", "blue")
         .style("cursor", "pointer") // 添加鼠标指针样式
@@ -425,7 +418,7 @@ const renderLine = (
             time: d.time,
             value: d.value,
         });
-        setIsModalVisible(true);
+        // setIsModalVisible(true);
         // }
     };
     // 折线生成器
@@ -440,77 +433,7 @@ const renderLine = (
         startX = event.x;
         startY = event.y;
     }
-    // 拖拽开始时的处理函数
-    // function dragstarted(event, d) {
-    //     d3.select(this).raise().classed("active", true);
-    //     delD = { time: parseTimeString(d.time), value: d.value };
-    //     ifMove = [d.time, d.value];
-    // }
-
-    // 拖拽过程中的处理函数
-    // function dragged(event, d) {
-    //     const dx = event.x - startX;
-    //     // console.log("dx :", dx);
-    //     const dy = event.y - startY;
-    //     // console.log("dy :", dy);
-    //     const distance = Math.sqrt(dx * dx + dy * dy);
-    //     // console.log("distance :", distance);
-
-    //     if (distance > dragThreshold) {
-    //         // console.log("dragged :");
-    //         isDragging = true;
-
-    //         d3.select(this)
-    //             .attr("cx", (d.time = event.x))
-    //             .attr("cy", (d.value = event.y));
-    //         let newLinePoint = linePointChange;
-    //         newLinePoint = newLinePoint.filter((point) => {
-    //             return !_.isEqual(delD, point);
-    //         });
-    //         setlinePointChange(newLinePoint);
-    //         // console.log("setlinePointChange :", newLinePoint);
-    //     } else {
-    //         d3.select(this).raise().classed("active", false);
-    //     }
-    // }
-
-    // 拖拽结束时的处理函数
-    // function dragended(event, d) {
-    //     // dragTimeout = setTimeout(() => {
-    //     //     if (!isDragging) {
-    //     //     }
-    //     //     isDragging = false;
-    //     // }, 100);
-    //     //判断是否是拖拽行为
-    //     if (isDragging) {
-    //         // console.log("isDragging :", isDragging);
-
-    //         var date = new Date(x2Scale.invert(d.time));
-    //         d3.select(this).classed("active", false);
-    //         newD = {
-    //             time: parseTimeString(date),
-    //             value: parseFloat(y2Scale.invert(d.value).toFixed(2)),
-    //         };
-    //         console.log("newD", newD);
-    //         if (!_.isEqual(newD, delD)) {
-    //             let newLinePoint = linePointChange.filter((point) => {
-    //                 return !_.isEqual(delD, point);
-    //             });
-    //             newLinePoint.push(newD);
-    //             newLinePoint = newLinePoint.sort(
-    //                 (a, b) => parseTime(a.time) - parseTime(b.time)
-    //             );
-    //             setlinePointChange(newLinePoint);
-    //             console.log("newLinePoint :", newLinePoint);
-    //             console.log("linePointChange :", linePointChange);
-    //             callback(newLinePoint);
-    //         }
-    //     } else {
-    //         // console.log("isDragging :", isDragging);
-
-    //         handleClick(event, d);
-    //     }
-    // }
+   
 };
 
 const LineChart = (props) => {
@@ -678,9 +601,9 @@ const LineChart = (props) => {
 
     const handleOk = () => {
         const newX = parseTimeString(inputValues.time);
-        console.log("lineFlag  newX :", typeof newX);
 
         const newY = Number(inputValues.value);
+
         let newData = linePointChange.map((point) =>
             isEqual(selectedPoint, point)
                 ? { flow_rate: inputValues.flow_rate, time: newX, value: newY }
@@ -688,6 +611,7 @@ const LineChart = (props) => {
         );
         newData = newData.sort((a, b) => parseTime(a.time) - parseTime(b.time));
         setlinePointChange(newData);
+
         // console.log("lineFlag    newData :", newData);
         props.callback(newData); // 确保调用了回调函数
         // console.log("lineFlag  linePoint----------- :", linePoint);
@@ -853,7 +777,7 @@ const LineChart = (props) => {
                     // onChange={handleInputChange}
                     controls={false}
                 />
-                {/* <Input
+                <Input
                     ref={inputRef}
                     className="input-number"
                     value={inputValues.flow_rate}
@@ -864,7 +788,7 @@ const LineChart = (props) => {
                     // onChange={handleInputChange}
                     controls={false}
                     disabled
-                /> */}
+                />
                 <KeyboardNumber
                     className="input-keyboard"
                     value={inputValues.value}

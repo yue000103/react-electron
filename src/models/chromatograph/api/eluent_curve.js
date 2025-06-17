@@ -43,3 +43,16 @@ export function UpdateCleanListAPI(data) {
 export function SetSampleStatusAPI() {
     return axiosInstance.post("/eluent_curve/set_sample_valve");
 }
+
+export function SetManualHoldAPI(data) {
+    return axiosInstance.post("/eluent_curve/set_manual_hold", data);
+}
+
+export function UpdateLinePointAPI(data) {
+    return axiosInstance.post("/eluent_curve/update_line_point", data);
+}
+
+export function SetManualCutTubeAPI() {
+  return axiosInstance.post("/eluent_curve/set_manual_cut_tube");
+}
+
