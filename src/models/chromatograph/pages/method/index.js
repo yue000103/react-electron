@@ -65,7 +65,6 @@ const Method = () => {
     const [formBasis] = Form.useForm();
     const [formPump] = Form.useForm();
     const [formElution] = Form.useForm();
-    const [isEquilibration, setIsEquilibration] = useState(false);
     const [basisData, setBasisData] = useState([]);
     const [elutionData, setElutionData] = useState([]);
 
@@ -88,6 +87,7 @@ const Method = () => {
     const [retainList, setRetainList] = useState([]);
     const { storeData } = createDB("MyDatabase", "method", "methodId");
     const [uploadFlag, setUploadFlag] = useState(0);
+    const [manualGradient, setManualGradient] = useState(false);
 
     console.log("basisData :", basisData);
     console.log("elutionData :", elutionData);
@@ -118,15 +118,7 @@ const Method = () => {
         }
     }, [methodID]);
 
-    const handleSwitchChange = (checked) => {
-        setIsEquilibration(checked);
-        if (!checked) {
-            formBasis.setFieldsValue({
-                speed: "",
-                equilibrationTime: "",
-            });
-        }
-    };
+ 
 
     const saveMethod = () => {
         const methodId = localStorage.getItem("methodId");
@@ -277,7 +269,6 @@ const Method = () => {
         };
         formBasis.setFieldsValue(basisDatas);
         setSamplingTime(item.samplingTime);
-        setIsEquilibration(item.equilibrationColumn);
         if (item.isocratic === 1) {
             setValue(1);
             const elutionDatas = {
@@ -628,6 +619,18 @@ const Method = () => {
             console.error(error);
         }
     };
+    const handleUploadParams = () => {
+      const values = formBasis.getFieldsValue([
+        'start_ratio', 'end_ratio', 'n1_volumes', 'gradient_rate', 'peak_threshold',
+        'column_volume', 'sg_window', 'sg_order', 'baseline_window', 'k_factor'
+      ]);
+      // 这里调用你的上传API
+      uploadParamsAPI(values).then(res => {
+        message.success('参数上传成功');
+      }).catch(() => {
+        message.error('参数上传失败');
+      });
+    };
 
     useEffect(() => {
         const methodId = localStorage.getItem("methodId");
@@ -749,18 +752,10 @@ const Method = () => {
                                 </Col>
                             </Row>
                             <Row gutter={16}>
-                                <Col span={6}>
-                                    <Form.Item
-                                        label="润柱"
-                                        name="equilibrationColumn"
-                                        valuePropName="checked"
-                                    >
-                                        <Switch onChange={handleSwitchChange} />
-                                    </Form.Item>
-                                </Col>
+                                
                                 <Col span={6}>
                                     <Form.Item label="泵B速度/%" name="speed">
-                                        <Input disabled={!isEquilibration} />
+                                        <Input/>
                                     </Form.Item>
                                 </Col>
                                 <Col span={6}>
@@ -768,10 +763,16 @@ const Method = () => {
                                         label="润柱时间/分钟"
                                         name="equilibrationTime"
                                     >
-                                        <Input disabled={!isEquilibration} />
+                                        <Input/>
                                     </Form.Item>
                                 </Col>
+                                <Col span={6}>
+                                <Form.Item label="是否启用自动改梯度曲线" name="manualGradient" valuePropName="checked" style={{ marginBottom: 0 }}>
+                                <Switch checked={manualGradient} onChange={setManualGradient} />
+                          </Form.Item>
+                          </Col>
                             </Row>
+                            
                         </Form>
                     </Col>
 
@@ -812,6 +813,8 @@ const Method = () => {
                             >
                                 清空
                             </Button>
+                            <Button type="primary" onClick={handleUploadParams}>上传参数</Button>
+
                         </Row>
                     </Col>
                 </Row>
@@ -829,85 +832,159 @@ const Method = () => {
                             ></Buttons>
                         </div>
                     </Col>
+                   
                     <Col span={13}>
-                        <Row>
-                            <Col span={3}></Col>
-                            <Col span={9}>
-                                <div style={{ marginTop: 13 }}>
-                                    <Radio.Group
-                                        onChange={onChange}
-                                        value={value}
-                                    >
-                                        <Radio value={1}>等度洗脱</Radio>
-                                        <Radio value={2}>二元高压梯度</Radio>
-                                    </Radio.Group>
-                                </div>
-                            </Col>
-                            <Col span={4}>
-                                {value === 2 && (
-                                    <pre
-                                        style={{
-                                            fontSize: "15px",
-                                            fontWeight: "550",
-                                        }}
-                                    >
-                                        {
-                                            "时间    泵A速度    泵B速度    总流速 "
-                                        }
-                                    </pre>
-                                )}
-                            </Col>
-                        </Row>
-                        {value === 1 && (
-                            <div className="isocratic">
-                                {" "}
+                    
+                          
+                    {!manualGradient && (
+                       <>
+                            <div style={{ marginTop: 13 }}>
+                              <Radio.Group onChange={onChange} value={value}>
+                                <Radio value={1}>等度洗脱</Radio>
+                                <Radio value={2}>二元高压梯度</Radio>
+                              </Radio.Group>
+                            </div>
+                            {value === 1 && (
+                              <div className="isocratic">
                                 <Form
-                                    labelCol={{
-                                        span: 10,
-                                    }}
-                                    wrapperCol={{
-                                        span: 14,
-                                    }}
-                                    layout="horizontal"
-                                    initialValues={{
-                                        size: "larger",
-                                    }}
-                                    form={formElution}
-                                    onFinish={onFinishElution}
+                                  labelCol={{ span: 10 }}
+                                  wrapperCol={{ span: 14 }}
+                                  layout="horizontal"
+                                  initialValues={{ size: "larger" }}
+                                  form={formElution}
+                                  onFinish={onFinishElution}
                                 >
-                                    <Form.Item label="泵A流速" name="pumpA">
-                                        <Input />
-                                    </Form.Item>
-                                    <Form.Item label="泵B流速" name="pumpB">
-                                        <Input />
-                                    </Form.Item>
+                                  <Form.Item label="泵A流速" name="pumpA">
+                                    <Input />
+                                  </Form.Item>
+                                  <Form.Item label="泵B流速" name="pumpB">
+                                    <Input />
+                                  </Form.Item>
                                 </Form>
-                            </div>
-                        )}
-                        {value === 2 && (
-                            <div className="pressure">
+                              </div>
+                            )}
+                            {value === 2 && (
+                              <div className="pressure">
                                 <Row>
-                                    <Col span={2}></Col>
-                                    <Col span={9}>
-                                        <div className="dynamic-line">
-                                            <DynamicLine
-                                                widthLine={widthLine}
-                                                heightLine={heightLine}
-                                                samplingTime={samplingTime}
-                                                pressure={pressure}
-                                            ></DynamicLine>
-                                        </div>
-                                    </Col>
-                                    <Col span={12}>
-                                        <DynamicForm
-                                            flowRateDefault={flowRateDefault}
-                                            pressure={pressure}
-                                            onValuesChange={handleValuesChange}
-                                        ></DynamicForm>
-                                    </Col>
+                                  <Col span={2}></Col>
+                                  <Col span={9}>
+                                    <div className="dynamic-line">
+                                      <DynamicLine
+                                        widthLine={widthLine}
+                                        heightLine={heightLine}
+                                        samplingTime={samplingTime}
+                                        pressure={pressure}
+                                      ></DynamicLine>
+                                    </div>
+                                  </Col>
+                                  <Col span={12}>
+                                    <DynamicForm
+                                      flowRateDefault={flowRateDefault}
+                                      pressure={pressure}
+                                      onValuesChange={handleValuesChange}
+                                    ></DynamicForm>
+                                  </Col>
                                 </Row>
-                            </div>
-                        )}
+                              </div>
+                            )}
+                            </>
+                          )}
+                          {manualGradient && (
+                          <Col span={22}>
+                                  <Row gutter={8}>
+                                    <Col span={8}>
+                                      <Form.Item
+                                        label={<span>start_ratio 起始比例</span>}
+                                        name="start_ratio"
+                                        tooltip="梯度开始时溶剂B的体积分数(%)"
+                                      >
+                                        <InputNumber min={0} max={100} style={{ width: '100%' }} />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col span={8}>
+                                      <Form.Item
+                                        label={<span>end_ratio 终止比例</span>}
+                                        name="end_ratio"
+                                        tooltip="梯度结束时溶剂B的体积分数(%)"
+                                      >
+                                        <InputNumber min={0} max={100} style={{ width: '100%' }} />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col span={8}>
+                                      <Form.Item
+                                        label={<span>n1_volumes N1柱体积倍数</span>}
+                                        name="n1_volumes"
+                                        tooltip="首段恒流持续的柱体积数"
+                                      >
+                                        <InputNumber min={0} style={{ width: '100%' }} />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col span={8}>
+                                      <Form.Item
+                                        label={<span>gradient_rate 梯度速率</span>}
+                                        name="gradient_rate"
+                                        tooltip="流动相B比例变化速率(%/柱体积)"
+                                      >
+                                        <InputNumber min={0} style={{ width: '100%' }} />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col span={8}>
+                                      <Form.Item
+                                        label={<span>peak_threshold 峰检测阈值</span>}
+                                        name="peak_threshold"
+                                        tooltip="判定峰起始/结束的信号阈值"
+                                      >
+                                        <InputNumber min={0} style={{ width: '100%' }} />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col span={8}>
+                                      <Form.Item
+                                        label={<span>column_volume 柱体积</span>}
+                                        name="column_volume"
+                                        tooltip="柱子实际总内体积(mL)"
+                                      >
+                                        <InputNumber min={0} style={{ width: '100%' }} />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col span={8}>
+                                      <Form.Item
+                                        label={<span>sg_window 平滑窗口宽度</span>}
+                                        name="sg_window"
+                                        tooltip="Savitzky-Golay平滑窗口点数"
+                                      >
+                                        <InputNumber min={1} style={{ width: '100%' }} />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col span={8}>
+                                      <Form.Item
+                                        label={<span>sg_order 平滑多项式阶数</span>}
+                                        name="sg_order"
+                                        tooltip="Savitzky-Golay多项式拟合阶数"
+                                      >
+                                        <InputNumber min={1} style={{ width: '100%' }} />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col span={8}>
+                                      <Form.Item
+                                        label={<span>baseline_window 基线窗口宽度</span>}
+                                        name="baseline_window"
+                                        tooltip="基线校正参考窗口点数"
+                                      >
+                                        <InputNumber min={1} style={{ width: '100%' }} />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col span={8}>
+                                      <Form.Item
+                                        label={<span>k_factor 灵敏度系数K</span>}
+                                        name="k_factor"
+                                        tooltip="调整峰检测灵敏度的倍率系数"
+                                      >
+                                        <InputNumber min={0} style={{ width: '100%' }} />
+                                      </Form.Item>
+                                    </Col>
+                                  </Row>
+                              
+                          </Col>)}
                     </Col>
                 </Row>
             </div>
