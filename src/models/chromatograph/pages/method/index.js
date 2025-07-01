@@ -28,8 +28,9 @@ import {
     DeleteFilled,
     DeleteOutlined,
     SelectOutlined,
+    
 } from "@ant-design/icons";
-import { uploadMethodFlag } from "../../api/methods";
+import { uploadMethodFlag ,UpdatePrepChromParamsAPI} from "../../api/methods";
 
 import "./index.css";
 import DynamicLine from "@components/d3/dynamicLine";
@@ -63,6 +64,7 @@ const Method = () => {
     const [widthLine, setWidthLine] = useState(270);
     const [heightLine, setHeightLine] = useState(230);
     const [formBasis] = Form.useForm();
+    const [formParams] = Form.useForm();
     const [formPump] = Form.useForm();
     const [formElution] = Form.useForm();
     const [basisData, setBasisData] = useState([]);
@@ -620,12 +622,13 @@ const Method = () => {
         }
     };
     const handleUploadParams = () => {
-      const values = formBasis.getFieldsValue([
+      const values = formParams.getFieldsValue([
         'start_ratio', 'end_ratio', 'n1_volumes', 'gradient_rate', 'peak_threshold',
         'column_volume', 'sg_window', 'sg_order', 'baseline_window', 'k_factor'
       ]);
+      console.log("values :", values);
       // 这里调用你的上传API
-      uploadParamsAPI(values).then(res => {
+      UpdatePrepChromParamsAPI(values).then(res => {
         message.success('参数上传成功');
       }).catch(() => {
         message.error('参数上传失败');
@@ -891,6 +894,15 @@ const Method = () => {
                           )}
                           {manualGradient && (
                           <Col span={22}>
+                            <Form
+                            form={formParams}
+                            layout="vertical" // 设为 vertical 以便更好地控制
+                            initialValues={{
+                                equilibrationColumn: false,
+                                maxwidth: "none",
+                            }}
+                            
+                        >
                                   <Row gutter={8}>
                                     <Col span={8}>
                                       <Form.Item
@@ -952,7 +964,7 @@ const Method = () => {
                                         name="sg_window"
                                         tooltip="Savitzky-Golay平滑窗口点数"
                                       >
-                                        <InputNumber min={1} style={{ width: '100%' }} />
+                                        <InputNumber min={0} style={{ width: '100%' }} />
                                       </Form.Item>
                                     </Col>
                                     <Col span={8}>
@@ -961,7 +973,7 @@ const Method = () => {
                                         name="sg_order"
                                         tooltip="Savitzky-Golay多项式拟合阶数"
                                       >
-                                        <InputNumber min={1} style={{ width: '100%' }} />
+                                        <InputNumber min={0} style={{ width: '100%' }} />
                                       </Form.Item>
                                     </Col>
                                     <Col span={8}>
@@ -970,7 +982,7 @@ const Method = () => {
                                         name="baseline_window"
                                         tooltip="基线校正参考窗口点数"
                                       >
-                                        <InputNumber min={1} style={{ width: '100%' }} />
+                                        <InputNumber min={0} style={{ width: '100%' }} />
                                       </Form.Item>
                                     </Col>
                                     <Col span={8}>
@@ -983,7 +995,8 @@ const Method = () => {
                                       </Form.Item>
                                     </Col>
                                   </Row>
-                              
+                                  
+                              </Form>
                           </Col>)}
                     </Col>
                 </Row>
