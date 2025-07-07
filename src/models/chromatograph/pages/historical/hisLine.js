@@ -38,13 +38,7 @@ const _ = require("lodash");
 now = new Date();
 now.setHours(0, 0, 0);
 
-
-const renderCurve = (
-    svg,
-    height,
-    samplingTime,
-    xScale
-) => {
+const renderCurve = (svg, height, samplingTime, xScale) => {
     // console.log("data", data);
     //data{time: '17:46:47', value: 81.41712213857508}
 
@@ -107,9 +101,8 @@ const renderCurve = (
         .attr("stroke", "red")
         .attr("stroke-width", 2)
         .attr("d", line);
-    
+
     renderVertical(svg, xScale, height);
-   
 };
 
 const renderVertical = (svg, xScale, height) => {
@@ -148,93 +141,9 @@ const renderVertical = (svg, xScale, height) => {
         )
         .attr("y", 30) // 计算中间位置的 y 坐标
         .attr("text-anchor", "middle")
-        .text((d) => d.tube);
+        .text((d) => `${d.module_index + 1}-${d.tube_index + 1}`);
 };
 
-const renderArea = (svg, xScale, yScale, height) => {
-    // 生成填充区域的路径生成器
-    const area = d3
-        .area()
-        .x((d) => xScale(d.time))
-        .y0(height)
-        .y1((d) => yScale(d.value))
-        .curve(d3.curveLinear);
-    console.log("num:", num);
-    const getXandY = (tube) => {
-        const selectedTube = num.find((item) => item.tube === tube);
-        // console.log("selectedTube---------- :", selectedTube);
-
-        if (selectedTube) {
-            return {
-                x1: selectedTube.time_start,
-                x2: selectedTube.time_end,
-                color: selectedTube.color,
-            };
-        } else {
-            return null; // 如果未找到匹配的 tube，则返回 null 或者其他你认为合适的值
-        }
-    };
-    selected.forEach((selectTube) => {
-        console.log("selectTube", selectTube["tube_list"]);
-        let fillColor = "";
-        // console.log("selectTube :", selectTube);
-        selectTube["tube_list"].forEach((tube) => {
-            // console.log("tube :", tube);
-
-            const xy = getXandY(tube);
-            // console.log("xy", xy);
-            if (xy) {
-                const { x1, x2, color } = xy;
-                // console.log("x1, x2, color :", x1, x2, color);
-                fillColor = color;
-                // console.log("data :", data);
-
-                let fillArea = data.filter((item) => {
-                    return item.time >= x1 && item.time <= x2;
-                });
-                fillAreaData = [...fillAreaData, ...fillArea];
-                // console.log("fillAreaData :", fillAreaData);
-            }
-        });
-        const { x1, x2, color } = selectTube["tube_list"][0]
-            ? getXandY(selectTube["tube_list"][0])
-            : "";
-        fillAreaData.unshift({ time: x1, value: fillAreaData[0].value });
-        // const { x1, x2, color } = getXandY(
-        //     selectTube["tube_list"][selectTube["tube_list"].length - 1]
-        // );
-
-        // fillAreaData.unshift({
-        //     time: x1,
-        //     value: fillAreaData[fillAreaData.length - 1].value,
-        // });
-        fillAreaData = fillAreaData.sort((a, b) => a.time - b.time);
-        // console.log("fillAreaData :", fillAreaData);
-        let fill = { area: fillAreaData, color: fillColor };
-        fillAreaDatas = [...fillAreaDatas, fill];
-        fillAreaData = [];
-    });
-
-    // console.log("fillAreaDatas :", fillAreaDatas);
-    fillAreaDatas.forEach((fill) => {
-        // console.log("fill :", fill);
-        const parsedData = fill.area?.map((d) => ({
-            ...d,
-            time: parseTime(d.time),
-        }));
-
-        if (fill.color) {
-            const colorName = `color${fill.color}`;
-            svg.append("path")
-                .datum(parsedData)
-                .attr("fill", colors[colorName].backgroundColor)
-                .attr("stroke", "none")
-                .attr("d", area);
-        }
-    });
-    fillAreaDatas = [];
-    // 绘制填充区域
-};
 const parseTime = (timeString) => {
     // 解析时间字符串
     // console.log("timeString", timeString);
@@ -277,7 +186,7 @@ const renderLine = (
     svgRef,
     setSelectedPoint,
     linePointChange,
-  
+
     xScale
 ) => {
     console.log("1012 linePointChange :", linePointChange);
@@ -286,10 +195,7 @@ const renderLine = (
         time: parseTime(d.time),
     }));
 
-    
-
-
-    const yScale = d3.scaleLinear().domain([0, 105]).range([height, 0]);
+    const yScale = d3.scaleLinear().domain([70, 101]).range([height, 0]);
     const y2Axis = d3
         .axisLeft(yScale)
         .tickFormat((d) => (d === 0 || d === 110 ? "" : d));
@@ -334,15 +240,12 @@ const renderLine = (
         })
         .on("click", function (event, d) {
             handleClick(event, d);
-        })
+        });
     const handleClick = (event, d) => {
-      
         setSelectedPoint({
             time: parseTimeString(d.time),
             value: d.value,
         });
-        
-        
     };
     // 折线生成器
     const line2 = d3
@@ -357,14 +260,11 @@ const renderLine = (
         .attr("stroke", "blue")
         .attr("stroke-width", 2)
         .attr("d", line2);
-    
-    
-
 };
 
 const LineChart = (props) => {
     // console.log("1014 --------------- LineChart -----------------");
-    
+
     const svgRef = useRef(null);
 
     const [scrollPosition, setScrollPosition] = useState(0);
@@ -379,28 +279,24 @@ const LineChart = (props) => {
     const [samplingTime, setSamplingTime] = useState(props.samplingTime);
     endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
 
-
-
     // 修改状态
     const [zoomState, setZoomState] = useState({
         k: 1,
         x: 0,
         y: 0,
     });
-    
 
     data = props.data;
     // console.log("data.props", props.data);
     num = props.num;
     linePoint = props.linePoint;
-    
+
     selected = props.selected_tubes;
 
     useEffect(() => {
         setSamplingTime(props.samplingTime);
         setDimensions(props.dimensions);
-    }, [props.samplingTime,props.dimensions]);
-   
+    }, [props.samplingTime, props.dimensions]);
 
     // 在组件挂载时设置linePointChange的初始值
     useEffect(() => {
@@ -408,12 +304,9 @@ const LineChart = (props) => {
             setlinePointChange(linePoint);
         }
     }, [linePointChange, linePoint]); // 依赖项数组包含需要触发effect的变量
-    
-   
 
     const drawChart = useCallback(() => {
         // console.log("1014   dimensions", dimensions);
-      
 
         if (!data || dimensions.width === 0 || dimensions.height === 0) return;
 
@@ -442,12 +335,7 @@ const LineChart = (props) => {
             ]);
 
         // 绘制曲线
-        renderCurve(
-            gContent,
-            height,
-            samplingTime,
-            zoomedXScale
-        );
+        renderCurve(gContent, height, samplingTime, zoomedXScale);
         renderLine(
             height,
             margin,
@@ -472,7 +360,7 @@ const LineChart = (props) => {
         // console.log("----1014---------props.sampling-----------",props.samplingTime);
         drawChart();
     }, [drawChart, props.samplingTime]);
-  
+
     const handleZoomOut = useCallback(() => {
         setZoomState((prevState) => ({
             ...prevState,
@@ -510,7 +398,7 @@ const LineChart = (props) => {
                 top: "0px",
             }}
         >
-                <svg ref={svgRef} width="100%" height="20rem"></svg>
+            <svg ref={svgRef} width="100%" height="20rem"></svg>
 
             <div
                 style={{
@@ -523,18 +411,16 @@ const LineChart = (props) => {
                     <Col span={17}></Col>
                     <Col span={2}>
                         {" "}
-                        <div style={{paddingTop:"5rem"}}
-                        >
-                        <Button
-                            icon={<PlusOutlined />}
-                            onClick={handleZoomIn}
-                        />
-                        <Button
-                            style={{ marginLeft: "10px"}}
-                            icon={<MinusOutlined />}
-                            onClick={handleZoomOut}
-
-                        />
+                        <div style={{ paddingTop: "5rem" }}>
+                            <Button
+                                icon={<PlusOutlined />}
+                                onClick={handleZoomIn}
+                            />
+                            <Button
+                                style={{ marginLeft: "10px" }}
+                                icon={<MinusOutlined />}
+                                onClick={handleZoomOut}
+                            />
                         </div>
                     </Col>
                     <Col span={4}>
@@ -546,7 +432,6 @@ const LineChart = (props) => {
                     </Col>
                 </Row>
             </div>
-            
         </div>
     );
 };

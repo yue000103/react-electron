@@ -14,11 +14,10 @@ import "@components/css/overlay.css";
 
 function App() {
     const { Link } = Anchor;
-
-    const [showExperiment, setShowExperiment] = useState(false);
-    const [showMethod, setShowMethod] = useState(true);
+    const [showExperiment, setShowExperiment] = useState(true);
+    const [showMethod, setShowMethod] = useState(false);
     const [showHistorical, setShowHistorical] = useState(false);
-    const [activeLink, setActiveLink] = useState("#1"); // 设置默认激活的链接
+    const [activeLink, setActiveLink] = useState("#2"); // 设置默认激活的链接
 
     const handleClick = (e, link) => {
         e.preventDefault();

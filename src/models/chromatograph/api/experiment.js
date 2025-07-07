@@ -19,3 +19,4 @@ export function getMethodById(data) {
 export function downloadFile(data) {
     return axiosInstance.post("/experiment/get/download_file", data);
 }
+

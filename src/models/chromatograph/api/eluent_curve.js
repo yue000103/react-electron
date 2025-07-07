@@ -56,3 +56,11 @@ export function SetManualCutTubeAPI() {
   return axiosInstance.post("/eluent_curve/set_manual_cut_tube");
 }
 
+
+export function wasteMode(data) {
+  return axiosInstance.post("/eluent_curve/waste_mode", data);
+}
+
+export function getDetectedPeaks() {
+  return axiosInstance.post("/eluent_curve/get_detected_peaks");
+}

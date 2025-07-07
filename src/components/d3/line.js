@@ -107,28 +107,10 @@ const renderCurve = (
         .style("color", "red")
         .call(yAxis);
 
-    // 添加横线网格
-    const gridLines = svg
-        .append("g")
-        .attr("class", "grid-lines")
-        .attr("transform", `translate(0, 0)`);
+  
+    
 
-    // 生成刻度值
-    const ticks = d3.range(-2.5, 105, 2.5); // 从0到100，间隔为5
-
-    // 绘制横线
-    gridLines
-        .selectAll("line")
-        .data(ticks)
-        .enter()
-        .append("line")
-        .attr("x1", 0)
-        .attr("x2", width)
-        .attr("y1", (d) => yScale(d))
-        .attr("y2", (d) => yScale(d))
-        .attr("stroke", "blue")
-        .attr("stroke-width", 0.5)
-        .attr("stroke-dasharray", "5,5"); // 设置虚线样式
+    
 
     const line = d3
         .line()
@@ -162,7 +144,7 @@ const renderCurve = (
 };
 
 const renderVertical = (svg, xScale, height) => {
-    console.log("9090--------num-", num);
+    // console.log("9090--------num-", num);
 
     const parsedData = num?.map((d) => ({
         ...d,
@@ -362,9 +344,6 @@ const renderLine = (
         .attr("d", line2)
         .style("pointer-events", "none"); // 确保线不会阻挡点的事件
 
-   
-
-
     const points = svg
         .selectAll("circle.point")
         .data(parsedData)
@@ -377,6 +356,28 @@ const renderLine = (
         .attr("fill", "blue")
         .style("cursor", "pointer") // 添加鼠标指针样式
         .style("pointer-events", "all"); // 确保点可以接收事件
+      // 添加横线网格
+      const gridLines = svg
+        .append("g")
+        .attr("class", "grid-lines")
+        .attr("transform", `translate(0, 0)`);
+      // 生成刻度值
+      const ticks = d3.range(0, 105, 10); // 从0到100，间隔为5
+
+
+      // 绘制横线
+    gridLines
+      .selectAll("line")
+      .data(ticks)
+      .enter()
+      .append("line")
+      .attr("x1", 0)
+      .attr("x2", width)
+      .attr("y1", (d) => yScale(d))
+      .attr("y2", (d) => yScale(d))
+      .attr("stroke", "blue")
+      .attr("stroke-width", 0.5)
+      .attr("stroke-dasharray", "5,5"); // 设置虚线样式
     points.each(function () {
         // 使用 each 来确保每个点都绑定了事件
         const point = d3.select(this);
@@ -433,7 +434,6 @@ const renderLine = (
         startX = event.x;
         startY = event.y;
     }
-   
 };
 
 const LineChart = (props) => {

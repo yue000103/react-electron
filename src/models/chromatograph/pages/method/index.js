@@ -89,7 +89,6 @@ const Method = () => {
     const [retainList, setRetainList] = useState([]);
     const { storeData } = createDB("MyDatabase", "method", "methodId");
     const [uploadFlag, setUploadFlag] = useState(0);
-    const [manualGradient, setManualGradient] = useState(false);
 
     console.log("basisData :", basisData);
     console.log("elutionData :", elutionData);
@@ -169,18 +168,19 @@ const Method = () => {
             method: transformedData,
         }).then((response) => {
             console.log("response :", response);
-            setSpinning(false);
+            uploadMethodOperate();
 
-            // messageApi.open({
-            //     type: "success",
-            //     content: "更新方法成功",
-            //     duration: 2,
-            // });
+            localStorage.setItem("uploadFlag", 1);
+            setSpinning(false);
+            messageApi.open({
+              type: "success",
+              content: "上传成功！",
+            });
         });
-        // setTimeout(() => {
-        //     setOpenMethod(false);
-        // }, 2000);
-        uploadMethod();
+        
+
+        
+        // uploadMethod();
     };
     const showModal = () => {
         setOpen(true);
@@ -603,7 +603,6 @@ const Method = () => {
                     type: "success",
                     content: "上传成功！",
                 });
-                // localStorage.setItem("uploadMethodFlag", true);
             } else if (uploadFlag === 0) {
                 // 上传失败的情况
                 messageApi.open({
@@ -621,19 +620,7 @@ const Method = () => {
             console.error(error);
         }
     };
-    const handleUploadParams = () => {
-      const values = formParams.getFieldsValue([
-        'start_ratio', 'end_ratio', 'n1_volumes', 'gradient_rate', 'peak_threshold',
-        'column_volume', 'sg_window', 'sg_order', 'baseline_window', 'k_factor'
-      ]);
-      console.log("values :", values);
-      // 这里调用你的上传API
-      UpdatePrepChromParamsAPI(values).then(res => {
-        message.success('参数上传成功');
-      }).catch(() => {
-        message.error('参数上传失败');
-      });
-    };
+   
 
     useEffect(() => {
         const methodId = localStorage.getItem("methodId");
@@ -769,11 +756,7 @@ const Method = () => {
                                         <Input/>
                                     </Form.Item>
                                 </Col>
-                                <Col span={6}>
-                                <Form.Item label="是否启用自动改梯度曲线" name="manualGradient" valuePropName="checked" style={{ marginBottom: 0 }}>
-                                <Switch checked={manualGradient} onChange={setManualGradient} />
-                          </Form.Item>
-                          </Col>
+                               
                             </Row>
                             
                         </Form>
@@ -816,7 +799,6 @@ const Method = () => {
                             >
                                 清空
                             </Button>
-                            <Button type="primary" onClick={handleUploadParams}>上传参数</Button>
 
                         </Row>
                     </Col>
@@ -838,8 +820,7 @@ const Method = () => {
                    
                     <Col span={13}>
                     
-                          
-                    {!manualGradient && (
+                 
                        <>
                             <div style={{ marginTop: 13 }}>
                               <Radio.Group onChange={onChange} value={value}>
@@ -891,113 +872,8 @@ const Method = () => {
                               </div>
                             )}
                             </>
-                          )}
-                          {manualGradient && (
-                          <Col span={22}>
-                            <Form
-                            form={formParams}
-                            layout="vertical" // 设为 vertical 以便更好地控制
-                            initialValues={{
-                                equilibrationColumn: false,
-                                maxwidth: "none",
-                            }}
-                            
-                        >
-                                  <Row gutter={8}>
-                                    <Col span={8}>
-                                      <Form.Item
-                                        label={<span>start_ratio 起始比例</span>}
-                                        name="start_ratio"
-                                        tooltip="梯度开始时溶剂B的体积分数(%)"
-                                      >
-                                        <InputNumber min={0} max={100} style={{ width: '100%' }} />
-                                      </Form.Item>
-                                    </Col>
-                                    <Col span={8}>
-                                      <Form.Item
-                                        label={<span>end_ratio 终止比例</span>}
-                                        name="end_ratio"
-                                        tooltip="梯度结束时溶剂B的体积分数(%)"
-                                      >
-                                        <InputNumber min={0} max={100} style={{ width: '100%' }} />
-                                      </Form.Item>
-                                    </Col>
-                                    <Col span={8}>
-                                      <Form.Item
-                                        label={<span>n1_volumes N1柱体积倍数</span>}
-                                        name="n1_volumes"
-                                        tooltip="首段恒流持续的柱体积数"
-                                      >
-                                        <InputNumber min={0} style={{ width: '100%' }} />
-                                      </Form.Item>
-                                    </Col>
-                                    <Col span={8}>
-                                      <Form.Item
-                                        label={<span>gradient_rate 梯度速率</span>}
-                                        name="gradient_rate"
-                                        tooltip="流动相B比例变化速率(%/柱体积)"
-                                      >
-                                        <InputNumber min={0} style={{ width: '100%' }} />
-                                      </Form.Item>
-                                    </Col>
-                                    <Col span={8}>
-                                      <Form.Item
-                                        label={<span>peak_threshold 峰检测阈值</span>}
-                                        name="peak_threshold"
-                                        tooltip="判定峰起始/结束的信号阈值"
-                                      >
-                                        <InputNumber min={0} style={{ width: '100%' }} />
-                                      </Form.Item>
-                                    </Col>
-                                    <Col span={8}>
-                                      <Form.Item
-                                        label={<span>column_volume 柱体积</span>}
-                                        name="column_volume"
-                                        tooltip="柱子实际总内体积(mL)"
-                                      >
-                                        <InputNumber min={0} style={{ width: '100%' }} />
-                                      </Form.Item>
-                                    </Col>
-                                    <Col span={8}>
-                                      <Form.Item
-                                        label={<span>sg_window 平滑窗口宽度</span>}
-                                        name="sg_window"
-                                        tooltip="Savitzky-Golay平滑窗口点数"
-                                      >
-                                        <InputNumber min={0} style={{ width: '100%' }} />
-                                      </Form.Item>
-                                    </Col>
-                                    <Col span={8}>
-                                      <Form.Item
-                                        label={<span>sg_order 平滑多项式阶数</span>}
-                                        name="sg_order"
-                                        tooltip="Savitzky-Golay多项式拟合阶数"
-                                      >
-                                        <InputNumber min={0} style={{ width: '100%' }} />
-                                      </Form.Item>
-                                    </Col>
-                                    <Col span={8}>
-                                      <Form.Item
-                                        label={<span>baseline_window 基线窗口宽度</span>}
-                                        name="baseline_window"
-                                        tooltip="基线校正参考窗口点数"
-                                      >
-                                        <InputNumber min={0} style={{ width: '100%' }} />
-                                      </Form.Item>
-                                    </Col>
-                                    <Col span={8}>
-                                      <Form.Item
-                                        label={<span>k_factor 灵敏度系数K</span>}
-                                        name="k_factor"
-                                        tooltip="调整峰检测灵敏度的倍率系数"
-                                      >
-                                        <InputNumber min={0} style={{ width: '100%' }} />
-                                      </Form.Item>
-                                    </Col>
-                                  </Row>
-                                  
-                              </Form>
-                          </Col>)}
+                          
+                        
                     </Col>
                 </Row>
             </div>
