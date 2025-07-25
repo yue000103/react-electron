@@ -106,7 +106,7 @@ const renderCurve = (svg, height, samplingTime, xScale) => {
 };
 
 const renderVertical = (svg, xScale, height) => {
-    console.log("9090--------num-", num);
+    console.log("0708--------num-", num);
 
     const parsedData = num?.map((d) => ({
         ...d,
@@ -146,7 +146,7 @@ const renderVertical = (svg, xScale, height) => {
 
 const parseTime = (timeString) => {
     // 解析时间字符串
-    // console.log("timeString", timeString);
+    // console.log("0708  timeString", timeString);
     const [hours, minutes, seconds] = timeString.split(":").map(Number);
 
     const parsedTime = new Date();

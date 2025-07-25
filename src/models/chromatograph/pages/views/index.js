@@ -232,7 +232,7 @@ const App = () => {
             });
             console.log("warningCode :", warningCode);
             setErrorCode((pre) => [...pre, responseData.code]);
-            terminate();
+            pause();
         });
         socket.on("current_tube", (responseData) => {
             console.log(
@@ -259,7 +259,6 @@ const App = () => {
                 setEquilibrationLoading(false);
                 setOpenEquilibration(false);
                 setEquilibrationStatus(false);
-                clearInterval(checkInterval);
                 messageApi.open({
                     type: "success",
                     content: "润柱完成！",
@@ -680,6 +679,7 @@ const App = () => {
         setLoading(false);
         terminateEluentLine().then((responseData) => {});
         setAutoGradient(false)
+        handleOkRest()
     };
 
     function formatTimeWithRegex(timeStr) {
@@ -959,7 +959,7 @@ const App = () => {
 
     const handleEquilibrationStart = () => {
         setEquilibrationLoading(true);
-        columnEquilibration().then((response) => {
+        columnEquilibration({time:3}).then((response) => {
             if (!response.error) {
                 setEquilibrationStatus(true);
             }
