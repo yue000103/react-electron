@@ -180,10 +180,11 @@ const App = () => {
                 checkMethod(historyData[key].methodId);
                 setHightWidth(); // 获取面板的尺寸
                 // 确保当前面板的 `data` 被更新
+                console.log("0702", historyData[key]);
                 const newData = historyData[key].curveData || [];
                 const verticalDatas = historyData[key].verticalData || [];
                 const pumpLists = historyData[key].pumpList || [];
-                const end = historyData[key].endStart || 5;
+                const end = historyData[key].samplingTime || 5;
                 setCurveData(newData); // 设置当前折叠面板的 `Line` 数据
                 setVerticalData(verticalDatas);
                 setPumpList(pumpLists);

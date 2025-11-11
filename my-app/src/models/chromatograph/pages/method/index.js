@@ -28,8 +28,9 @@ import {
     DeleteFilled,
     DeleteOutlined,
     SelectOutlined,
+    
 } from "@ant-design/icons";
-import { uploadMethodFlag } from "../../api/methods";
+import { uploadMethodFlag ,UpdatePrepChromParamsAPI} from "../../api/methods";
 
 import "./index.css";
 import DynamicLine from "@components/d3/dynamicLine";
@@ -63,9 +64,9 @@ const Method = () => {
     const [widthLine, setWidthLine] = useState(270);
     const [heightLine, setHeightLine] = useState(230);
     const [formBasis] = Form.useForm();
+    const [formParams] = Form.useForm();
     const [formPump] = Form.useForm();
     const [formElution] = Form.useForm();
-    const [isEquilibration, setIsEquilibration] = useState(false);
     const [basisData, setBasisData] = useState([]);
     const [elutionData, setElutionData] = useState([]);
 
@@ -118,15 +119,7 @@ const Method = () => {
         }
     }, [methodID]);
 
-    const handleSwitchChange = (checked) => {
-        setIsEquilibration(checked);
-        if (!checked) {
-            formBasis.setFieldsValue({
-                speed: "",
-                equilibrationTime: "",
-            });
-        }
-    };
+ 
 
     const saveMethod = () => {
         const methodId = localStorage.getItem("methodId");
@@ -175,18 +168,19 @@ const Method = () => {
             method: transformedData,
         }).then((response) => {
             console.log("response :", response);
-            setSpinning(false);
+            uploadMethodOperate();
 
-            // messageApi.open({
-            //     type: "success",
-            //     content: "更新方法成功",
-            //     duration: 2,
-            // });
+            localStorage.setItem("uploadFlag", 1);
+            setSpinning(false);
+            messageApi.open({
+              type: "success",
+              content: "上传成功！",
+            });
         });
-        // setTimeout(() => {
-        //     setOpenMethod(false);
-        // }, 2000);
-        uploadMethod();
+        
+
+        
+        // uploadMethod();
     };
     const showModal = () => {
         setOpen(true);
@@ -277,7 +271,6 @@ const Method = () => {
         };
         formBasis.setFieldsValue(basisDatas);
         setSamplingTime(item.samplingTime);
-        setIsEquilibration(item.equilibrationColumn);
         if (item.isocratic === 1) {
             setValue(1);
             const elutionDatas = {
@@ -610,7 +603,6 @@ const Method = () => {
                     type: "success",
                     content: "上传成功！",
                 });
-                // localStorage.setItem("uploadMethodFlag", true);
             } else if (uploadFlag === 0) {
                 // 上传失败的情况
                 messageApi.open({
@@ -628,6 +620,7 @@ const Method = () => {
             console.error(error);
         }
     };
+   
 
     useEffect(() => {
         const methodId = localStorage.getItem("methodId");
@@ -749,18 +742,10 @@ const Method = () => {
                                 </Col>
                             </Row>
                             <Row gutter={16}>
-                                <Col span={6}>
-                                    <Form.Item
-                                        label="润柱"
-                                        name="equilibrationColumn"
-                                        valuePropName="checked"
-                                    >
-                                        <Switch onChange={handleSwitchChange} />
-                                    </Form.Item>
-                                </Col>
+                                
                                 <Col span={6}>
                                     <Form.Item label="泵B速度/%" name="speed">
-                                        <Input disabled={!isEquilibration} />
+                                        <Input/>
                                     </Form.Item>
                                 </Col>
                                 <Col span={6}>
@@ -768,10 +753,12 @@ const Method = () => {
                                         label="润柱时间/分钟"
                                         name="equilibrationTime"
                                     >
-                                        <Input disabled={!isEquilibration} />
+                                        <Input/>
                                     </Form.Item>
                                 </Col>
+                               
                             </Row>
+                            
                         </Form>
                     </Col>
 
@@ -812,6 +799,7 @@ const Method = () => {
                             >
                                 清空
                             </Button>
+
                         </Row>
                     </Col>
                 </Row>
@@ -829,85 +817,63 @@ const Method = () => {
                             ></Buttons>
                         </div>
                     </Col>
+                   
                     <Col span={13}>
-                        <Row>
-                            <Col span={3}></Col>
-                            <Col span={9}>
-                                <div style={{ marginTop: 13 }}>
-                                    <Radio.Group
-                                        onChange={onChange}
-                                        value={value}
-                                    >
-                                        <Radio value={1}>等度洗脱</Radio>
-                                        <Radio value={2}>二元高压梯度</Radio>
-                                    </Radio.Group>
-                                </div>
-                            </Col>
-                            <Col span={4}>
-                                {value === 2 && (
-                                    <pre
-                                        style={{
-                                            fontSize: "15px",
-                                            fontWeight: "550",
-                                        }}
-                                    >
-                                        {
-                                            "时间    泵A速度    泵B速度    总流速 "
-                                        }
-                                    </pre>
-                                )}
-                            </Col>
-                        </Row>
-                        {value === 1 && (
-                            <div className="isocratic">
-                                {" "}
+                    
+                 
+                       <>
+                            <div style={{ marginTop: 13 }}>
+                              <Radio.Group onChange={onChange} value={value}>
+                                <Radio value={1}>等度洗脱</Radio>
+                                <Radio value={2}>二元高压梯度</Radio>
+                              </Radio.Group>
+                            </div>
+                            {value === 1 && (
+                              <div className="isocratic">
                                 <Form
-                                    labelCol={{
-                                        span: 10,
-                                    }}
-                                    wrapperCol={{
-                                        span: 14,
-                                    }}
-                                    layout="horizontal"
-                                    initialValues={{
-                                        size: "larger",
-                                    }}
-                                    form={formElution}
-                                    onFinish={onFinishElution}
+                                  labelCol={{ span: 10 }}
+                                  wrapperCol={{ span: 14 }}
+                                  layout="horizontal"
+                                  initialValues={{ size: "larger" }}
+                                  form={formElution}
+                                  onFinish={onFinishElution}
                                 >
-                                    <Form.Item label="泵A流速" name="pumpA">
-                                        <Input />
-                                    </Form.Item>
-                                    <Form.Item label="泵B流速" name="pumpB">
-                                        <Input />
-                                    </Form.Item>
+                                  <Form.Item label="泵A流速" name="pumpA">
+                                    <Input />
+                                  </Form.Item>
+                                  <Form.Item label="泵B流速" name="pumpB">
+                                    <Input />
+                                  </Form.Item>
                                 </Form>
-                            </div>
-                        )}
-                        {value === 2 && (
-                            <div className="pressure">
+                              </div>
+                            )}
+                            {value === 2 && (
+                              <div className="pressure">
                                 <Row>
-                                    <Col span={2}></Col>
-                                    <Col span={9}>
-                                        <div className="dynamic-line">
-                                            <DynamicLine
-                                                widthLine={widthLine}
-                                                heightLine={heightLine}
-                                                samplingTime={samplingTime}
-                                                pressure={pressure}
-                                            ></DynamicLine>
-                                        </div>
-                                    </Col>
-                                    <Col span={12}>
-                                        <DynamicForm
-                                            flowRateDefault={flowRateDefault}
-                                            pressure={pressure}
-                                            onValuesChange={handleValuesChange}
-                                        ></DynamicForm>
-                                    </Col>
+                                  <Col span={2}></Col>
+                                  <Col span={9}>
+                                    <div className="dynamic-line">
+                                      <DynamicLine
+                                        widthLine={widthLine}
+                                        heightLine={heightLine}
+                                        samplingTime={samplingTime}
+                                        pressure={pressure}
+                                      ></DynamicLine>
+                                    </div>
+                                  </Col>
+                                  <Col span={12}>
+                                    <DynamicForm
+                                      flowRateDefault={flowRateDefault}
+                                      pressure={pressure}
+                                      onValuesChange={handleValuesChange}
+                                    ></DynamicForm>
+                                  </Col>
                                 </Row>
-                            </div>
-                        )}
+                              </div>
+                            )}
+                            </>
+                          
+                        
                     </Col>
                 </Row>
             </div>

@@ -15,6 +15,7 @@ import {
     Form,
     InputNumber,
     Input,
+    Switch,
 } from "antd";
 import "./index.css";
 import Line from "@components/d3/line";
@@ -39,17 +40,17 @@ import {
     SetSampleStatusAPI,
     UpdateLinePointAPI,
     SetManualHoldAPI,
-    SetManualCutTubeAPI
+    SetManualCutTubeAPI,
+    wasteMode,
+    getDetectedPeaks,
 } from "../../api/eluent_curve";
 import {
     startEquilibration,
     setCurrentMethodOperate,
     uploadMethodOperate,
+    UpdatePrepChromParamsAPI,
 } from "../../api/methods";
-import {
-  columnEquilibration,
-  stopColumnEquilibration
-} from "../../api/column";
+import { columnEquilibration, stopColumnEquilibration } from "../../api/column";
 
 import { saveExperimentData, executionMethod } from "../../api/experiment";
 
@@ -173,10 +174,19 @@ const App = () => {
     const [pauseForm] = Form.useForm();
 
     const [openManualHold, setOpenManualHold] = useState(false);
+    const [openWasteModel, setOpenWasteModel] = useState(false);
+
+    const [autoGradient, setAutoGradient] = useState(false);
+    let autoGradientLet = false;
 
     const [openEquilibration, setOpenEquilibration] = useState(false);
     const [equilibrationLoading, setEquilibrationLoading] = useState(false);
     const [equilibrationStatus, setEquilibrationStatus] = useState(false);
+
+    // 自动梯度相关状态变量
+    const [openAutoGradientModal, setOpenAutoGradientModal] = useState(false);
+    const [autoGradientLoading, setAutoGradientLoading] = useState(false);
+    const [autoGradientForm] = Form.useForm();
 
     const handleInputNumberChange = (value) => {
         setInputTubeId(value);
@@ -203,24 +213,14 @@ const App = () => {
         });
 
         socket.on("new_curve_point", (responseData) => {
-            console.log("9090   responseData", responseData);
+            console.log("0705   autoGradient", autoGradient, autoGradientLet);
             getEluentLine().then((responseData) => {
-              if (!responseData.error) {
-                  setLine(responseData.data.point);
-              }
+                if (!responseData.error) {
+                    setLine(responseData.data.point);
+                }
             });
-            // if (responseData.point["value"] == 0) {
-            //     // messageApi.open({
-            //     //     type: "error",
-            //     //     content: "检测器异常！暂停实验",
-            //     // });
-            //     // pause()
-            //     // setLoading(false);
-            //     // flagStartTime = 1;
-            //     terminate();
-            // } else {
+
             setData((prevData) => [...prevData, responseData.point]);
-            // }
         });
         socket.on("warning", (responseData) => {
             setWarningCode({
@@ -258,8 +258,8 @@ const App = () => {
                 setEquilibrationStatus(false);
                 clearInterval(checkInterval);
                 messageApi.open({
-                    type: 'success',
-                    content: '润柱完成！',
+                    type: "success",
+                    content: "润柱完成！",
                 });
             }
         });
@@ -268,6 +268,10 @@ const App = () => {
         });
         socket.on("disconnect", () => {
             console.log("Disconnected from WebSocket server");
+        });
+
+        socket.on("pressure", (responseData) => {
+            console.log(responseData.pressure_value);
         });
 
         // Clean up the connection on component unmount
@@ -612,31 +616,15 @@ const App = () => {
     };
     const showModal = () => {
         localStorage.setItem("updateLineFlag", true);
-        // setUploadFlag(localStorage.getItem("uploadFlag"));
-        console.log("----upload_flag---", uploadFlag);
 
-        if (uploadFlag === 0) {
+        if (uploadFlag == 0) {
             messageApi.open({
                 type: "error",
                 content: "没有上传方法",
                 duration: 2,
             });
         } else {
-            if (flagStartTime == 1) {
-                setOpenStart(true);
-            } else {
-                setLineLoading(true);
-                startEluentLine().then((responsedata) => {
-                    // console.log("responsedata :", responsedata);
-                });
-                updateEluentLine({
-                    point: Object.values(newPoints),
-                    start_time: startTime,
-                }).then((responseData) => {
-                    if (!responseData.error) {
-                    }
-                });
-            }
+            setOpenStart(true);
         }
     };
     const handleStart = () => {
@@ -646,7 +634,7 @@ const App = () => {
                     detector_zeroing: values.detector_zeroing,
                     tube_id: values.tube_id,
                     module_id: values.module_id,
-                    pump_pressure_zeroing: values.pump_pressure_zeroing,
+                    waste_mode: values.waste_mode,
                 }).then(() => {});
             })
             .catch((errorInfo) => {
@@ -664,15 +652,7 @@ const App = () => {
         uploadMethodFlag().then((responsedata) => {
             setEquilibrationFlag(responsedata.data.equilibration_flag);
         });
-        if (
-            currentMethod.equilibrationColumn === 1 &&
-            equilibrationFlag === 1
-        ) {
-            messageApi.open({
-                type: "success",
-                content: "已经平衡过柱子了，再次开始实验",
-            });
-        }
+
         setCleanFlag(0);
         setLineLoading(true);
         setLoading(true);
@@ -700,6 +680,7 @@ const App = () => {
         flagStartTime = 1;
         setLoading(false);
         terminateEluentLine().then((responseData) => {});
+        setAutoGradient(false);
     };
 
     function formatTimeWithRegex(timeStr) {
@@ -710,26 +691,21 @@ const App = () => {
         setLineLoading(false);
         pauseEluentLine().then((responseData) => {});
         // 获取linePoint最后一个点的value值
-        const lastPoint = linePoint[linePoint.length - 1];
-        if (lastPoint) {
-            pauseForm.setFieldsValue({
-                value: lastPoint.value,
-                new_rate: 0
-            });
+        if (autoGradient == true) {
+            setOpenPause(true);
         }
-        setOpenPause(true);
     };
 
     const handlePauseOk = () => {
         pauseForm.validateFields().then((values) => {
             UpdateLinePointAPI({
                 value: values.value,
-                new_rate: values.new_rate
+                new_rate: values.new_rate,
             }).then((response) => {
                 if (!response.error) {
                     messageApi.open({
-                        type: 'success',
-                        content: '更新成功！',
+                        type: "success",
+                        content: "更新成功！",
                     });
                 }
             });
@@ -773,7 +749,7 @@ const App = () => {
                 console.log("0924   response.status", response.status);
             });
         } else {
-            clearData();
+            // clearData();
         }
     };
     const saveExperiment = (experimentId) => {
@@ -793,7 +769,6 @@ const App = () => {
                 .filter(Boolean); // 过滤掉 null 值
             const experiment_data = {
                 experiment_id: Number(experimentId),
-        
             };
 
             saveExperimentData(experiment_data).then((res) => {
@@ -802,11 +777,7 @@ const App = () => {
         }
     };
     const reset = () => {
-        if (clean_flag === 1 || data.length === 0) {
-            clearData();
-        } else if (clean_flag === 0) {
-            setOpenReset(true);
-        }
+        setOpenReset(true);
     };
     const handleOkRest = () => {
         const experimentId = generateTaskId();
@@ -816,7 +787,17 @@ const App = () => {
         saveExcute(experimentId);
         saveExperiment(experimentId);
         setOpenReset(false);
-        clearData();
+        if (autoGradient == true) {
+            getDetectedPeaks().then((responseData) => {
+                if (!responseData.error) {
+                }
+            });
+        }
+        messageApi.open({
+            type: "success",
+            content: "保存成功！",
+        });
+        // clearData();
     };
     const handleCancelReset = () => {
         const experimentId = generateTaskId();
@@ -827,41 +808,21 @@ const App = () => {
         clearData();
         setOpenReset(false);
     };
-    const uploadMethod = async () => {
-        try {
-            setSpinning(true);
-            const response = await uploadMethodOperate();
-            const responsedata = await uploadMethodFlag();
-            const uploadFlag = responsedata.data.upload_flag;
-            localStorage.setItem("uploadFlag", uploadFlag);
-            const equilibrationFlag = responsedata.data.equilibration_flag;
-            setUploadFlag(uploadFlag);
-            setEquilibrationFlag(equilibrationFlag);
 
-            if (uploadFlag === 1) {
-                // 上传成功的情况
-                setSpinning(false);
-                messageApi.open({
-                    type: "success",
-                    content: "上传成功！",
-                });
-                // localStorage.setItem("uploadMethodFlag", true);
-            } else if (uploadFlag === 0) {
-                // 上传失败的情况
-                setSpinning(false);
-                messageApi.open({
-                    type: "error",
-                    content: "上传失败，请重新上传！",
-                });
+    const continue_process = () => {
+        setLineLoading(true);
+        startEluentLine().then((responseData) => {
+            if (!responseData.error) {
             }
-        } catch (error) {
-            // 错误处理
-            setSpinning(false);
-            messageApi.open({
-                type: "error",
-                content: "发生错误，请稍后重试！",
+        });
+        if (autoGradient == false) {
+            updateEluentLine({
+                point: Object.values(newPoints),
+                start_time: startTime,
+            }).then((responseData) => {
+                if (!responseData.error) {
+                }
             });
-            console.error(error);
         }
     };
 
@@ -883,11 +844,6 @@ const App = () => {
             }));
             selected_tube = consecutiveArrays;
 
-            // if (colorNum != 9) {
-            //     colorNum++;
-            // } else {
-            //     colorNum = 1;
-            // }
             colorNum = 4;
             process_data_flag(selected_tube, true, colorMap[colorNum]);
             setSelectedReverse([]);
@@ -907,14 +863,6 @@ const App = () => {
     useEffect(() => {
         console.log("1029   ", formatTimeWithRegex("00:02:00"));
 
-        uploadMethodFlag().then((responsedata) => {
-            if (!responsedata.error) {
-                setUploadFlag(responsedata.data.upload_flag);
-                setEquilibrationFlag(responsedata.data.equilibration_flag);
-            }
-        });
-        console.log("----upload_flag---", uploadFlag);
-
         clearData();
         // setData([])
         getEluentLine().then((responseData) => {
@@ -922,32 +870,24 @@ const App = () => {
                 // if (responseData.data.point.length === 0) {
                 //     setMethodFlag(0);
                 // } else {
-                    const methodId = localStorage.getItem("methodId");
-                    if (methodId) {
-                        setCurrentMethodOperate({
-                            method_id: Number(methodId),
-                        }).then((response) => {
-                            console.log(
-                                "0909 ------response :",
-                                response.data.methods
-                            );
-                            setCurrentMethod(response.data.methods[0]);
-                        });
-                    }
-                    setMethodFlag(1);
-                    setLine(responseData.data.point);
-                    newPoints = responseData.data.point;
-                    // console.log(
-                    //     "samplingTime  responseData.data :",
-                    //     responseData.data
-                    // );
-                    setSamplingTime(responseData.data.sampling_time);
-                    // console.log(
-                    //     "samplingTime responseData.data.sampling_time :",
-                    //     responseData.data.sampling_time
-                    // );
-                    // console.log("samplingTime ------------:", samplingTime);
+                const methodId = localStorage.getItem("methodId");
+                if (methodId) {
+                    setCurrentMethodOperate({
+                        method_id: Number(methodId),
+                    }).then((response) => {
+                        console.log(
+                            "0909 ------response :",
+                            response.data.methods
+                        );
+                        setCurrentMethod(response.data.methods[0]);
+                    });
                 }
+                setMethodFlag(1);
+                setLine(responseData.data.point);
+                newPoints = responseData.data.point;
+
+                setSamplingTime(responseData.data.sampling_time);
+            }
             // }
         });
         localStorage.setItem("updateLineFlag", true);
@@ -972,7 +912,7 @@ const App = () => {
             window.removeEventListener("resize", handleResize);
             resizeObserver.disconnect();
         };
-    }, [samplingTime, uploadFlag]);
+    }, [samplingTime]);
     const handleDynamicLine = (flag) => {
         console.log("1030   flag", flag);
         getEluentLine().then((responseData) => {
@@ -1026,11 +966,37 @@ const App = () => {
                 setOpenEquilibration(false);
                 setEquilibrationStatus(false);
                 messageApi.open({
-                    type: 'info',
-                    content: '已停止润柱！',
+                    type: "info",
+                    content: "已停止润柱！",
                 });
             }
         });
+    };
+
+    // 自动梯度相关函数
+    const handleAutoGradientOk = () => {
+        autoGradientForm.validateFields().then((values) => {
+            setAutoGradientLoading(true);
+            console.log("自动梯度参数:", values);
+            UpdatePrepChromParamsAPI(values)
+                .then((res) => {
+                    setAutoGradientLoading(false);
+                    setOpenAutoGradientModal(false);
+                    messageApi.open({
+                        type: "success",
+                        content: "自动梯度参数保存成功！",
+                    });
+                })
+                .catch(() => {
+                    message.error("参数上传失败");
+                });
+        });
+    };
+
+    const handleAutoGradientCancel = () => {
+        autoGradientLet = false;
+        setAutoGradient(false); // 取消时关闭Switch
+        setOpenAutoGradientModal(false);
     };
 
     return (
@@ -1051,119 +1017,196 @@ const App = () => {
                     }}
                 >
                     <Row>
-                        <Col span={3}>
-                            <Row>
-                                <Col span={24}>
-                                    <div className="buttonStyle">
-                                        <Row gutter={[8, 8]}>
-                                        <Col span={24}>
-                                                <Button
-                                                    type="primary"
-                                                    size="large"
-                                                    className={`button button7`}
-                                                    onClick={() => setOpenEquilibration(true)}
-                                                    disabled={methodFlag === 0 ? true : false}
-                                                >
-                                                    润柱
-                                                </Button>
-                                            </Col>
-                                            <Col span={12}>
-                                                <Button
-                                                    type="primary"
-                                                    size="large"
-                                                    danger
-                                                    className={`button`}
-                                                    onClick={() => showModal()}
-                                                    disabled={
-                                                        clean_flag === 1 ||
-                                                        methodFlag === 0
-                                                            ? true
-                                                            : false
-                                                    }
-                                                >
-                                                    开始
-                                                </Button>
-                                            </Col>
-                                            <Col span={12}>
-                                                <Button
-                                                    type="primary"
-                                                    size="large"
-                                                    className={`button button2`}
-                                                    onClick={() => pause()}
-                                                    disabled={
-                                                        clean_flag === 1 ||
-                                                        methodFlag === 0
-                                                            ? true
-                                                            : false
-                                                    }
-                                                >
-                                                    暂停
-                                                </Button>
-                                            </Col>
-                                            <Col span={12}>
-                                                <Button
-                                                    type="primary"
-                                                    size="large"
-                                                    className={`button button1`}
-                                                    onClick={() => terminate()}
-                                                    disabled={
-                                                        clean_flag === 1 ||
-                                                        methodFlag === 0
-                                                            ? true
-                                                            : false
-                                                    }
-                                                >
-                                                    终止
-                                                </Button>
-                                            </Col>
-                                            <Col span={24}>
-                                                <Button
-                                                    type="primary"
-                                                    size="large"
-                                                    className={`button button4`}
-                                                    onClick={() => reset()}
-                                                    disabled={
-                                                        methodFlag === 0 ? true : false
-                                                    }
-                                                >
-                                                    复位
-                                                </Button>
-                                            </Col>
-                                           
-                                            <Col span={24}>
-                                                <Button
-                                                    type="primary"
-                                                    size="large"
-                                                    className={`button button5`}
-                                                    onClick={() => setOpenManualHold(true)}
-                                                    disabled={
-                                                        methodFlag === 0 ? true : false
-                                                    }
-                                                >
-                                                    手动保持
-                                                </Button>
-                                            </Col>
-                                            <Col span={24}>
-                                                <Button
-                                                    type="primary"
-                                                    size="large"
-                                                    className={`button button6`}
-                                                    onClick={() => {
-                                                        SetManualCutTubeAPI().then(() => {
-                                                            messageApi.open({ type: 'success', content: '切换试管成功' });
-                                                        });
-                                                    }}
-                                                    disabled={methodFlag === 0 ? true : false}
-                                                >
-                                                    切换试管
-                                                </Button>
-                                            </Col>
-                                        </Row>
+                        <Col span={4}>
+                            <Row style={{ marginTop: "30px" }}>
+                                <Col span={12}>
+                                    <Button
+                                        type="primary"
+                                        size="large"
+                                        className={`button button7`}
+                                        onClick={() =>
+                                            setOpenEquilibration(true)
+                                        }
+                                        disabled={
+                                            methodFlag === 0 ? true : false
+                                        }
+                                    >
+                                        润柱
+                                    </Button>
+                                </Col>
+                                <Col span={12}>
+                                    <Button
+                                        type="primary"
+                                        size="large"
+                                        danger
+                                        className={`button`}
+                                        onClick={() => showModal()}
+                                        disabled={
+                                            clean_flag === 1 || methodFlag === 0
+                                                ? true
+                                                : false
+                                        }
+                                    >
+                                        开始
+                                    </Button>
+                                </Col>
+                                <Col span={12}>
+                                    <Button
+                                        type="primary"
+                                        size="large"
+                                        className={`button button2`}
+                                        onClick={() => pause()}
+                                        disabled={
+                                            clean_flag === 1 || methodFlag === 0
+                                                ? true
+                                                : false
+                                        }
+                                    >
+                                        暂停
+                                    </Button>
+                                </Col>
+                                <Col span={12}>
+                                    <Button
+                                        type="primary"
+                                        size="large"
+                                        className={`button button1`}
+                                        onClick={() => continue_process()}
+                                    >
+                                        继续
+                                    </Button>
+                                </Col>
+                                <Col span={12}>
+                                    <Button
+                                        type="primary"
+                                        size="large"
+                                        className={`button button1`}
+                                        onClick={() => terminate()}
+                                        disabled={
+                                            clean_flag === 1 || methodFlag === 0
+                                                ? true
+                                                : false
+                                        }
+                                    >
+                                        终止
+                                    </Button>
+                                </Col>
+                                <Col span={12}>
+                                    <Button
+                                        type="primary"
+                                        size="large"
+                                        className={`button button4`}
+                                        onClick={() => handleOkRest()}
+                                        disabled={
+                                            methodFlag === 0 ? true : false
+                                        }
+                                    >
+                                        保存
+                                    </Button>
+                                </Col>
+
+                                <Col span={12}>
+                                    <Button
+                                        type="primary"
+                                        size="large"
+                                        className={`button button5`}
+                                        onClick={() => setOpenManualHold(true)}
+                                        disabled={
+                                            methodFlag === 0 ? true : false
+                                        }
+                                    >
+                                        手动保持
+                                    </Button>
+                                </Col>
+                                <Col span={12}>
+                                    <Button
+                                        type="primary"
+                                        size="large"
+                                        className={`button button6`}
+                                        onClick={() => {
+                                            SetManualCutTubeAPI().then(() => {
+                                                messageApi.open({
+                                                    type: "success",
+                                                    content: "切换试管成功",
+                                                });
+                                            });
+                                        }}
+                                        disabled={
+                                            methodFlag === 0 ? true : false
+                                        }
+                                    >
+                                        切换试管
+                                    </Button>
+                                </Col>
+                                <Col span={15}>
+                                    <div
+                                        style={{
+                                            border: "2px solidrgb(87, 80, 80)",
+                                            borderRadius: "6px",
+                                            backgroundColor:
+                                                "rgb(168, 166, 102)",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "space-between",
+                                            padding: "8px 2px",
+                                            marginLeft: "23px",
+                                            marginTop: "10px",
+                                        }}
+                                    >
+                                        <span
+                                            style={{
+                                                fontSize: "14px",
+                                                color: "rgb(255, 252, 252)",
+                                            }}
+                                        >
+                                            自动梯度
+                                        </span>
+                                        <Switch
+                                            checked={autoGradient}
+                                            onChange={(checked) => {
+                                                setAutoGradient(checked);
+                                                autoGradientLet = true;
+                                                console.log(
+                                                    "0705   autoGradientLet"
+                                                );
+                                                if (checked) {
+                                                    setOpenAutoGradientModal(
+                                                        true
+                                                    );
+                                                }
+                                            }}
+                                            disabled={methodFlag === 0}
+                                        />
                                     </div>
+                                </Col>
+                                <Col span={9}>
+                                    <Button
+                                        type="primary"
+                                        size="large"
+                                        className={`button button4`}
+                                        disabled={
+                                            methodFlag === 0 ? true : false
+                                        }
+                                        onClick={() => clearData()}
+                                    >
+                                        清空
+                                    </Button>
+                                </Col>
+                                <Col span={9}>
+                                    <Button
+                                        type="primary"
+                                        size="large"
+                                        className={`button button6`}
+                                        onClick={() => setOpenWasteModel(true)}
+                                        disabled={
+                                            methodFlag === 0 ? true : false
+                                        }
+                                    >
+                                        废弃模式
+                                    </Button>
                                 </Col>
                             </Row>
                         </Col>
-                        <Col span={21}>
+                        <Col span={20}>
                             <div className={`lineStyle overlayBox`}>
                                 <div className={`line_line overlayBox1`}>
                                     <Line
@@ -1357,7 +1400,7 @@ const App = () => {
                         tube_id: inputTubeId,
                         module_id: inputModuleId,
                         detector_zeroing: true,
-                        pump_pressure_zeroing: true,
+                        waste_mode: false,
                     }}
                 >
                     <Form.Item
@@ -1368,8 +1411,8 @@ const App = () => {
                         <Checkbox></Checkbox>
                     </Form.Item>
                     <Form.Item
-                        label="泵压力清零："
-                        name="pump_pressure_zeroing"
+                        label="废弃模式："
+                        name="waste_mode"
                         valuePropName="checked"
                     >
                         <Checkbox></Checkbox>
@@ -1411,23 +1454,22 @@ const App = () => {
                 onOk={handlePauseOk}
                 onCancel={handlePauseCancel}
             >
-                <Form
-                    form={pauseForm}
-                    layout="vertical"
-                >
+                <Form form={pauseForm} layout="vertical">
                     <Form.Item
                         label="Value"
                         name="value"
-                        rules={[{ required: true, message: '请输入value值' }]}
+                        rules={[{ required: true, message: "请输入value值" }]}
                     >
-                        <InputNumber style={{ width: '100%' }} />
+                        <InputNumber style={{ width: "100%" }} />
                     </Form.Item>
                     <Form.Item
                         label="New Rate"
                         name="new_rate"
-                        rules={[{ required: true, message: '请输入new_rate值' }]}
+                        rules={[
+                            { required: true, message: "请输入new_rate值" },
+                        ]}
                     >
-                        <InputNumber style={{ width: '100%' }} />
+                        <InputNumber style={{ width: "100%" }} />
                     </Form.Item>
                 </Form>
             </Modal>
@@ -1437,29 +1479,75 @@ const App = () => {
                 onCancel={() => setOpenManualHold(false)}
                 footer={null}
             >
-                <p>是否启用手动保持？</p>
-                <div style={{ textAlign: 'right' }}>
+                <div style={{ textAlign: "right" }}>
                     <Button
                         type="primary"
                         onClick={() => {
-                            SetManualHoldAPI({ hold_enabled: true }).then(() => {
-                                messageApi.open({ type: 'success', content: '已启用手动保持' });
-                                setOpenManualHold(false);
+                            SetManualHoldAPI({ hold_enabled: true }).then(
+                                () => {
+                                    messageApi.open({
+                                        type: "success",
+                                        content: "已启用手动保持",
+                                    });
+                                    setOpenManualHold(false);
+                                }
+                            );
+                        }}
+                        style={{ marginRight: 8 }}
+                    >
+                        开启
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            SetManualHoldAPI({ hold_enabled: false }).then(
+                                () => {
+                                    messageApi.open({
+                                        type: "success",
+                                        content: "已关闭手动保持",
+                                    });
+                                    setOpenManualHold(false);
+                                }
+                            );
+                        }}
+                    >
+                        关闭
+                    </Button>
+                </div>
+            </Modal>
+            <Modal
+                title="废弃模式"
+                open={openWasteModel}
+                onCancel={() => setOpenWasteModel(false)}
+                footer={null}
+            >
+                <div style={{ textAlign: "right" }}>
+                    <Button
+                        type="primary"
+                        onClick={() => {
+                            wasteMode({ waste_mode: true }).then(() => {
+                                messageApi.open({
+                                    type: "success",
+                                    content: "已启用废弃模式",
+                                });
+                                setOpenWasteModel(false);
                             });
                         }}
                         style={{ marginRight: 8 }}
                     >
-                        是
+                        开启
                     </Button>
                     <Button
                         onClick={() => {
-                            SetManualHoldAPI({ hold_enabled: false }).then(() => {
-                                messageApi.open({ type: 'success', content: '已关闭手动保持' });
-                                setOpenManualHold(false);
+                            wasteMode({ waste_mode: false }).then(() => {
+                                messageApi.open({
+                                    type: "success",
+                                    content: "已关闭废弃模式",
+                                });
+                                setOpenWasteModel(false);
                             });
                         }}
                     >
-                        否
+                        关闭
                     </Button>
                 </div>
             </Modal>
@@ -1469,22 +1557,232 @@ const App = () => {
                 onCancel={handleEquilibrationStop}
                 footer={null}
             >
-                <div style={{ textAlign: 'center', padding: '20px' }}>
+                <div style={{ textAlign: "center", padding: "20px" }}>
                     <p>是否开始润柱？</p>
-                    <div style={{ marginTop: '20px' }}>
+                    <div style={{ marginTop: "20px" }}>
                         <Button
                             type="primary"
                             onClick={handleEquilibrationStart}
                             loading={equilibrationLoading}
-                            style={{ marginRight: '10px' }}
+                            style={{ marginRight: "10px" }}
                         >
                             开始
                         </Button>
-                        <Button onClick={handleEquilibrationStop}>
-                            结束
-                        </Button>
+                        <Button onClick={handleEquilibrationStop}>结束</Button>
                     </div>
                 </div>
+            </Modal>
+
+            <Modal
+                title="自动梯度参数设置"
+                open={openAutoGradientModal}
+                onOk={handleAutoGradientOk}
+                onCancel={handleAutoGradientCancel}
+                confirmLoading={autoGradientLoading}
+                okText="保存"
+                cancelText="取消"
+                width={800}
+            >
+                <Form
+                    form={autoGradientForm}
+                    layout="vertical"
+                    initialValues={{
+                        start_ratio: 0,
+                        end_ratio: 100,
+                        n1_volumes: 1,
+                        gradient_rate: 5,
+                        peak_threshold: 0.1,
+                        column_volume: 1.0,
+                        sg_window: 5,
+                        sg_order: 2,
+                        baseline_window: 10,
+                        k_factor: 1.0,
+                    }}
+                >
+                    <Row gutter={8}>
+                        <Col span={8}>
+                            <Form.Item
+                                label={<span>start_ratio 起始比例</span>}
+                                name="start_ratio"
+                                tooltip="梯度开始时溶剂B的体积分数(%)"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "请输入起始比例",
+                                    },
+                                ]}
+                            >
+                                <InputNumber
+                                    min={0}
+                                    max={100}
+                                    style={{ width: "100%" }}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                            <Form.Item
+                                label={<span>end_ratio 终止比例</span>}
+                                name="end_ratio"
+                                tooltip="梯度结束时溶剂B的体积分数(%)"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "请输入终止比例",
+                                    },
+                                ]}
+                            >
+                                <InputNumber
+                                    min={0}
+                                    max={100}
+                                    style={{ width: "100%" }}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                            <Form.Item
+                                label={<span>n1_volumes N1柱体积倍数</span>}
+                                name="n1_volumes"
+                                tooltip="首段恒流持续的柱体积数"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "请输入柱体积倍数",
+                                    },
+                                ]}
+                            >
+                                <InputNumber
+                                    min={0}
+                                    style={{ width: "100%" }}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                            <Form.Item
+                                label={<span>gradient_rate 梯度速率</span>}
+                                name="gradient_rate"
+                                tooltip="流动相B比例变化速率(%/柱体积)"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "请输入梯度速率",
+                                    },
+                                ]}
+                            >
+                                <InputNumber
+                                    min={0}
+                                    style={{ width: "100%" }}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                            <Form.Item
+                                label={<span>peak_threshold 峰检测阈值</span>}
+                                name="peak_threshold"
+                                tooltip="判定峰起始/结束的信号阈值"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "请输入峰检测阈值",
+                                    },
+                                ]}
+                            >
+                                <InputNumber
+                                    min={0}
+                                    style={{ width: "100%" }}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                            <Form.Item
+                                label={<span>column_volume 柱体积</span>}
+                                name="column_volume"
+                                tooltip="柱子实际总内体积(mL)"
+                                rules={[
+                                    { required: true, message: "请输入柱体积" },
+                                ]}
+                            >
+                                <InputNumber
+                                    min={0}
+                                    style={{ width: "100%" }}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                            <Form.Item
+                                label={<span>sg_window 平滑窗口宽度</span>}
+                                name="sg_window"
+                                tooltip="Savitzky-Golay平滑窗口点数"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "请输入平滑窗口宽度",
+                                    },
+                                ]}
+                            >
+                                <InputNumber
+                                    min={0}
+                                    style={{ width: "100%" }}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                            <Form.Item
+                                label={<span>sg_order 平滑多项式阶数</span>}
+                                name="sg_order"
+                                tooltip="Savitzky-Golay多项式拟合阶数"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "请输入平滑多项式阶数",
+                                    },
+                                ]}
+                            >
+                                <InputNumber
+                                    min={0}
+                                    style={{ width: "100%" }}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                            <Form.Item
+                                label={
+                                    <span>baseline_window 基线窗口宽度</span>
+                                }
+                                name="baseline_window"
+                                tooltip="基线校正参考窗口点数"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "请输入基线窗口宽度",
+                                    },
+                                ]}
+                            >
+                                <InputNumber
+                                    min={0}
+                                    style={{ width: "100%" }}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                            <Form.Item
+                                label={<span>k_factor 灵敏度系数K</span>}
+                                name="k_factor"
+                                tooltip="调整峰检测灵敏度的倍率系数"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "请输入灵敏度系数",
+                                    },
+                                ]}
+                            >
+                                <InputNumber
+                                    min={0}
+                                    style={{ width: "100%" }}
+                                />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                </Form>
             </Modal>
         </Flex>
     );

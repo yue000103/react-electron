@@ -43,3 +43,7 @@ export function uploadMethodFlag() {
 export function getNewMethodId() {
     return axiosInstance.get("/method/get/new_method_id");
 }
+
+export function UpdatePrepChromParamsAPI(data) {
+    return axiosInstance.post("/eluent_curve/update_prep_chrom_params", data);
+}

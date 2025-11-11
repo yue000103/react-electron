@@ -16,7 +16,7 @@ const createDB = (dbName, storeName, keyPath) => {
                     return;
                 }
 
-                const request = indexedDB.open(dbName, 1);
+                const request = indexedDB.open(dbName, Date.now());
 
                 request.onupgradeneeded = (event) => {
                     const db = event.target.result;
