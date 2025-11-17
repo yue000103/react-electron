@@ -224,13 +224,52 @@ const App = ({
         set(_value_);
     };
 
+    const getCurrentTubeVolume = (groupIndex, subGroupIndex) => {
+        if (!modeAndValues.length) {
+            return null;
+        }
+
+        const idx = calculateIndex(groupIndex, subGroupIndex);
+        const rateValue = value[idx];
+
+        if (typeof rateValue !== "number" || Number.isNaN(rateValue)) {
+            // 尚未设置保留体积
+            return null;
+        }
+
+        if (rateValue <= 0) {
+            return 0;
+        }
+
+        const descIndex = Math.max(
+            0,
+            Math.min(desc.length - 1, Math.floor(rateValue * 2) - 1)
+        );
+        const descValue = Number(desc[descIndex]);
+        const modeValue = getModeAndValue(idx);
+        if (!modeValue) {
+            return null;
+        }
+
+        const currentNum = descValue * modeValue[1];
+        return Number.isFinite(currentNum) ? currentNum : null;
+    };
+
+    const canSelectTubeByVolume = (groupIndex, subGroupIndex) => {
+        const currentNum = getCurrentTubeVolume(groupIndex, subGroupIndex);
+        if (currentNum === null) {
+            // 数据尚未加载或未操作，默认允许选中
+            return true;
+        }
+        return currentNum > 0;
+    };
+
     const handleButtonClick = (tube_i, module, groupIndex, subGroupIndex) => {
         console.log("1021  Receive tube", module, tube_i);
         setSelectedFlags((prevFlags) => {
             const isSelected = prevFlags.some(
                 (f) => f.module_index === module && f.tube_index === tube_i
             );
-            // console.log("1021  Receive isSelected", isSelected);
 
             let select_tube = [];
 
@@ -242,94 +281,63 @@ const App = ({
                 );
                 callback(select_tube);
                 return select_tube;
-            } else {
-                // 检查是否存在该模块的试管
-                const existingModuleTubes = prevFlags.filter(
-                    (f) => f.module_index === module
+            }
+
+            const existingModuleTubes = prevFlags.filter(
+                (f) => f.module_index === module
+            );
+            const allowSelect = canSelectTubeByVolume(
+                groupIndex,
+                subGroupIndex
+            );
+
+            if (!allowSelect) {
+                select_tube = [...prevFlags];
+            } else if (existingModuleTubes.length > 0) {
+                // 如果存在同一模块的试管，选中上一个和当前试管之间的所有试管
+                const lastSelectedTube =
+                    existingModuleTubes[existingModuleTubes.length - 1];
+                const startTube = lastSelectedTube.tube_index;
+
+                const newFlags = Array.from(
+                    {
+                        length: Math.abs(tube_i - startTube) + 1,
+                    },
+                    (_, i) => ({
+                        module_index: module,
+                        tube_index: Math.min(tube_i, startTube) + i,
+                    })
+                ).filter(
+                    (t) =>
+                        !prevFlags.some(
+                            (f) =>
+                                f.module_index === t.module_index &&
+                                f.tube_index === t.tube_index
+                        )
                 );
 
-                if (existingModuleTubes.length > 0) {
-                    // 如果存在同一模块的试管，选中上一个和当前试管之间的所有试管
-                    const lastSelectedTube =
-                        existingModuleTubes[existingModuleTubes.length - 1];
-                    const startTube = lastSelectedTube.tube_index;
-
-                    const newFlags = Array.from(
-                        {
-                            length: Math.abs(tube_i - startTube) + 1,
-                        },
-                        (_, i) => ({
-                            module_index: module,
-                            tube_index: Math.min(tube_i, startTube) + i,
-                        })
-                    ).filter((t) => {
-                        // 根据体积筛选出体积大于 0 的试管
-                        const currentNum =
-                            desc[
-                                Math.floor(
-                                    value[
-                                        calculateIndex(
-                                            groupIndex,
-                                            subGroupIndex
-                                        )
-                                    ] * 2
-                                ) - 1
-                            ] *
-                            getModeAndValue(
-                                calculateIndex(groupIndex, subGroupIndex)
-                            )[1];
-
-                        return (
-                            currentNum > 0 &&
-                            !prevFlags.some(
-                                (f) =>
-                                    f.module_index === t.module_index &&
-                                    f.tube_index === t.tube_index
-                            )
-                        );
-                    });
-
-                    select_tube = [...prevFlags, ...newFlags];
-                } else {
-                    // 如果该模块没有已选中的试管，检查当前试管的体积是否大于 0
-                    const currentNum =
-                        desc[
-                            Math.floor(
-                                value[
-                                    calculateIndex(groupIndex, subGroupIndex)
-                                ] * 2
-                            ) - 1
-                        ] *
-                        getModeAndValue(
-                            calculateIndex(groupIndex, subGroupIndex)
-                        )[1];
-
-                    if (currentNum > 0) {
-                        // 如果体积大于 0，则将当前试管加入到选中列表
-                        if (
-                            !prevFlags.some(
-                                (f) =>
-                                    f.module_index === module &&
-                                    f.tube_index === tube_i
-                            )
-                        ) {
-                            select_tube = [
-                                ...prevFlags,
-                                { module_index: module, tube_index: tube_i },
-                            ];
-                        }
-                    } else {
-                        // 如果体积小于等于 0，保持不变
-                        select_tube = [...prevFlags];
-                    }
+                select_tube = [...prevFlags, ...newFlags];
+            } else {
+                // 如果该模块没有已选中的试管，检查当前试管是否可选
+                if (
+                    !prevFlags.some(
+                        (f) =>
+                            f.module_index === module &&
+                            f.tube_index === tube_i
+                    )
+                ) {
+                    select_tube = [
+                        ...prevFlags,
+                        { module_index: module, tube_index: tube_i },
+                    ];
                 }
-                select_tube_flag = select_tube;
-                callback(select_tube);
-                return select_tube;
             }
+
+            select_tube_flag = select_tube;
+            callback(select_tube);
+            return select_tube;
         });
     };
-
     const chunkArray = (array, chunkSize) => {
         const results = [];
         for (let i = 0; i < array.length; i += chunkSize) {
