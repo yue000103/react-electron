@@ -256,7 +256,6 @@ const App = () => {
                 setEquilibrationLoading(false);
                 setOpenEquilibration(false);
                 setEquilibrationStatus(false);
-                clearInterval(checkInterval);
                 messageApi.open({
                     type: "success",
                     content: "润柱完成！",
@@ -952,6 +951,7 @@ const App = () => {
 
     const handleEquilibrationStart = () => {
         setEquilibrationLoading(true);
+        const methodId = localStorage.getItem("methodId");
         columnEquilibration().then((response) => {
             if (!response.error) {
                 setEquilibrationStatus(true);
