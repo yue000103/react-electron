@@ -322,8 +322,7 @@ const App = ({
                 if (
                     !prevFlags.some(
                         (f) =>
-                            f.module_index === module &&
-                            f.tube_index === tube_i
+                            f.module_index === module && f.tube_index === tube_i
                     )
                 ) {
                     select_tube = [

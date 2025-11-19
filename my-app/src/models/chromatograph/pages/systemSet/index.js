@@ -61,6 +61,7 @@ const translateType = (codeInfo) => {
 let lineFlag = 0;
 
 const App = (props) => {
+    const { onDeviceStatusChange, onOperatingTimeChange } = props;
     // console.log("1030 props :", props);
 
     const [openNotice, setOpenNotice] = useState(false);
@@ -122,11 +123,19 @@ const App = (props) => {
         socket.on("DeviceStatusEnum", (data) => {
             // console.log("1024   DeviceStatusEnum", data);
             setDeviceStatus(data.DeviceStatusEnum);
+            // 传递机器状态给父组件
+            if (onDeviceStatusChange) {
+                onDeviceStatusChange(data.DeviceStatusEnum);
+            }
         });
         socket.on("OperatingTime", (data) => {
             // console.log("1024   OperatingTime", data);
 
             setOperatingTime(data.operating_time);
+            // 传递运行时间给父组件
+            if (onOperatingTimeChange) {
+                onOperatingTimeChange(data.operating_time);
+            }
         });
 
         // Clean up the connection on component unmount

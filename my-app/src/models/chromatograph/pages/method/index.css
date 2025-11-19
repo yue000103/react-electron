@@ -1,83 +1,210 @@
-.line{
-  padding:2rem
+/* 方法配置页面专属样式 */
+
+/* 主容器 */
+.method {
+  margin-top: 2rem;
+  margin-left: var(--spacing-lg);
+  margin-right: var(--spacing-lg);
 }
 
-.method{
-  /* height: 2rem; */
-  margin-top: 4rem;
-  margin-left: 1rem;
-}
-.button{
-  /* margin-left: 1.5rem;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem; */
-  
-}
-.button1{
-  background-color: #597099;
+/* 底部配置区域 */
+.clean {
+  margin: var(--spacing-md);
+  margin-left: var(--spacing-lg);
+  margin-right: var(--spacing-lg);
 }
 
-.button-div{
-  height: 100%;
-  /* display: flex;
+/* 配置卡片 */
+.config-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+
+.config-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* 按钮样式统一 */
+.button {
+  width: 100%;
+  margin-bottom: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* 保存按钮 */
+.button4 {
+  background-color: var(--success-color);
+  border-color: var(--success-color);
+}
+
+.button4:hover {
+  background-color: #73d13d !important;
+  border-color: #73d13d !important;
+}
+
+/* 上传按钮 */
+.button2 {
+  background-color: var(--info-color);
+  border-color: var(--info-color);
+}
+
+.button2:hover {
+  background-color: #40a9ff !important;
+  border-color: #40a9ff !important;
+}
+
+/* 方法按钮 */
+.button3 {
+  background-color: var(--brand-color);
+  border-color: var(--brand-color);
+}
+
+.button3:hover {
+  background-color: var(--brand-secondary) !important;
+  border-color: var(--brand-secondary) !important;
+}
+
+/* 清空按钮 */
+.button5 {
+  background-color: var(--neutral-color);
+  border-color: var(--neutral-color);
+}
+
+.button5:hover {
+  background-color: #a6a6a6 !important;
+  border-color: #a6a6a6 !important;
+}
+
+/* 等度洗脱区域 */
+.isocratic {
+  padding: var(--spacing-lg);
+  margin-top: var(--spacing-md);
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* 二元高压梯度区域 */
+.pressure {
+  padding: var(--spacing-lg);
+  margin-top: var(--spacing-md);
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* 动态折线图容器 */
+.dynamic-line {
+  display: flex;
   justify-content: center;
-  align-items: center;   
-  text-align: center; */
-}
-
-.isocratic{
-  /* background-color: aqua; */
-  height: 20rem;
-  width: 20rem;
-  margin-top: 1.5rem;
-}
-
-.pressure{
-  margin-top: 0rem;
-  /* width: 36rem; */
-  /* height: 10rem; */
-}
-
-.pressure-line{
-  height: 100%;
-}
-
-.dynamic-line{
-  height: 100%;
-
+  align-items: center;
+  padding: var(--spacing-md);
   padding-top: 2rem;
 }
 
-.clean{
-  margin: 20px;
-  margin-left: 1rem;
-
+/* 淡入动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.ant-form-inline .ant-form-item {
-  margin-bottom: 1rem; /* 设置行间距 */
+/* 表单标签样式 */
+.ant-form-item-label > label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
-.basis{
-  /* background-color: #e4e6ea50; */
-  border-radius: 2%;
+.ant-form-item-required::before {
+  color: var(--danger-color) !important;
 }
 
+/* 重要字段标签加粗 */
+.important-label {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+}
+
+/* 输入框统一圆角 */
+.ant-input,
+.ant-input-number,
+.ant-select-selector {
+  border-radius: var(--radius-sm) !important;
+}
+
+/* 数字输入框右对齐 */
+.ant-input-number-input {
+  text-align: right;
+}
+
+/* 背景容器 */
 .background-container {
-  position: relative; /* 确保背景图片在最底层 */
-  z-index: 1; /* 设置 z-index，确保其他内容在上面 */
-  background-size:cover;
+  min-height: 100%;
+  position: relative;
+  z-index: 1;
+  background-size: cover;
 }
 
-/* .background-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: url(${p7ConBg});
-  background-size: cover; 
-  background-position: center; 
-  z-index: -1; 
-} */
+/* 按钮容器 */
+.button-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.button-div {
+  width: 100%;
+}
+
+/* 模态框样式优化 */
+.ant-modal-content {
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+/* 洗脱模式选择器 */
+.elution-mode-selector {
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Tooltip 图标 */
+.tooltip-icon {
+  margin-left: var(--spacing-xs);
+  color: var(--text-muted);
+  cursor: help;
+}
+
+/* 表单行间距 */
+.ant-form-inline .ant-form-item {
+  margin-bottom: var(--spacing-md);
+}
+
+/* 响应式优化 - 10.1寸屏幕 */
+@media (max-width: 1280px) and (max-height: 800px) {
+  .method {
+    margin-top: 1rem;
+  }
+
+  .config-card {
+    padding: var(--spacing-md);
+  }
+}

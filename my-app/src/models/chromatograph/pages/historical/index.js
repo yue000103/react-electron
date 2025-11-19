@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import {
-    Collapse,
+    Table,
     Badge,
     Descriptions,
     Button,
     Row,
     Col,
-    Upload,
     Modal,
     message,
     Spin,
@@ -48,7 +47,6 @@ const App = () => {
     const [historyData, setHistoryData] = useState([]);
     const [openReset, setOpenReset] = useState(false);
     const [currentMethod, setCurrentMethod] = useState(null);
-    const [activeKey, setActiveKey] = useState(null);
     const fileName = `data_${Date.now()}.txt`; // 生成文件名称
     const savePath = "F:/experiment_data"; // 默认保存路径（可以根据实际情况设置）
     const [spinning, setSpinning] = React.useState(false);
@@ -60,6 +58,12 @@ const App = () => {
     const [endStart, setEndStart] = useState(5);
     const [folderName, setFolderName] = useState(""); // 新增状态保存文件夹名称
     const [folderNameOnly, setFolderNameOnly] = useState("");
+    // 分页相关状态
+    const [currentPage, setCurrentPage] = useState(1); // 当前页码
+    const pageSize = 10; // 每页显示10条
+    // 详情弹窗状态
+    const [openDetail, setOpenDetail] = useState(false);
+    const [selectedRecord, setSelectedRecord] = useState(null);
 
     useEffect(() => {
         fetchHistoryData();
@@ -173,27 +177,6 @@ const App = () => {
             );
         });
     };
-    const handleCollapseChange = (key) => {
-        if (key !== activeKey) {
-            setActiveKey(key); // 切换激活的面板
-            if (historyData[key]) {
-                checkMethod(historyData[key].methodId);
-                setHightWidth(); // 获取面板的尺寸
-                // 确保当前面板的 `data` 被更新
-                console.log("0702", historyData[key]);
-                const newData = historyData[key].curveData || [];
-                const verticalDatas = historyData[key].verticalData || [];
-                const pumpLists = historyData[key].pumpList || [];
-                const end = historyData[key].samplingTime || 5;
-                setCurveData(newData); // 设置当前折叠面板的 `Line` 数据
-                setVerticalData(verticalDatas);
-                setPumpList(pumpLists);
-                setEndStart(end);
-            }
-        } else {
-            setActiveKey(null); // 当相同的面板再次被点击时，关闭面板并注销组件
-        }
-    };
     const setHightWidth = () => {
         const headerDiv = document.querySelector(".data-main");
         if (
@@ -210,98 +193,119 @@ const App = () => {
         }
     };
 
-    const items = historyData.map((item, index) => ({
-        key: index.toString(),
-        label: `保存时间：${item.saveTime || "未知"}`,
-        children: (
-            <Descriptions
-                title={`方法名称：${item.methodName || "未知"}`}
-                bordered
-                extra={
-                    <div>
-                        <Row>
-                            <Col span={2}></Col>
-                            <Col span={6}>
-                                <Button
-                                    type="primary"
-                                    onClick={() => setOpen()}
-                                >
-                                    方法
-                                </Button>
-                            </Col>
-                            <Col span={10}>
-                                <Input
-                                    placeholder="输入文件夹名称"
-                                    value={folderNameOnly}
-                                    onChange={(e) =>
-                                        setFolderNameOnly(e.target.value)
-                                    }
-                                />
-                            </Col>
-                            <Col span={4}>
-                                <Button
-                                    onClick={() => handleDownload(item)}
-                                    type="primary"
-                                >
-                                    下载文件
-                                </Button>
-                            </Col>
-                        </Row>
-                    </div>
-                }
-            >
-                <Descriptions.Item label="采集时长" name="samplingTime">
-                    {item.samplingTime || "未知"}min
-                </Descriptions.Item>
-                <Descriptions.Item label="开始时间" name="methodStartTime">
-                    {item.methodStartTime || "未知"}
-                </Descriptions.Item>
-                <Descriptions.Item label="结束时间" name="methodEndTime">
-                    {item.methodEndTime || "未知"}
-                </Descriptions.Item>
-                <Descriptions.Item label="目标化合物SMILES" name="smiles">
-                    {item.smiles || "未知"}
-                </Descriptions.Item>
-                <Descriptions.Item label="试管体积" name="smiles">
-                    {item.tubeVolume || "未知"}
-                </Descriptions.Item>
+    // 获取当前页数据
+    const getCurrentPageData = () => {
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        return historyData.slice(startIndex, endIndex);
+    };
 
-                <Descriptions.Item
-                    label="实验警报"
-                    name="errorMessage"
-                    span={5}
-                >
-                    {Array.isArray(item.errorMessage)
-                        ? item.errorMessage.map((error, index) => (
-                              <Badge
-                                  key={index}
-                                  status="error"
-                                  text={error}
-                                  style={{ marginRight: "10px" }}
-                              />
-                          ))
-                        : "无警报"}
-                </Descriptions.Item>
+    // 计算总页数
+    const totalPages = Math.ceil(historyData.length / pageSize);
 
-                <Descriptions.Item label="实验数据" span={5}>
-                    {item.curveData && item.curveData.length > 0 ? (
-                        <Line
-                            data={curveData}
-                            num={verticalData}
-                            selected_tubes={[]}
-                            linePoint={pumpList}
-                            samplingTime={endStart}
-                            dimensions={dimensions}
-                        />
-                    ) : null}
-                </Descriptions.Item>
+    // 上一页
+    const handlePrevPage = () => {
+        if (currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // 滚动到顶部
+        }
+    };
 
-                <Descriptions.Item label="实验操作" name="taskList">
-                    {renderTaskList(item.taskList)}
-                </Descriptions.Item>
-            </Descriptions>
-        ),
-    }));
+    // 下一页
+    const handleNextPage = () => {
+        if (currentPage < totalPages) {
+            setCurrentPage(currentPage + 1);
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // 滚动到顶部
+        }
+    };
+
+    // 查看详情
+    const handleViewDetail = (record) => {
+        setSelectedRecord(record);
+        checkMethod(record.methodId);
+
+        // 添加数据验证：过滤掉无效数据
+        const newData = Array.isArray(record.curveData)
+            ? record.curveData.filter(d => d && d.time && typeof d.value !== 'undefined')
+            : [];
+        const verticalDatas = Array.isArray(record.verticalData)
+            ? record.verticalData.filter(d => d && d.time_start && d.time_end)
+            : [];
+        const pumpLists = Array.isArray(record.pumpList)
+            ? record.pumpList.filter(d => d && d.time)
+            : [];
+        const end = record.samplingTime || 5;
+
+        setCurveData(newData);
+        setVerticalData(verticalDatas);
+        setPumpList(pumpLists);
+        setEndStart(end);
+        setOpenDetail(true);
+
+        // 延迟获取尺寸，确保 Modal 已渲染
+        setTimeout(() => {
+            setHightWidth();
+        }, 100);
+    };
+
+    // 关闭详情弹窗
+    const handleCloseDetail = () => {
+        setOpenDetail(false);
+        setSelectedRecord(null);
+    };
+
+    // Table 列配置
+    const columns = [
+        {
+            title: '保存时间',
+            dataIndex: 'saveTime',
+            key: 'saveTime',
+            width: 180,
+        },
+        {
+            title: '方法名称',
+            dataIndex: 'methodName',
+            key: 'methodName',
+            width: 150,
+        },
+        {
+            title: '采集时长',
+            dataIndex: 'samplingTime',
+            key: 'samplingTime',
+            width: 100,
+            render: (text) => `${text || 0} min`,
+        },
+        {
+            title: '开始时间',
+            dataIndex: 'methodStartTime',
+            key: 'methodStartTime',
+            width: 180,
+        },
+        {
+            title: '结束时间',
+            dataIndex: 'methodEndTime',
+            key: 'methodEndTime',
+            width: 180,
+        },
+        {
+            title: '操作',
+            key: 'action',
+            width: 200,
+            render: (_, record) => (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <Button type="primary" size="small" onClick={() => handleViewDetail(record)}>
+                        查看详情
+                    </Button>
+                    <Button size="small" onClick={() => handleDownload(record)}>
+                        下载
+                    </Button>
+                </div>
+            ),
+        },
+    ];
+
+    // 获取当前页的数据
+    const currentPageData = getCurrentPageData();
 
     return (
         <div className="data-main">
@@ -322,12 +326,117 @@ const App = () => {
                     </Col>
                 </Row>
             </div>
-            <Collapse
-                accordion
-                items={items}
-                onChange={handleCollapseChange}
+            <Table
+                columns={columns}
+                dataSource={currentPageData}
+                rowKey={(record) => record.saveTime || Math.random()}
+                pagination={false}
                 className="headerStyle"
+                scroll={{ x: 1000 }}
             />
+            {/* 分页控件 */}
+            {historyData.length > 0 && (
+                <div style={{
+                    marginTop: '20px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: '20px'
+                }}>
+                    <Button
+                        onClick={handlePrevPage}
+                        disabled={currentPage === 1}
+                    >
+                        上一页
+                    </Button>
+                    <span style={{ fontSize: '14px' }}>
+                        第 {currentPage} / {totalPages} 页 （共 {historyData.length} 条）
+                    </span>
+                    <Button
+                        onClick={handleNextPage}
+                        disabled={currentPage >= totalPages}
+                    >
+                        下一页
+                    </Button>
+                </div>
+            )}
+            {/* 详情弹窗 */}
+            <Modal
+                title={`历史数据详情 - ${selectedRecord?.saveTime || ''}`}
+                open={openDetail}
+                onCancel={handleCloseDetail}
+                width="90%"
+                footer={null}
+                style={{ top: 20 }}
+            >
+                {selectedRecord && (
+                    <Descriptions
+                        title={`方法名称：${selectedRecord.methodName || "未知"}`}
+                        bordered
+                        column={3}
+                        extra={
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <Button type="primary" onClick={() => setOpen()}>
+                                    查看方法
+                                </Button>
+                                <Input
+                                    placeholder="输入文件夹名称"
+                                    value={folderNameOnly}
+                                    onChange={(e) => setFolderNameOnly(e.target.value)}
+                                    style={{ width: '200px' }}
+                                />
+                                <Button type="primary" onClick={() => handleDownload(selectedRecord)}>
+                                    下载文件
+                                </Button>
+                            </div>
+                        }
+                    >
+                        <Descriptions.Item label="采集时长">
+                            {selectedRecord.samplingTime || "未知"}min
+                        </Descriptions.Item>
+                        <Descriptions.Item label="开始时间">
+                            {selectedRecord.methodStartTime || "未知"}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="结束时间">
+                            {selectedRecord.methodEndTime || "未知"}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="目标化合物SMILES" span={2}>
+                            {selectedRecord.smiles || "未知"}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="试管体积">
+                            {selectedRecord.tubeVolume || "未知"}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="实验警报" span={3}>
+                            {Array.isArray(selectedRecord.errorMessage)
+                                ? selectedRecord.errorMessage.map((error, index) => (
+                                      <Badge
+                                          key={index}
+                                          status="error"
+                                          text={error}
+                                          style={{ marginRight: "10px" }}
+                                      />
+                                  ))
+                                : "无警报"}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="实验数据" span={3}>
+                            {curveData && curveData.length > 0 ? (
+                                <Line
+                                    data={curveData}
+                                    num={verticalData}
+                                    selected_tubes={[]}
+                                    linePoint={pumpList}
+                                    samplingTime={endStart}
+                                    dimensions={dimensions}
+                                />
+                            ) : <div>暂无数据</div>}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="实验操作" span={3}>
+                            {renderTaskList(selectedRecord.taskList)}
+                        </Descriptions.Item>
+                    </Descriptions>
+                )}
+            </Modal>
+            {/* 方法详情弹窗 */}
             <Modal
                 open={openReset}
                 onOk={handleOkReset}

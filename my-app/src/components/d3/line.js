@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+﻿import React, { useEffect, useRef, useState, useCallback } from "react";
 import * as d3 from "d3";
 import colors from "@components/color/index";
 import {
@@ -64,7 +64,7 @@ const renderCurve = (
     }));
     console.log("0920   data--------------------", parsedData);
     const valueExtent = d3.extent(parsedData, (d) => d.value);
-    const [minValue = -3, maxValue = 53] = valueExtent || [-3, 50]; // 默认值为 [0, 50]
+    const [minValue = -3, maxValue = 53] = valueExtent || [-3, 50]; // 榛樿鍊间负 [0, 50]
 
     let newMinValue = parseFloat(minValue) - parseFloat(maxValue) * 0.05;
     let newMaxValue = parseFloat(maxValue) + parseFloat(maxValue) * 0.05;
@@ -74,7 +74,7 @@ const renderCurve = (
         [newMinValue, newMaxValue] = [newMaxValue, newMinValue];
     }
     if (Math.abs(newMaxValue - newMinValue) < 1e-3) {
-        newMinValue -= 2; // 给值一个小的偏移量
+        newMinValue -= 2; // 缁欏€间竴涓皬鐨勫亸绉婚噺
         newMaxValue += 2;
     }
 
@@ -100,30 +100,50 @@ const renderCurve = (
 
     svg.append("g")
         .attr("transform", `translate(0, ${height - 1})`)
-        .style("color", "red")
+        .style("color", "#00838f")
         .call(xAxis);
     svg.append("g")
         .attr("transform", `translate(0, 0)`)
-        .style("color", "red")
+        .style("color", "#00838f")
         .call(yAxis);
-
-  
-    
-
-    
 
     const line = d3
         .line()
         .x((d) => xScale(d.time))
         .y((d) => yScale(d.value))
         .curve(d3.curveBasis);
+
+    // 创建渐变定义
+    const gradientId = "curveGradient";
+    const defs = svg.append("defs");
+    const gradient = defs
+        .append("linearGradient")
+        .attr("id", gradientId)
+        .attr("x1", "0%")
+        .attr("x2", "100%")
+        .attr("y1", "0%")
+        .attr("y2", "0%");
+
+    gradient
+        .append("stop")
+        .attr("offset", "0%")
+        .attr("stop-color", "#00bcd4")
+        .attr("stop-opacity", 1);
+
+    gradient
+        .append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", "#0097a7")
+        .attr("stop-opacity", 1);
+
     // console.log("par", parsedData);
     svg.append("path")
         .datum(parsedData)
         .attr("fill", "none")
-        .attr("stroke", "red")
-        .attr("stroke-width", 2)
-        .attr("d", line);
+        .attr("stroke", `url(#${gradientId})`)
+        .attr("stroke-width", 3)
+        .attr("d", line)
+        .style("filter", "drop-shadow(0px 2px 4px rgba(0, 188, 212, 0.3))");
     // const lineX = d3
     //     .line()
     //     .x((d) => xScale(d.time))
@@ -151,21 +171,22 @@ const renderVertical = (svg, xScale, height) => {
         timeStart: parseTime(d.time_start),
         timeEnd: parseTime(d.time_end),
     }));
-    // 生成垂直虚线的路径生成器
+    // 鐢熸垚鍨傜洿铏氱嚎鐨勮矾寰勭敓鎴愬櫒
     const lineVertical = (d) => {
         return `M${xScale(d.timeEnd)},${height}V${0}`;
     };
-    // 绘制垂直虚线
+    // 缁樺埗鍨傜洿铏氱嚎
     svg.selectAll(".vertical-line")
         .data(parsedData)
         .enter()
         .append("path")
         .attr("class", "vertical-line")
-        .attr("stroke", "red")
-        .attr("stroke-width", 1)
-        .attr("stroke-dasharray", "5,5") // 设置虚线样式
-        .attr("d", lineVertical);
-    // //生成flag
+        .attr("stroke", "#546e7a")
+        .attr("stroke-width", 1.5)
+        .attr("stroke-dasharray", "5,5") // 璁剧疆铏氱嚎鏍峰紡
+        .attr("d", lineVertical)
+        .style("opacity", 0.8);
+    // //鐢熸垚flag
     svg.selectAll(".flag-text")
         .data(parsedData)
         .enter()
@@ -177,74 +198,77 @@ const renderVertical = (svg, xScale, height) => {
                 (xScale(d.timeEnd) - xScale(d.timeStart)) / 2 +
                 xScale(d.timeStart)
         )
-        .attr("y", 30) // 计算中间位置的 y 坐标
+        .attr("y", 30) // 璁＄畻涓棿浣嶇疆鐨?y 鍧愭爣
         .attr("text-anchor", "middle")
         .text((d) => `${d.module_index + 1}-${d.tube_index + 1}`);
 };
 
 const renderArea = (svg, xScale, yScale, height) => {
-    // 生成填充区域的路径生成器
+    console.log("1118  renderArea start", Date.now());
+    // 清除旧的填充，避免重复叠加
+    svg.selectAll(".fill-area").remove();
+
     const area = d3
         .area()
         .x((d) => xScale(d.time))
         .y0(height)
         .y1((d) => yScale(d.value))
         .curve(d3.curveLinear);
+
     console.log("1021   num:", num);
     console.log("1021   selected:", selected);
-    let fillColor = "";
-
+    console.log("1118 selected count", selected.length);
     selected.forEach((selectTube) => {
         console.log("1021 selectTube", selectTube);
         console.log("1021   selectTube :", selectTube);
 
-        fillColor = selectTube.color;
-
-        let fillArea = data
-            .filter((item) => {
-                return (
+        const fillColor = selectTube.color;
+        const fillArea = data
+            .filter(
+                (item) =>
                     item.time >= selectTube.time_start &&
                     item.time <= selectTube.time_end
-                );
-            })
-            .map((item) => {
-                // 在每个对象中添加 fillColor 属性
-                return {
-                    ...item,
-                    color: fillColor,
-                };
-            });
-
-        fillAreaData = [...fillArea];
-        fillAreaData = fillAreaData.sort((a, b) => a.time - b.time);
-        let fill = { area: fillAreaData, color: fillColor };
-        fillAreaDatas = [...fillAreaDatas, fill];
-        fillAreaData = [];
-        fillAreaDatas.forEach((fill) => {
-            console.log("fill :", fill);
-            const parsedData = fill.area?.map((d) => ({
-                ...d,
-                time: parseTime(d.time),
+            )
+            .map((item) => ({
+                ...item,
+                color: fillColor,
             }));
-
-            if (fill.color) {
-                const colorName = `color${fill.color}`;
-                svg.append("path")
-                    .datum(parsedData)
-                    .attr("fill", colors[colorName].backgroundColor)
-                    .attr("stroke", "none")
-                    .attr("d", area);
-            }
-        });
-
-        console.log("1021   fillAreaData :", fillAreaData);
+        console.log(
+            "1118  fillArea length",
+            fillArea.length,
+            "time range",
+            selectTube.time_start,
+            selectTube.time_end
+        );
+        const sortedArea = [...fillArea].sort((a, b) => a.time - b.time);
+        fillAreaDatas = [
+            ...fillAreaDatas,
+            { area: sortedArea, color: fillColor },
+        ];
     });
 
+    fillAreaDatas.forEach((fill) => {
+        console.log("fill :", fill);
+        const parsedData = fill.area?.map((d) => ({
+            ...d,
+            time: parseTime(d.time),
+        }));
+
+        if (fill.color) {
+            const colorName = `color${fill.color}`;
+            svg.append("path")
+                .datum(parsedData)
+                .attr("class", "fill-area")
+                .attr("fill", colors[colorName].backgroundColor)
+                .attr("stroke", "none")
+                .attr("d", area);
+        }
+    });
+    console.log("1118  fill-area paths", svg.selectAll(".fill-area").size());
     fillAreaDatas = [];
-    // 绘制填充区域
 };
 const parseTime = (timeString) => {
-    // 解析时间字符串
+    // 瑙ｆ瀽鏃堕棿瀛楃涓?
     const [hours, minutes, seconds] = timeString.split(":").map(Number);
     const parsedTime = new Date();
     parsedTime.setHours(hours, minutes, seconds, 0);
@@ -257,11 +281,11 @@ const parseTimeString = (time) => {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
-        hour12: false, // 使用 24 小时制
+        hour12: false, // 浣跨敤 24 灏忔椂鍒?
     });
     return parseTimeString;
 };
-//格式化为一致的格式（如'00:06:00'），然后再比较
+//鏍煎紡鍖栦负涓€鑷寸殑鏍煎紡锛堝'00:06:00'锛夛紝鐒跺悗鍐嶆瘮杈?
 const normalizeTime = (time) => time.padStart(8, "0");
 const isEqual = (p1, p2) =>
     normalizeTime(p1.time) === normalizeTime(p2.time) && p1.value === p2.value;
@@ -283,14 +307,14 @@ const renderLine = (
 ) => {
     console.log("1012 time linePointChange :", linePointChange);
     linePointChange?.sort((a, b) => {
-        // 将时间字符串转换为秒数进行比较
+        // 灏嗘椂闂村瓧绗︿覆杞崲涓虹鏁拌繘琛屾瘮杈?
         const timeA = a.time
             .split(":")
             .reduce((acc, time) => 60 * acc + +time, 0);
         const timeB = b.time
             .split(":")
             .reduce((acc, time) => 60 * acc + +time, 0);
-        return timeA - timeB; // 从小到大排序
+        return timeA - timeB; // 浠庡皬鍒板ぇ鎺掑簭
     });
     const parsedData = linePointChange?.map((d) => ({
         ...d,
@@ -320,66 +344,68 @@ const renderLine = (
     const yAxisG = svg
         .append("g")
         .attr("transform", `translate(${margin.right - 1}, 0)`)
-        .style("color", "blue")
+        .style("color", "#f57c00")
         .call(y2Axis);
     yAxisG
         .selectAll(".tick text")
         .attr("x", -10)
         .attr("y", 0)
-        .style("text-anchor", "end"); // 右对齐文本
+        .style("text-anchor", "end"); // 鍙冲榻愭枃鏈?
 
     const line2 = d3
         .line()
         .x((d) => xScale(d.time))
         .y((d) => yScale(d.value))
-        .curve(d3.curveLinear); // 使用 Cardinal 曲线插值
+        .curve(d3.curveLinear); // 浣跨敤 Cardinal 鏇茬嚎鎻掑€?
     console.log("8672 parsedData", parsedData);
-    // 绘制折线路径
+    // 缁樺埗鎶樼嚎璺緞
     svg.append("path")
         .attr("class", "line")
         .datum(parsedData)
         .attr("fill", "none")
-        .attr("stroke", "blue")
-        .attr("stroke-width", 2)
+        .attr("stroke", "#ff9800")
+        .attr("stroke-width", 3)
         .attr("d", line2)
-        .style("pointer-events", "none"); // 确保线不会阻挡点的事件
+        .style("pointer-events", "none"); // 纭繚绾夸笉浼氶樆鎸＄偣鐨勪簨浠?
 
     const points = svg
         .selectAll("circle.point")
         .data(parsedData)
-        .join("circle") // 使用 join 代替 enter().append()
+        .join("circle") // 浣跨敤 join 浠ｆ浛 enter().append()
         .attr("class", "point")
         .attr("cx", (d) => xScale(d.time))
         .attr("cy", (d) => yScale(d.value))
-        .attr("r", 1)
+        .attr("r", 5)
         .style("opacity", 1)
-        .attr("fill", "blue")
-        .style("cursor", "pointer") // 添加鼠标指针样式
-        .style("pointer-events", "all"); // 确保点可以接收事件
-      // 添加横线网格
-      const gridLines = svg
+        .attr("fill", "#ff9800")
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 2)
+        .style("cursor", "pointer") // 娣诲姞榧犳爣鎸囬拡鏍峰紡
+        .style("pointer-events", "all"); // 纭繚鐐瑰彲浠ユ帴鏀朵簨浠?
+    // 娣诲姞妯嚎缃戞牸
+    const gridLines = svg
         .append("g")
         .attr("class", "grid-lines")
         .attr("transform", `translate(0, 0)`);
-      // 生成刻度值
-      const ticks = d3.range(0, 105, 10); // 从0到100，间隔为5
+    // 鐢熸垚鍒诲害鍊?
+    const ticks = d3.range(0, 105, 10); // 浠?鍒?00锛岄棿闅斾负5
 
-
-      // 绘制横线
+    // 缁樺埗妯嚎
     gridLines
-      .selectAll("line")
-      .data(ticks)
-      .enter()
-      .append("line")
-      .attr("x1", 0)
-      .attr("x2", width)
-      .attr("y1", (d) => yScale(d))
-      .attr("y2", (d) => yScale(d))
-      .attr("stroke", "blue")
-      .attr("stroke-width", 0.5)
-      .attr("stroke-dasharray", "5,5"); // 设置虚线样式
+        .selectAll("line")
+        .data(ticks)
+        .enter()
+        .append("line")
+        .attr("x1", 0)
+        .attr("x2", width)
+        .attr("y1", (d) => yScale(d))
+        .attr("y2", (d) => yScale(d))
+        .attr("stroke", "#e0e0e0")
+        .attr("stroke-width", 1)
+        .attr("stroke-dasharray", "3,3")
+        .style("opacity", 0.6); // 璁剧疆铏氱嚎鏍峰紡
     points.each(function () {
-        // 使用 each 来确保每个点都绑定了事件
+        // 浣跨敤 each 鏉ョ‘淇濇瘡涓偣閮界粦瀹氫簡浜嬩欢
         const point = d3.select(this);
         point
             .on("mouseover", function (event, d) {
@@ -406,7 +432,7 @@ const renderLine = (
             });
     });
 
-    // .call(drag); // 应用拖拽行为
+    // .call(drag); // 搴旂敤鎷栨嫿琛屼负
     const handleClick = (event, d) => {
         // console.log("lineFlag", lineFlag);
         // if (lineFlag == 1) {
@@ -422,14 +448,14 @@ const renderLine = (
         // setIsModalVisible(true);
         // }
     };
-    // 折线生成器
+    // 鎶樼嚎鐢熸垚鍣?
 
-    const dragThreshold = 300; // 拖拽启动阈值，单位为像素
+    const dragThreshold = 300; // 鎷栨嫿鍚姩闃堝€硷紝鍗曚綅涓哄儚绱?
     let startX, startY;
     let isDragging = false;
     let dragTimeout;
 
-    // 拖拽开始前的准备
+    // 鎷栨嫿寮€濮嬪墠鐨勫噯澶?
     function prepareDrag(event, d) {
         startX = event.x;
         startY = event.y;
@@ -441,7 +467,7 @@ const LineChart = (props) => {
 
     const [scrollPosition, setScrollPosition] = useState(0);
     const [realPosition, setRealPosition] = useState(0);
-    const [maxScrollPosition, setMaxScrollPosition] = useState(100); // 假设最大滚动范围为1000
+    const [maxScrollPosition, setMaxScrollPosition] = useState(100); // 鍋囪鏈€澶ф粴鍔ㄨ寖鍥翠负1000
 
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -460,7 +486,7 @@ const LineChart = (props) => {
     // console.log("8672  samplingTime", samplingTime);
     // console.log("lineFlag   lineFlag", lineFlag);
 
-    // 修改状态
+    // 淇敼鐘舵€?
     const [zoomState, setZoomState] = useState({
         k: 1,
         x: 0,
@@ -479,6 +505,7 @@ const LineChart = (props) => {
     // if (linePointChange.length == 0) {
     //     setlinePointChange(linePoint);
     // }
+    console.log("1118  selectedAllTubes", props.selectedAllTubes);
     selected = props.selectedAllTubes;
     console.log("1021   selected", selected);
 
@@ -492,7 +519,7 @@ const LineChart = (props) => {
 
     // console.log("lineFlag   lineFlag   2---", props.lineFlag);
 
-    // 在组件挂载时设置linePointChange的初始值
+    // 鍦ㄧ粍浠舵寕杞芥椂璁剧疆linePointChange鐨勫垵濮嬪€?
     useEffect(() => {
         console.log("1029  props.linePoint", props.linePoint);
 
@@ -501,7 +528,7 @@ const LineChart = (props) => {
         // if (linePointChange.length === 0) {
         //     setlinePointChange(linePoint);
         // }
-    }, [props.linePoint]); // 依赖项数组包含需要触发effect的变量
+    }, [props.linePoint]); // 渚濊禆椤规暟缁勫寘鍚渶瑕佽Е鍙慹ffect鐨勫彉閲?
     const setHight = () => {
         const headerDiv = document.querySelector(".headerStyle");
         const resizeObserver = new ResizeObserver((entries) => {
@@ -547,7 +574,7 @@ const LineChart = (props) => {
             ]);
         console.log("1021    props---------------5");
 
-        // 绘制曲线
+        // 缁樺埗鏇茬嚎
         renderCurve(
             gContent,
             zoomedWidth,
@@ -613,7 +640,7 @@ const LineChart = (props) => {
         setlinePointChange(newData);
 
         // console.log("lineFlag    newData :", newData);
-        props.callback(newData); // 确保调用了回调函数
+        props.callback(newData); // 纭繚璋冪敤浜嗗洖璋冨嚱鏁?
         // console.log("lineFlag  linePoint----------- :", linePoint);
         // console.log("lineFlag  linePointChange----------- :", linePointChange);
         setIsModalVisible(false);
@@ -645,8 +672,8 @@ const LineChart = (props) => {
             inputRef.current.focus();
             let result = NaN;
             if (typeof inputNumber !== "number") {
-                const concatenatedStr = inputNumber.join(""); // 拼接数组中的字符串
-                result = concatenatedStr; // 将拼接后的字符串转换为数字
+                const concatenatedStr = inputNumber.join(""); // 鎷兼帴鏁扮粍涓殑瀛楃涓?
+                result = concatenatedStr; // 灏嗘嫾鎺ュ悗鐨勫瓧绗︿覆杞崲涓烘暟瀛?
             } else {
                 result = inputNumber;
             }
@@ -685,7 +712,7 @@ const LineChart = (props) => {
 
     const updateMaxScroll = (position, k) => {
         const maxScroll = dimensions.width * k - dimensions.width;
-        const percentage = (position / 100) * maxScroll; // 将 newPosition 转换为 0 到 1 之间的数
+        const percentage = (position / 100) * maxScroll; // 灏?newPosition 杞崲涓?0 鍒?1 涔嬮棿鐨勬暟
         setRealPosition(percentage);
     };
 
@@ -693,21 +720,19 @@ const LineChart = (props) => {
         <div
             className="headerStyle"
             style={{
-                width: "100%",
-                height: "300px",
+                width: "97%",
+                height: "250px",
                 border: "none",
                 position: "relative",
                 top: "0px",
             }}
         >
-            <Spin spinning={lineLoading} delay={500}>
-                <svg
-                    ref={svgRef}
-                    width="100%"
-                    height="20rem"
-                    style={{ position: "relative", zIndex: 1 }}
-                ></svg>
-            </Spin>
+            <svg
+                ref={svgRef}
+                width="100%"
+                height="20rem"
+                style={{ position: "relative", zIndex: 1 }}
+            ></svg>
 
             <div
                 style={{
@@ -751,7 +776,7 @@ const LineChart = (props) => {
                 </Row>
             </div>
             <Modal
-                title="梯度曲线"
+                title="姊害鏇茬嚎"
                 open={isModalVisible}
                 onOk={handleOk}
                 onCancel={handleCancel}

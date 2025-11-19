@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(if [ -f \"D:\\chrom_pcb\\react-electron\\my-app\\src\\models\\chromatograph\\pages\\method\\index.css\" ])",
+      "Bash(then echo \"File exists\")",
+      "Bash(else echo \"File does not exist\")",
+      "Bash(fi)",
+      "Bash(git checkout:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

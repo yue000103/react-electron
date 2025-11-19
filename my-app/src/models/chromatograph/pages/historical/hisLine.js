@@ -146,6 +146,12 @@ const renderVertical = (svg, xScale, height) => {
 
 const parseTime = (timeString) => {
     // 解析时间字符串
+    // 添加防护：检查 timeString 是否为有效字符串
+    if (!timeString || typeof timeString !== 'string') {
+        console.warn('Invalid timeString:', timeString);
+        return new Date(); // 返回默认值
+    }
+
     // console.log("timeString", timeString);
     const [hours, minutes, seconds] = timeString.split(":").map(Number);
 

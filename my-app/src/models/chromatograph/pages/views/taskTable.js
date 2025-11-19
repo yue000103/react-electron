@@ -1,184 +1,262 @@
-import React, { useState } from "react";
-import { Button, Flex, Table, Checkbox } from "antd";
-import { Empty } from "antd";
+import React, { useState, useMemo, useCallback } from "react";
+import { Button, Flex, Checkbox, Tag, Empty } from "antd";
 import { pauseTube, resumeTube } from "@/models/chromatograph/api/tube";
-import { logDOM } from "@testing-library/react";
-import { postStartRotary } from "../../api/xuanzheng";
+import "./taskTable.css";
 
-const columns = [
-    {
-        title: "操作",
-        dataIndex: "status",
-        width: 30,
-    },
-    {
-        title: "试管",
-        dataIndex: "tube_list",
-        width: 150,
-    },
-];
+// 状态映射常量
+const STATUS_MAP = {
+    abandon: "废弃",
+    clean: "清洗",
+    retain: "保留",
+};
 
-const App = (props) => {
-    const { selected_tubes, button_flag, callback, selectedAllTubes } = props;
-    const [title, setTitle] = useState(props.title);
+const TaskTable = (props) => {
+    const { callback, selectedAllTubes, runningInfo, buttonFlag } = props;
+
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [runningKeys, setRunningKeys] = useState([]);
+    const [completedKeys, setCompletedKeys] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [buttonFlag, setButtonFlag] = useState(props.buttonFlag);
-    const [allSelected, setAllSelected] = useState(false); // 新增状态
-    const dataSource = selectedAllTubes
-        .filter((tube) => !isNaN(tube.module_index)) // 过滤掉module_index为NaN的值
-        .map((tube, i) => ({
-            key: i,
-            status:
-                tube.status === "abandon"
-                    ? "废弃"
-                    : tube.status === "clean"
-                    ? "清洗"
-                    : tube.status === "retain"
-                    ? "保留"
-                    : tube.status,
-            tube_list: `${tube.module_index + 1} - ${tube.tube_index_list
-                .map((index) => index + 1)
-                .join(", ")}`,
-        }));
-    console.log("1101    selectedAllTubes", selectedAllTubes);
 
-    const runTubes = () => {
-        const selectedData = dataSource.filter((item) =>
-            selectedRowKeys.includes(item.key)
-        );
-        console.log("9012   选中的信息：", selectedData);
-        const result = selectedData.map((item, index) => {
-            return { flag: "run", index: item.key };
-        });
-        callback(result);
-        console.log("9012   result", result);
-    };
-    const deleteTubes = () => {
-        const selectedData = dataSource.filter((item) =>
-            selectedRowKeys.includes(item.key)
-        );
-        console.log("1030   selectedData", selectedData);
-        const result = selectedData.map((item, index) => {
-            return { flag: "delete", index: item.key };
-        });
-        console.log("1030   result", result);
+    // 使用 useMemo 优化数据源计算
+    const dataSource = useMemo(() => {
+        return selectedAllTubes
+            .filter((tube) => !isNaN(tube.module_index))
+            .map((tube, i) => {
+                const tubes = tube.tube_index_list.map((index) => index + 1);
+                return {
+                    key: i,
+                    status: STATUS_MAP[tube.status] || tube.status,
+                    tube_list: `${tube.module_index + 1} - ${tubes.join(", ")}`,
+                    moduleIndex: tube.module_index,
+                    tubes: tubes,
+                };
+            });
+    }, [selectedAllTubes]);
 
-        callback(result);
-    };
-    const onSelectChange = (newSelectedRowKeys) => {
-        setSelectedRowKeys(newSelectedRowKeys);
-    };
-    const onSelectAll = (e) => {
-        const newSelectedRowKeys = e.target.checked
-            ? dataSource.map((item) => item.key)
-            : [];
-        setSelectedRowKeys(newSelectedRowKeys);
-        setAllSelected(e.target.checked);
-    };
-    const rowSelection = {
-        selectedRowKeys,
-        onChange: onSelectChange,
-    };
+    // 判断任务状态
+    const getItemStatus = useCallback(
+        (key) => {
+            if (completedKeys.includes(key)) return "completed";
+            if (runningKeys.includes(key)) return "running";
+            return "normal";
+        },
+        [completedKeys, runningKeys]
+    );
+
+    // 点击任务项
+    const handleItemClick = useCallback(
+        (key) => {
+            const status = getItemStatus(key);
+            // 运行中的任务不能选中
+            if (status === "running") return;
+
+            setSelectedRowKeys((prev) => {
+                if (prev.includes(key)) {
+                    return prev.filter((k) => k !== key);
+                } else {
+                    return [...prev, key];
+                }
+            });
+        },
+        [getItemStatus]
+    );
+
+    // 提取公共的处理逻辑
+    const handleTubeAction = useCallback(
+        (flag) => {
+            const result = selectedRowKeys.map((key) => ({
+                flag,
+                index: key,
+            }));
+            callback(result);
+        },
+        [selectedRowKeys, callback]
+    );
+
+    const runTubes = useCallback(() => {
+        handleTubeAction("run");
+        // 将选中的任务标记为运行中
+        setRunningKeys((prev) => [...prev, ...selectedRowKeys]);
+        // 清空选中状态
+        setSelectedRowKeys([]);
+    }, [handleTubeAction, selectedRowKeys]);
+
+    const deleteTubes = useCallback(() => {
+        handleTubeAction("delete");
+    }, [handleTubeAction]);
+
+    const onSelectAll = useCallback(
+        (e) => {
+            if (e.target.checked) {
+                // 只选中未运行的任务
+                const availableKeys = dataSource
+                    .filter((item) => !runningKeys.includes(item.key))
+                    .map((item) => item.key);
+                setSelectedRowKeys(availableKeys);
+            } else {
+                setSelectedRowKeys([]);
+            }
+        },
+        [dataSource, runningKeys]
+    );
+
     const hasSelected = selectedRowKeys.length > 0;
+    const allSelected =
+        dataSource.length > 0 && selectedRowKeys.length === dataSource.length;
 
-    const pause = () => {
-        pauseTube().then((res) => {
-            if (!res.error) {
-            }
-        });
-    };
-    const resume = () => {
-        resumeTube().then((res) => {
-            if (!res.error) {
-            }
-        });
-    };
-    const startRotary = () => {
-        postStartRotary().then((res) => {
-            if (!res.error) {
-            }
-        });
-    };
+    const pause = useCallback(() => {
+        setLoading(true);
+        pauseTube()
+            .then((res) => {
+                if (!res.error) {
+                    // 处理成功逻辑
+                }
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    }, []);
+
+    const resume = useCallback(() => {
+        setLoading(true);
+        resumeTube()
+            .then((res) => {
+                if (!res.error) {
+                    // 处理成功逻辑
+                }
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    }, []);
 
     return (
-        <Flex gap="middle" vertical>
+        <div className="task-table-container">
             {dataSource.length > 0 ? (
-                <div>
-                    <Table
-                        size="small"
-                        rowSelection={rowSelection}
-                        columns={columns}
-                        dataSource={dataSource}
-                        title={false}
-                        scroll={{
-                            x: 200,
-                            y: 200,
-                        }}
-                        pagination={false}
-                        style={{
-                            marginTop: "10px",
-                            marginLeft: "10px",
-                            marginRight: "10px",
-                        }}
-                        showHeader={false}
-                    />
+                <>
+                    <div className="task-list">
+                        {dataSource.map((item) => {
+                            const status = getItemStatus(item.key);
+                            const isSelected = selectedRowKeys.includes(
+                                item.key
+                            );
+                            const isRunning =
+                                runningInfo &&
+                                runningInfo.moduleId === item.moduleIndex + 1 &&
+                                runningInfo.tubeId &&
+                                item.tubes.includes(runningInfo.tubeId);
 
-                    {buttonFlag === 1 ? (
-                        <Flex
-                            align="center"
-                            gap="middle"
-                            style={{ marginLeft: "20px" }}
-                        >
-                            <Checkbox
-                                checked={allSelected}
-                                onChange={onSelectAll}
-                                disabled={dataSource.length === 0}
-                            ></Checkbox>
-                            <Button
-                                type="primary"
-                                onClick={runTubes}
-                                disabled={!hasSelected}
-                                loading={loading}
-                            >
-                                运行
-                            </Button>
-                            <Button
-                                type="primary"
-                                onClick={deleteTubes}
-                                disabled={!hasSelected}
-                                loading={loading}
-                                // style={{backgroundColor: '#ad0202',}}
-                            >
-                                删除
-                            </Button>
-                            <Button
-                                type="primary"
-                                onClick={pause}
-                                // style={{backgroundColor: '#ad0202',}}
-                            >
-                                暂停
-                            </Button>
-                            <Button
-                                type="primary"
-                                onClick={resume}
-                                // style={{backgroundColor: '#ad0202',}}
-                            >
-                                继续
-                            </Button>
-                        </Flex>
-                    ) : (
-                        <div></div>
+                            return (
+                                <div
+                                    key={item.key}
+                                    className={`task-item ${status} ${
+                                        isSelected ? "selected" : ""
+                                    }`}
+                                    onClick={() => handleItemClick(item.key)}
+                                >
+                                    <div className="task-checkbox">
+                                        <Checkbox
+                                            checked={isSelected}
+                                            disabled={status === "running"}
+                                            onChange={(e) => {
+                                                e.stopPropagation();
+                                                handleItemClick(item.key);
+                                            }}
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    </div>
+                                    <div className="task-content">
+                                        <div className="task-status">
+                                            <span className="status-text">
+                                                {item.status}
+                                            </span>
+                                            {isRunning && (
+                                                <Tag
+                                                    color="green"
+                                                    className="running-tag"
+                                                >
+                                                    运行中 #{runningInfo.tubeId}
+                                                </Tag>
+                                            )}
+                                        </div>
+                                        <div className="task-tubes">
+                                            {item.tube_list}
+                                        </div>
+                                    </div>
+                                    <div className="task-status-icon">
+                                        {status === "completed" && (
+                                            <span className="status-icon completed">
+                                                ✓
+                                            </span>
+                                        )}
+                                        {status === "running" && (
+                                            <span className="status-icon running">
+                                                ⏳
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {buttonFlag === 1 && (
+                        <div className="task-actions">
+                            <div className="action-left">
+                                <Checkbox
+                                    checked={allSelected}
+                                    onChange={onSelectAll}
+                                    disabled={dataSource.length === 0}
+                                >
+                                    全选
+                                </Checkbox>
+                            </div>
+                            <div className="action-buttons">
+                                <Button
+                                    type="primary"
+                                    onClick={runTubes}
+                                    disabled={!hasSelected}
+                                    loading={loading}
+                                >
+                                    运行
+                                </Button>
+                                <Button
+                                    type="primary"
+                                    onClick={deleteTubes}
+                                    disabled={!hasSelected}
+                                    loading={loading}
+                                    danger
+                                >
+                                    删除
+                                </Button>
+                                <Button
+                                    type="default"
+                                    onClick={pause}
+                                    loading={loading}
+                                >
+                                    暂停
+                                </Button>
+                                <Button
+                                    type="default"
+                                    onClick={resume}
+                                    loading={loading}
+                                >
+                                    继续
+                                </Button>
+                            </div>
+                        </div>
                     )}
-                </div>
+                </>
             ) : (
                 <Empty
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
                     imageStyle={{ height: 100 }}
-                    description={<span>暂无试管</span>}
+                    description="暂无试管"
                 />
             )}
-        </Flex>
+        </div>
     );
 };
-export default App;
+
+export default TaskTable;

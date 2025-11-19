@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
     Flex,
     Layout,
@@ -23,9 +23,7 @@ import Buttons from "./buttonTube";
 import TaskList from "@components/taskList/index";
 import FloatB from "../systemSet/index";
 import TaskTable from "./taskTable";
-import TaskStep from "@components/steps/taskStep";
 import DynamicCard from "@components/cards/dynamicCard";
-
 import { Empty } from "antd";
 import {
     getEluentCurve,
@@ -51,26 +49,19 @@ import {
     UpdatePrepChromParamsAPI,
 } from "../../api/methods";
 import { columnEquilibration, stopColumnEquilibration } from "../../api/column";
-
 import { saveExperimentData, executionMethod } from "../../api/experiment";
-
 import { uploadMethodFlag } from "../../api/methods";
 import { timeout } from "d3";
 import moment from "moment";
 import { getTube } from "@/models/chromatograph/api/tube";
-
 import io from "socket.io-client";
 import useIndexedDB from "../../hooks/useIndexedDB";
-
-const { Header, Sider, Content } = Layout;
-
 let num = [
     // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 1 },
     // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 2 },
     // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 3 },
     // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 4 },
 ];
-
 let data = [
     // { time: "17:46:47", value: 81.41712213857508 },
     // { time: "17:48:37", value: 88.51848125394666 },
@@ -78,7 +69,6 @@ let data = [
     // { time: "17:48:60", value: 20.51848125394666 },
 ];
 let excutedTubesUpdateFlag = false;
-
 let linePoint = [];
 const tube_list = [];
 const colorMap = {
@@ -106,19 +96,52 @@ let flagStartTime = 1; //  1 实验从头开始  0 实验继续
 let newPoints = [];
 let counter = 0;
 let selectTubeTransfer = [];
-
+const statusLabelMap = {
+    clean: "清洗",
+    abandon: "废弃",
+    retain: "保留",
+};
+const CollapsibleSection = ({ title, open, onToggle, children }) => (
+    <div className={`collapsible-section ${open ? "collapsible-open" : ""}`}>
+        <div className="collapsible-section__header" onClick={onToggle}>
+            <div className="collapsible-section__title">
+                <span className="collapsible-section__icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M9 3H4C3.44772 3 3 3.44772 3 4V9C3 9.55228 3.44772 10 4 10H9C9.55228 10 10 9.55228 10 9V4C10 3.44772 9.55228 3 9 3Z" fill="currentColor" opacity="0.3"/>
+                        <path d="M20 3H15C14.4477 3 14 3.44772 14 4V9C14 9.55228 14.4477 10 15 10H20C20.5523 10 21 9.55228 21 9V4C21 3.44772 20.5523 3 20 3Z" fill="currentColor" opacity="0.3"/>
+                        <path d="M9 14H4C3.44772 14 3 14.4477 3 15V20C3 20.5523 3.44772 21 4 21H9C9.55228 21 10 20.5523 10 20V15C10 14.4477 9.55228 14 9 14Z" fill="currentColor" opacity="0.3"/>
+                        <path d="M20 14H15C14.4477 14 14 14.4477 14 15V20C14 20.5523 14.4477 21 15 21H20C20.5523 21 21 20.5523 21 20V15C21 14.4477 20.5523 14 20 14Z" fill="currentColor"/>
+                    </svg>
+                </span>
+                <span className="collapsible-section__text">{title}</span>
+            </div>
+            <div className="collapsible-section__toggle">
+                <span className="collapsible-section__toggle-text">
+                    {open ? "收起" : "展开"}
+                </span>
+                <svg
+                    className={`collapsible-section__arrow ${open ? "collapsible-section__arrow--up" : ""}`}
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                >
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+            </div>
+        </div>
+        {open && <div className="collapsible-section__body">{children}</div>}
+    </div>
+);
 const App = () => {
     const [loading, setLoading] = React.useState(false);
     const [lineLoading, setLineLoading] = useState(false);
-
     const [data, setData] = useState([]);
     const [num, setNum] = useState([]);
     const [groupsOrigin, setGroupsOrigin] = useState([]);
-
     const [selectedAllTubes, setSelectedAllTubes] = useState([]);
     const [selectedTask, setSelectedTask] = useState([]);
     //反转标志，当0时，没有反转，当1时，已反选。
-
     const [reverseFlag, setReverseFlag] = useState(0);
     //清洗标志，当0时，所有试管禁用，当1时，所有试管可以选择。
     const [clean_flag, setCleanFlag] = useState(0);
@@ -126,26 +149,20 @@ const App = () => {
     const [methodFlag, setMethodFlag] = useState(0);
     //  1 可以修改折线 0 不可以修改折线
     const [lineFlag, setLineFlag] = useState(1);
+    const [operationsPanelOpen, setOperationsPanelOpen] = useState(true);
     const [selected_reverse, setSelectedReverse] = useState([]);
     const isScrollable = true;
-
     const [linePoint, setLine] = useState([]);
-
     const [messageApi, contextHolder] = message.useMessage();
-
     const [warningCode, setWarningCode] = useState({ code: 0, time: "" });
     const [errorCodes, setErrorCode] = useState([]);
-
     const [samplingTime, setSamplingTime] = useState(10);
-
     const [uploadFlag, setUploadFlag] = useState(1);
     const [equilibrationFlag, setEquilibrationFlag] = useState(1);
-
     const [dimensions, setDimensions] = useState({
         width: window.innerWidth,
         height: window.innerHeight,
     });
-
     const [currentMethod, setCurrentMethod] = useState({});
     const [excutedTubes, setExcutedTubes] = useState([]);
     // const [taskId, setTaskId] = useState();
@@ -159,7 +176,69 @@ const App = () => {
     });
     const [currentTaskId, setCurrentTaskId] = useState();
     const [excuteTaskFlag, setExcuteTaskFlag] = useState();
+    const [deviceStatus, setDeviceStatus] = useState({
+        PowerStatus: { value: false },
+        CurrentTube: { value: "0-0" },
+        PumpASpeed: { value: 0 },
+        PumpBSpeed: { value: 0 },
+        Detector: { value: 0 },
+    });
+    const [operatingTime, setOperatingTime] = useState(0);
+    const runningTaskInfo = useMemo(() => {
+        console.log("=== 状态栏调试信息 ===");
+        console.log("currentTaskId:", currentTaskId);
+        console.log("currentTubeId:", currentTubeId);
+        console.log("excutedTubes:", excutedTubes);
 
+        // 如果没有执行中的任务，返回null
+        if (!excutedTubes || excutedTubes.length === 0) {
+            console.log("excutedTubes 为空");
+            return null;
+        }
+
+        let task = null;
+        let tubeId = undefined;
+
+        // 优先使用 currentTaskId 查找任务
+        if (currentTaskId !== undefined && currentTaskId !== null) {
+            const activeTaskId = Number(currentTaskId);
+            if (!Number.isNaN(activeTaskId)) {
+                task = excutedTubes.find(
+                    (item) => Number(item.task_id) === activeTaskId
+                );
+                if (task) {
+                    // 如果有 currentTubeId，使用它
+                    const parsedTubeId =
+                        currentTubeId !== undefined && currentTubeId !== null
+                            ? Number(currentTubeId)
+                            : undefined;
+                    tubeId = Number.isNaN(parsedTubeId)
+                        ? undefined
+                        : parsedTubeId;
+                    console.log("使用 currentTaskId 找到任务");
+                }
+            }
+        }
+
+        // 如果没有找到任务，使用第一个任务作为当前运行任务
+        if (!task) {
+            task = excutedTubes[0];
+            // 使用任务的第一个试管
+            if (task.tube_list && task.tube_list.length > 0) {
+                tubeId = task.tube_list[0];
+            }
+            console.log("使用第一个任务作为当前运行任务");
+        }
+
+        const result = {
+            moduleId: task.module_id,
+            tubeId: tubeId,
+            statusText: statusLabelMap[task.status] || task.status,
+            taskId: task.task_id,
+        };
+        console.log("runningTaskInfo 结果:", result);
+        return result;
+    }, [currentTaskId, currentTubeId, excutedTubes]);
     const [openStart, setOpenStart] = useState(false);
     const [confirmLoading, setConfirmLoading] = useState(false);
     const [minTubeId, setMinTubeId] = useState(1); // 默认最小值
@@ -168,50 +247,46 @@ const App = () => {
     const [maxModuleId, setMaxModuleId] = useState(10); // 默认最大值
     const [inputTubeId, setInputTubeId] = useState(minTubeId); // 默认值为 minTubeId
     const [inputModuleId, setInputModuleId] = useState(minModuleId);
-
     const [openReset, setOpenReset] = useState(false);
     const [openPause, setOpenPause] = useState(false);
     const [pauseForm] = Form.useForm();
-
     const [openManualHold, setOpenManualHold] = useState(false);
     const [openWasteModel, setOpenWasteModel] = useState(false);
-
     const [autoGradient, setAutoGradient] = useState(false);
     let autoGradientLet = false;
-
+    const handleAutoGradientToggle = (checked) => {
+        setAutoGradient(checked);
+        autoGradientLet = true;
+        if (checked) {
+            setOpenAutoGradientModal(true);
+        }
+    };
     const [openEquilibration, setOpenEquilibration] = useState(false);
     const [equilibrationLoading, setEquilibrationLoading] = useState(false);
     const [equilibrationStatus, setEquilibrationStatus] = useState(false);
-
     // 自动梯度相关状态变量
     const [openAutoGradientModal, setOpenAutoGradientModal] = useState(false);
     const [autoGradientLoading, setAutoGradientLoading] = useState(false);
     const [autoGradientForm] = Form.useForm();
-
     const handleInputNumberChange = (value) => {
         setInputTubeId(value);
     };
     const [form] = Form.useForm(); // 获取表单实例
-
     const [spinning, setSpinning] = React.useState(false);
-
     const generateTaskId = () => {
         const timestamp = new Date().getTime();
         counter++;
         return `${timestamp}${counter}`;
     };
-
     useEffect(() => {
         const socket = io("http://localhost:5000"); // 确保 URL 正确
         socket.on("connect", () => {
             // console.log("Connected to WebSocket server");
         });
-
         socket.on("new_point", (data) => {
             console.log("1017   new_point", data);
             setNum((prevNum) => [...prevNum, data.point]);
         });
-
         socket.on("new_curve_point", (responseData) => {
             console.log("0705   autoGradient", autoGradient, autoGradientLet);
             getEluentLine().then((responseData) => {
@@ -219,7 +294,6 @@ const App = () => {
                     setLine(responseData.data.point);
                 }
             });
-
             setData((prevData) => [...prevData, responseData.point]);
         });
         socket.on("warning", (responseData) => {
@@ -268,11 +342,9 @@ const App = () => {
         socket.on("disconnect", () => {
             console.log("Disconnected from WebSocket server");
         });
-
         socket.on("pressure", (responseData) => {
             console.log(responseData.pressure_value);
         });
-
         // Clean up the connection on component unmount
         return () => {
             socket.disconnect();
@@ -281,26 +353,22 @@ const App = () => {
     useEffect(() => {
         excutedTubesUpdateFlag = true;
         updateExcuteTask(currentTubeId, currentTaskId);
-
         console.log("0913 -------8------ excutedTubes", excutedTubes);
     }, [currentTubeId, currentTaskId, excuteTaskFlag]);
     const handleReceiveFlags = (select_tubes, groupsOrigin) => {
         console.log("0926  Receive select_tubes", select_tubes);
         console.log("0926-2  Receive groupsOrigin", groupsOrigin);
-
         selected_tube = select_tubes;
         if (groupsOrigin?.length === 0) {
             setGroupsOrigin((prevNum) => {
                 return groupsOrigin;
             });
         }
-
         // setNum(numss);
     };
     // 把梯度曲线的value值转换成数字
     const convertNonNumericValues = (data) => {
         const updatedData = [...data];
-
         Object.keys(updatedData).forEach((key) => {
             const entry = updatedData[key];
             console.log("entry :", entry);
@@ -308,10 +376,8 @@ const App = () => {
                 entry.value = Number(entry.value);
             }
         });
-
         return updatedData;
     };
-
     const handleUpdatePoint = (linePointChange) => {
         console.log(
             "-------------------------------------------------linePointChange",
@@ -320,10 +386,8 @@ const App = () => {
         newPoints = convertNonNumericValues(linePointChange);
         console.log("linePointChange  newPoints :", newPoints);
         setLine(newPoints);
-
         // newPoints = linePointChange;
     };
-
     // flag  ： undefined  没被选中   true  保留  false  废弃
     const process_data_flag = (selected_tube, flag, color) => {
         console.log("1101   selected_tube", selected_tube);
@@ -339,7 +403,6 @@ const App = () => {
             ];
         }
         console.log("1101   newTubes", newTubes);
-
         selectTubeTransfer = [...newTubes];
         console.log("1101   selectTubeTransfer  2  ", selectTubeTransfer);
         if (clean_flag !== 1) {
@@ -347,34 +410,27 @@ const App = () => {
                 return [...prevNum, ...processGroupedData(selectTubeTransfer)];
             });
         }
-
         setSelectedTask((prevNum) => {
             return [...prevNum, ...processGroupedData(selectTubeTransfer)];
         });
     };
-
     const processGroupedData = (data) => {
         setReverseFlag(0);
         const groupedData = {};
-
         data.forEach((item) => {
             const key = `${item.module_index}-${item.flag}-${item.color}-${item.status}`;
-
             if (!groupedData[key]) {
                 groupedData[key] = [];
             }
-
             groupedData[key].push(item.tube_index);
         });
         console.log("1101   groupedData", groupedData);
-
         let result = [];
         Object.keys(groupedData).forEach((key) => {
             console.log("1021   key", key);
             const [module_index, flag, color, status] = key.split("-");
             const tube_indices = groupedData[key].sort((a, b) => a - b);
             let current_list = [tube_indices[0]];
-
             for (let i = 1; i < tube_indices.length; i++) {
                 if (tube_indices[i] === tube_indices[i - 1] + 1) {
                     current_list.push(tube_indices[i]);
@@ -389,7 +445,6 @@ const App = () => {
                     current_list = [tube_indices[i]];
                 }
             }
-
             // Add the last sequence
             result.push({
                 module_index: parseInt(module_index),
@@ -399,20 +454,16 @@ const App = () => {
                 color: color,
             });
         });
-
         result.forEach((entry) => {
             let tube_indices = entry.tube_index_list;
             let module_index = entry.module_index;
-
             // 根据 tube_index_list 获取最小和最大的 tube_index
             let min_tube_index = Math.min(...tube_indices);
             let max_tube_index = Math.max(...tube_indices);
-
             // 查找对应的时间
             let start_time = null;
             let end_time = null;
             // console.log("1021  ---------num", num);
-
             // 遍历 groupsOrigin 查找对应 module_index 和 tube_index 的时间
             num.forEach((group) => {
                 if (group.module_index === module_index) {
@@ -424,21 +475,17 @@ const App = () => {
                     }
                 }
             });
-
             // 将找到的时间插入 entry
             if (start_time && end_time) {
                 entry.time_start = start_time;
                 entry.time_end = end_time;
             }
         });
-
         console.log("1101    result", result);
-
         return result;
     };
     const retainFlags = () => {
         console.log("0926   selected_tube", selected_tube);
-
         if (selected_tube.length > 0) {
             let consecutiveArrays = selected_tube.map((tube) => ({
                 ...tube,
@@ -451,7 +498,6 @@ const App = () => {
                 colorNum = 1;
             }
             console.log("0926   selected_tube   ---2", selected_tube);
-
             process_data_flag(selected_tube, true, colorMap[colorNum]);
             setSelectedReverse([]);
             selected_tube = [];
@@ -459,7 +505,6 @@ const App = () => {
             error();
         }
     };
-
     const abandonFlags = () => {
         if (selected_tube.length > 0) {
             let consecutiveArrays = selected_tube.map((tube) => ({
@@ -475,7 +520,6 @@ const App = () => {
             error();
         }
     };
-
     const reverseFlags = () => {
         // console.log("1021-2 selected_tube :", selected_tube);
         // console.log("1021-2  groupsOrigin :", groupsOrigin);
@@ -501,7 +545,6 @@ const App = () => {
         //     error();
         // }
     };
-
     const updateExcuteTask = (tubeId, taskId) => {
         if (excutedTubesUpdateFlag) {
             excuted_tubes = excutedTubes;
@@ -516,7 +559,6 @@ const App = () => {
             });
         }
     };
-
     const undoReceiveFlags = async (result) => {
         const methodId = localStorage.getItem("methodId");
         if (result[0].flag === "run") {
@@ -538,7 +580,6 @@ const App = () => {
                 };
             });
             console.log("9012   tasks", tasks);
-
             excutedTubesUpdateFlag = false;
             setExcutedTubes((prevExcutedTubes) => [
                 ...prevExcutedTubes,
@@ -550,13 +591,11 @@ const App = () => {
         } else if (result[0].flag === "delete") {
             const indexesToDelete = new Set(result.map((item) => item.index));
             console.log("0926  indexesToDelete", indexesToDelete);
-
             // 处理被删除的元素
             indexesToDelete.forEach((index) => {
                 if (selectedAllTubes.length > 0) {
                     const tubeList = selectedAllTubes[index].tube_index_list;
                     console.log("0926    tubeList", tubeList);
-
                     process_data_flag(tubeList, undefined);
                     setSelectedAllTubes(
                         selectedAllTubes.filter((item, index) => {
@@ -573,12 +612,10 @@ const App = () => {
                             return !indexesToDelete.has(index);
                         })
                     );
-
                     console.log("0926    selectedAllTubes", selectedAllTubes);
                 } else {
                     // const tubeList = selectedTask[index].tube_index_list;
                     // console.log("0926   22222  tubeList", tubeList);
-
                     // console.log(
                     //     "0926  indexesToDelete  11   selectTubeTransfer",
                     //     selectTubeTransfer
@@ -592,9 +629,7 @@ const App = () => {
                     //     "0926 indexesToDelete  22   selectTubeTransfer",
                     //     selectTubeTransfer
                     // );
-
                     // process_data_flag(tubeList, undefined);
-
                     setSelectedTask(
                         selectedTask.filter((item, index) => {
                             return !indexesToDelete.has(index);
@@ -605,7 +640,6 @@ const App = () => {
             });
         }
     };
-
     const error = () => {
         messageApi.open({
             type: "error",
@@ -615,7 +649,6 @@ const App = () => {
     };
     const showModal = () => {
         localStorage.setItem("updateLineFlag", true);
-
         if (uploadFlag == 0) {
             messageApi.open({
                 type: "error",
@@ -646,12 +679,10 @@ const App = () => {
         setOpenStart(false);
         setOpenReset(false);
     };
-
     const start = () => {
         uploadMethodFlag().then((responsedata) => {
             setEquilibrationFlag(responsedata.data.equilibration_flag);
         });
-
         setCleanFlag(0);
         setLineLoading(true);
         setLoading(true);
@@ -666,14 +697,12 @@ const App = () => {
             console.log("0919  ----------2-------", flagStartTime);
         }
         console.log("0919  ----------3------", flagStartTime);
-
         getEluentCurve({ start_time: startTime })
             .then((responseData) => {})
             .catch((error) => {
                 console.log(error);
             });
     };
-
     const terminate = () => {
         setLineLoading(false);
         flagStartTime = 1;
@@ -681,11 +710,9 @@ const App = () => {
         terminateEluentLine().then((responseData) => {});
         setAutoGradient(false);
     };
-
     function formatTimeWithRegex(timeStr) {
         return timeStr.replace(/^(\d):/, "0$1:");
     }
-
     const pause = () => {
         setLineLoading(false);
         pauseEluentLine().then((responseData) => {});
@@ -694,7 +721,6 @@ const App = () => {
             setOpenPause(true);
         }
     };
-
     const handlePauseOk = () => {
         pauseForm.validateFields().then((values) => {
             UpdateLinePointAPI({
@@ -711,11 +737,9 @@ const App = () => {
             setOpenPause(false);
         });
     };
-
     const handlePauseCancel = () => {
         setOpenPause(false);
     };
-
     const clearData = () => {
         setExcutedTubes((prevExcutedTubes) => []);
         setCleanFlag(0);
@@ -735,7 +759,6 @@ const App = () => {
         console.log("0925  startTime", startTime);
         if (startTime !== undefined) {
             const methodId = localStorage.getItem("methodId");
-
             let endTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
             const excute_data = {
                 method_id: Number(methodId),
@@ -769,7 +792,6 @@ const App = () => {
             const experiment_data = {
                 experiment_id: Number(experimentId),
             };
-
             saveExperimentData(experiment_data).then((res) => {
                 console.log("res :", res.status);
             });
@@ -807,7 +829,6 @@ const App = () => {
         clearData();
         setOpenReset(false);
     };
-
     const continue_process = () => {
         setLineLoading(true);
         startEluentLine().then((responseData) => {
@@ -824,7 +845,6 @@ const App = () => {
             });
         }
     };
-
     const clean = () => {
         setData(() => []);
         setSelectedReverse([]);
@@ -832,17 +852,14 @@ const App = () => {
         setCleanFlag(1);
         console.log("clean_flag--- :", clean_flag);
         console.log("1101   selected_tube", selected_tube);
-
         if (selected_tube.length > 0) {
             // let consecutiveArrays = splitConsecutive(selected_tube);
             console.log("0926  clean_flag selected_tube :", selected_tube);
-
             let consecutiveArrays = selected_tube.map((tube) => ({
                 ...tube,
                 status: "clean",
             }));
             selected_tube = consecutiveArrays;
-
             colorNum = 4;
             process_data_flag(selected_tube, true, colorMap[colorNum]);
             setSelectedReverse([]);
@@ -852,16 +869,13 @@ const App = () => {
         //     error();
         // }
     };
-
     const setSampleStatus = () => {
         SetSampleStatusAPI().then((responsedata) => {
             // console.log("responsedata :", responsedata);
         });
     };
-
     useEffect(() => {
         console.log("1029   ", formatTimeWithRegex("00:02:00"));
-
         clearData();
         // setData([])
         getEluentLine().then((responseData) => {
@@ -884,29 +898,23 @@ const App = () => {
                 setMethodFlag(1);
                 setLine(responseData.data.point);
                 newPoints = responseData.data.point;
-
                 setSamplingTime(responseData.data.sampling_time);
             }
             // }
         });
         localStorage.setItem("updateLineFlag", true);
-
         const handleResize = () => {
             setDimensions({
                 width: window.innerWidth,
                 height: window.innerHeight,
             });
         };
-
         window.addEventListener("resize", handleResize);
-
         const resizeObserver = new ResizeObserver((entries) => {
             const { width, height } = entries[0].contentRect;
             setDimensions({ width, height });
         });
-
         resizeObserver.observe(document.documentElement);
-
         return () => {
             window.removeEventListener("resize", handleResize);
             resizeObserver.disconnect();
@@ -948,7 +956,6 @@ const App = () => {
             }
         });
     };
-
     const handleEquilibrationStart = () => {
         setEquilibrationLoading(true);
         const methodId = localStorage.getItem("methodId");
@@ -958,7 +965,6 @@ const App = () => {
             }
         });
     };
-
     const handleEquilibrationStop = () => {
         stopColumnEquilibration().then((response) => {
             if (!response.error) {
@@ -972,7 +978,6 @@ const App = () => {
             }
         });
     };
-
     // 自动梯度相关函数
     const handleAutoGradientOk = () => {
         autoGradientForm.validateFields().then((values) => {
@@ -992,13 +997,96 @@ const App = () => {
                 });
         });
     };
-
     const handleAutoGradientCancel = () => {
         autoGradientLet = false;
         setAutoGradient(false); // 取消时关闭Switch
         setOpenAutoGradientModal(false);
     };
-
+    const actionButtons = [
+        {
+            key: "equilibration",
+            label: "\u6da6\u67f1",
+            onClick: () => setOpenEquilibration(true),
+            disabled: methodFlag === 0,
+            className: "button7",
+        },
+        {
+            key: "start",
+            label: "\u5f00\u542f",
+            onClick: () => showModal(),
+            disabled: clean_flag === 1 || methodFlag === 0,
+            danger: true,
+        },
+        {
+            key: "pause",
+            label: "\u6682\u505c",
+            onClick: () => pause(),
+            disabled: clean_flag === 1 || methodFlag === 0,
+            className: "button2",
+        },
+        {
+            key: "continue",
+            label: "\u7ee7\u7eed",
+            onClick: () => continue_process(),
+            className: "button1",
+        },
+        {
+            key: "terminate",
+            label: "\u7ec8\u6b62",
+            onClick: () => terminate(),
+            disabled: clean_flag === 1 || methodFlag === 0,
+            className: "button1",
+        },
+        {
+            key: "save",
+            label: "\u4fdd\u5b58",
+            onClick: () => handleOkRest(),
+            disabled: methodFlag === 0,
+            className: "button4",
+        },
+        {
+            key: "manualHold",
+            label: "\u624b\u52a8\u4fdd\u6301",
+            onClick: () => setOpenManualHold(true),
+            disabled: methodFlag === 0,
+            className: "button5",
+        },
+        {
+            key: "switchTube",
+            label: "\u5207\u6362\u8bd5\u7ba1",
+            onClick: () => {
+                SetManualCutTubeAPI().then(() => {
+                    messageApi.open({
+                        type: "success",
+                        content: "切换试管成功",
+                    });
+                });
+            },
+            disabled: methodFlag === 0,
+            className: "button6",
+        },
+        {
+            key: "clear",
+            label: "\u6e05\u7a7a",
+            onClick: () => clearData(),
+            disabled: methodFlag === 0,
+            className: "button4",
+        },
+        {
+            key: "waste",
+            label: "\u5e9f\u5f03\u6a21\u5f0f",
+            onClick: () => setOpenWasteModel(true),
+            disabled: methodFlag === 0,
+            className: "button6",
+        },
+        {
+            key: "autoGradient",
+            label: `\u81ea\u52a8\u68af\u5ea6${autoGradient ? "(开)" : ""}`,
+            onClick: () => handleAutoGradientToggle(!autoGradient),
+            disabled: methodFlag === 0,
+            className: `button3 ${autoGradient ? "button-active" : ""}`,
+        },
+    ];
     return (
         <Flex gap="middle" wrap className="flex">
             {contextHolder}
@@ -1006,209 +1094,91 @@ const App = () => {
                 warningCode={warningCode}
                 dynamicHeight={dimensions.height}
                 callback={handleDynamicLine}
+                onDeviceStatusChange={(status) => setDeviceStatus(status)}
+                onOperatingTimeChange={(time) => setOperatingTime(time)}
             />
-
             <Layout>
-                <div
-                    style={{
-                        height: "340px",
-                        width: "100%",
-                        backgroundColor: "white",
-                    }}
-                >
-                    <Row>
-                        <Col span={4}>
-                            <Row style={{ marginTop: "30px" }}>
-                                <Col span={12}>
-                                    <Button
-                                        type="primary"
-                                        size="large"
-                                        className={`button button7`}
-                                        onClick={() =>
-                                            setOpenEquilibration(true)
-                                        }
-                                        disabled={
-                                            methodFlag === 0 ? true : false
-                                        }
-                                    >
-                                        润柱
-                                    </Button>
-                                </Col>
-                                <Col span={12}>
-                                    <Button
-                                        type="primary"
-                                        size="large"
-                                        danger
-                                        className={`button`}
-                                        onClick={() => showModal()}
-                                        disabled={
-                                            clean_flag === 1 || methodFlag === 0
-                                                ? true
-                                                : false
-                                        }
-                                    >
-                                        开始
-                                    </Button>
-                                </Col>
-                                <Col span={12}>
-                                    <Button
-                                        type="primary"
-                                        size="large"
-                                        className={`button button2`}
-                                        onClick={() => pause()}
-                                        disabled={
-                                            clean_flag === 1 || methodFlag === 0
-                                                ? true
-                                                : false
-                                        }
-                                    >
-                                        暂停
-                                    </Button>
-                                </Col>
-                                <Col span={12}>
-                                    <Button
-                                        type="primary"
-                                        size="large"
-                                        className={`button button1`}
-                                        onClick={() => continue_process()}
-                                    >
-                                        继续
-                                    </Button>
-                                </Col>
-                                <Col span={12}>
-                                    <Button
-                                        type="primary"
-                                        size="large"
-                                        className={`button button1`}
-                                        onClick={() => terminate()}
-                                        disabled={
-                                            clean_flag === 1 || methodFlag === 0
-                                                ? true
-                                                : false
-                                        }
-                                    >
-                                        终止
-                                    </Button>
-                                </Col>
-                                <Col span={12}>
-                                    <Button
-                                        type="primary"
-                                        size="large"
-                                        className={`button button4`}
-                                        onClick={() => handleOkRest()}
-                                        disabled={
-                                            methodFlag === 0 ? true : false
-                                        }
-                                    >
-                                        保存
-                                    </Button>
-                                </Col>
+                {/* 顶部机器状态栏 */}
+                <div className="machine-status-bar">
+                    <div className="machine-status-bar__content">
+                        <div className="machine-status-bar__item">
+                            <span className="machine-status-bar__label">
+                                设备
+                            </span>
+                            <span
+                                className={`machine-status-bar__value ${
+                                    deviceStatus?.PowerStatus?.value
+                                        ? "status-on"
+                                        : "status-off"
+                                }`}
+                            >
+                                {deviceStatus?.PowerStatus?.value
+                                    ? "接通"
+                                    : "断开"}
+                            </span>
+                        </div>
+                        <div className="machine-status-bar__separator"></div>
+                        <div className="machine-status-bar__item">
+                            <span className="machine-status-bar__label">
+                                运行时间
+                            </span>
+                            <span className="machine-status-bar__value">
+                                {operatingTime}H
+                            </span>
+                        </div>
+                        <div className="machine-status-bar__separator"></div>
+                        <div className="machine-status-bar__item">
+                            <span className="machine-status-bar__label">
+                                泵A
+                            </span>
+                            <span className="machine-status-bar__value">
+                                {(
+                                    deviceStatus?.PumpASpeed?.value / 1000
+                                ).toFixed(2)}{" "}
+                                ml/s
+                            </span>
+                        </div>
+                        <div className="machine-status-bar__separator"></div>
+                        <div className="machine-status-bar__item">
+                            <span className="machine-status-bar__label">
+                                泵B
+                            </span>
+                            <span className="machine-status-bar__value">
+                                {(
+                                    deviceStatus?.PumpBSpeed?.value / 1000
+                                ).toFixed(2)}{" "}
+                                ml/s
+                            </span>
+                        </div>
+                        <div className="machine-status-bar__separator"></div>
+                        <div className="machine-status-bar__item">
+                            <span className="machine-status-bar__label">
+                                检测器
+                            </span>
+                            <span className="machine-status-bar__value">
+                                {typeof deviceStatus?.Detector?.value === 'number'
+                                    ? deviceStatus.Detector.value.toFixed(3)
+                                    : deviceStatus?.Detector?.value || '0.000'}
+                            </span>
+                        </div>
+                        <div className="machine-status-bar__separator"></div>
+                        <div className="machine-status-bar__item">
+                            <span className="machine-status-bar__label">
+                                当前试管
+                            </span>
+                            <span className="machine-status-bar__value">
+                                {deviceStatus?.CurrentTube?.value || "-"}
+                            </span>
+                        </div>
+                    </div>
+                </div>
 
-                                <Col span={12}>
-                                    <Button
-                                        type="primary"
-                                        size="large"
-                                        className={`button button5`}
-                                        onClick={() => setOpenManualHold(true)}
-                                        disabled={
-                                            methodFlag === 0 ? true : false
-                                        }
-                                    >
-                                        手动保持
-                                    </Button>
-                                </Col>
-                                <Col span={12}>
-                                    <Button
-                                        type="primary"
-                                        size="large"
-                                        className={`button button6`}
-                                        onClick={() => {
-                                            SetManualCutTubeAPI().then(() => {
-                                                messageApi.open({
-                                                    type: "success",
-                                                    content: "切换试管成功",
-                                                });
-                                            });
-                                        }}
-                                        disabled={
-                                            methodFlag === 0 ? true : false
-                                        }
-                                    >
-                                        切换试管
-                                    </Button>
-                                </Col>
-                                <Col span={15}>
-                                    <div
-                                        style={{
-                                            border: "2px solidrgb(87, 80, 80)",
-                                            borderRadius: "6px",
-                                            backgroundColor:
-                                                "rgb(168, 166, 102)",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "space-between",
-                                            padding: "8px 2px",
-                                            marginLeft: "23px",
-                                            marginTop: "10px",
-                                        }}
-                                    >
-                                        <span
-                                            style={{
-                                                fontSize: "14px",
-                                                color: "rgb(255, 252, 252)",
-                                            }}
-                                        >
-                                            自动梯度
-                                        </span>
-                                        <Switch
-                                            checked={autoGradient}
-                                            onChange={(checked) => {
-                                                setAutoGradient(checked);
-                                                autoGradientLet = true;
-                                                console.log(
-                                                    "0705   autoGradientLet"
-                                                );
-                                                if (checked) {
-                                                    setOpenAutoGradientModal(
-                                                        true
-                                                    );
-                                                }
-                                            }}
-                                            disabled={methodFlag === 0}
-                                        />
-                                    </div>
-                                </Col>
-                                <Col span={9}>
-                                    <Button
-                                        type="primary"
-                                        size="large"
-                                        className={`button button4`}
-                                        disabled={
-                                            methodFlag === 0 ? true : false
-                                        }
-                                        onClick={() => clearData()}
-                                    >
-                                        清空
-                                    </Button>
-                                </Col>
-                                <Col span={9}>
-                                    <Button
-                                        type="primary"
-                                        size="large"
-                                        className={`button button6`}
-                                        onClick={() => setOpenWasteModel(true)}
-                                        disabled={
-                                            methodFlag === 0 ? true : false
-                                        }
-                                    >
-                                        废弃模式
-                                    </Button>
-                                </Col>
-                            </Row>
-                        </Col>
-                        <Col span={20}>
-                            <div className={`lineStyle overlayBox`}>
-                                <div className={`line_line overlayBox1`}>
+                <div className="top-section">
+                    {/* D3图表区域 */}
+                    <Row gutter={16}>
+                        <Col span={24}>
+                            <div className="lineStyle overlayBox">
+                                <div className="line_line overlayBox1">
                                     <Line
                                         data={data}
                                         num={num}
@@ -1222,32 +1192,58 @@ const App = () => {
                                         selectedAllTubes={selectedAllTubes}
                                     ></Line>
                                 </div>
-
-                                {/* <div className={`line_dynamic overlayBox2`}>
-                                    <DynamicLine></DynamicLine>
-                                </div> */}
                             </div>
                         </Col>
                     </Row>
+
+                    {/* 控制面板区域 - 当操作面板展开时隐藏 */}
+                    {!operationsPanelOpen && (
+                        <Row gutter={16} style={{ marginTop: "16px" }}>
+                            <Col span={24}>
+                                <div className="control-panel">
+                                    <div className="control-panel__header">
+                                        控制面板
+                                    </div>
+                                    <div className="control-panel__buttons-grid">
+                                        {actionButtons.map(
+                                            ({
+                                                key,
+                                                label,
+                                                onClick,
+                                                disabled,
+                                                danger,
+                                                className: customClass,
+                                            }) => (
+                                                <Button
+                                                    key={key}
+                                                    type="primary"
+                                                    danger={danger}
+                                                    size="middle"
+                                                    className={`control-panel__button ${
+                                                        customClass || ""
+                                                    }`.trim()}
+                                                    onClick={onClick}
+                                                    disabled={disabled}
+                                                >
+                                                    {label}
+                                                </Button>
+                                            )
+                                        )}
+                                    </div>
+                                </div>
+                            </Col>
+                        </Row>
+                    )}
                 </div>
-                <Divider
-                    className="divider"
-                    style={{
-                        color: "#9a0000",
-                        fontSize: "20px",
-                    }}
+
+                <CollapsibleSection
+                    title={"操作面板"}
+                    open={operationsPanelOpen}
+                    onToggle={() => setOperationsPanelOpen((prev) => !prev)}
                 >
-                    操作
-                </Divider>
-                <Spin spinning={loading} delay={500}>
-                    <Layout className="bottomStyle">
-                        <Sider width="34%" className="siderStyle">
-                            <DynamicCard
-                                position={"top"}
-                                title={"试管列表"}
-                                height={"300px"}
-                            >
-                                {/* <div className="buttonTitle">试管列表</div> */}
+                    <Row gutter={16} className="bottom-panels">
+                        <Col span={15}>
+                            <div className="panel-section">
                                 {num.length >= 0 && methodFlag !== 0 ? (
                                     <div className="buttonTubeFun">
                                         <Buttons
@@ -1259,70 +1255,45 @@ const App = () => {
                                             selectedAllTubes={selectedAllTubes}
                                             reverseFlag={reverseFlag}
                                         ></Buttons>
-
                                         <Row>
                                             <Col span={6}>
                                                 <Button
                                                     type="primary"
-                                                    className={`button button1`} // 使用模板字符串
+                                                    className={`button button1`}
                                                     onClick={() =>
                                                         retainFlags()
                                                     }
-                                                    // disabled={
-                                                    //     methodFlag === 0
-                                                    //         ? true
-                                                    //         : false
-                                                    // }
                                                 >
                                                     保留
                                                 </Button>
                                             </Col>
                                             <Col span={6}>
-                                                {" "}
                                                 <Button
                                                     type="primary"
                                                     className={`button button2`}
                                                     onClick={() =>
                                                         abandonFlags()
                                                     }
-                                                    // disabled={
-                                                    //     methodFlag === 0
-                                                    //         ? true
-                                                    //         : false
-                                                    // }
                                                 >
                                                     废弃
                                                 </Button>
                                             </Col>
-
                                             <Col span={6}>
-                                                {" "}
                                                 <Button
                                                     type="primary"
+                                                    className={`button button3`}
                                                     onClick={() =>
                                                         reverseFlags()
                                                     }
-                                                    className={`button button3`}
-                                                    // disabled={
-                                                    //     methodFlag === 0
-                                                    //         ? true
-                                                    //         : false
-                                                    // }
                                                 >
                                                     反转
                                                 </Button>
                                             </Col>
-
                                             <Col span={6}>
                                                 <Button
                                                     type="primary"
-                                                    onClick={() => clean()}
                                                     className={`button button4`}
-                                                    // disabled={
-                                                    //     methodFlag === 0
-                                                    //         ? true
-                                                    //         : false
-                                                    // }
+                                                    onClick={() => clean()}
                                                 >
                                                     清洗
                                                 </Button>
@@ -1336,46 +1307,22 @@ const App = () => {
                                         description={<span>暂无试管</span>}
                                     />
                                 )}
-                            </DynamicCard>
-                        </Sider>
-
-                        <Content className="taskStyle">
-                            {/* <div className="buttonTitle">任务列表</div> */}
-                            <div className="buttonTube">
-                                {/* {selected_tubes.length > 0  ? ( */}
-
-                                <Row gutter={20}>
-                                    <Col span={14}>
-                                        <DynamicCard
-                                            position={"top"}
-                                            title={"任务列表"}
-                                            height={"300px"}
-                                        >
-                                            <TaskTable
-                                                selected_tubes={selected_tubes}
-                                                title={""}
-                                                buttonFlag={1}
-                                                callback={undoReceiveFlags}
-                                                selectedAllTubes={selectedTask}
-                                            ></TaskTable>
-                                        </DynamicCard>
-                                    </Col>
-                                    <Col span={10}>
-                                        <DynamicCard
-                                            position={"top"}
-                                            title={"执行列表"}
-                                            height={"300px"}
-                                        >
-                                            <TaskStep
-                                                excuted_tubes={excutedTubes}
-                                            ></TaskStep>
-                                        </DynamicCard>
-                                    </Col>
-                                </Row>
                             </div>
-                        </Content>
-                    </Layout>
-                </Spin>
+                        </Col>
+                        <Col span={9}>
+                            <div className="panel-section">
+                                <TaskTable
+                                    selected_tubes={selected_tubes}
+                                    title={""}
+                                    buttonFlag={1}
+                                    callback={undoReceiveFlags}
+                                    selectedAllTubes={selectedTask}
+                                    runningInfo={runningTaskInfo}
+                                ></TaskTable>
+                            </div>
+                        </Col>
+                    </Row>
+                </CollapsibleSection>
             </Layout>
             <Modal
                 title="初始化"
@@ -1572,7 +1519,6 @@ const App = () => {
                     </div>
                 </div>
             </Modal>
-
             <Modal
                 title="自动梯度参数设置"
                 open={openAutoGradientModal}

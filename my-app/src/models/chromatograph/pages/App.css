@@ -1,148 +1,217 @@
-.App {
-  text-align: center;
+﻿:root {
+  /* 品牌色系 */
+  --brand-color: #9b0000;
+  --brand-secondary: #c24141;
+
+  /* 功能色系 */
+  --success-color: #52c41a;
+  --warning-color: #faad14;
+  --danger-color: #ff4d4f;
+  --info-color: #1890ff;
+  --neutral-color: #8c8c8c;
+
+  /* 背景色系 */
+  --layout-bg: #f6f7fb;
+  --card-bg: #ffffff;
+  --hover-bg: #f5f5f5;
+
+  /* 文字色系 */
+  --text-primary: #262626;
+  --text-secondary: #595959;
+  --text-muted: #7a7a7a;
+  --text-disabled: #bfbfbf;
+
+  /* 边框色系 */
+  --border-color: #e8e8e8;
+  --border-color-light: #f0f0f0;
+
+  /* 间距系统 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+
+  /* 圆角系统 */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* 阴影系统 */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+
+  /* 屏幕尺寸 */
+  --target-screen-width: 1280px;
+  --target-screen-height: 800px;
+  --header-height: 64px;
 }
 
-.container{
-  height:60vh;
+body, html, #root {
+  height: 100%;
+  background-color: var(--layout-bg);
+}
+
+.appShell {
+  width: min(var(--target-screen-width), 100vw);
+  height: min(var(--target-screen-height), 100vh);
+  margin: 0 auto;
+  background: var(--layout-bg);
   display: flex;
-  justify-content:center;
-  align-items:center;
-  
-} 
-
-
-.layoutStyle  {
-  border-radius: 8;
-  overflow:  hidden ;
-  width:  calc(100% - 8px) ;
-  max-width:  calc(100% - 8px) ;
-  background-color:  #ffffff !important;
-
-  /* background-image: url(D:\front\react-electron\my-app\src\assets\image\p7_con_bg.jpg); */
+  flex-direction: column;
+  box-sizing: border-box;
 }
-.title{
-  height: 30px;
-  width: 100%;
-  background-color: #9b0000 !important;
+
+.appHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--brand-color) !important;
+  padding: 0 0px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+}
+
+.brandBlock {
   display: flex;
   align-items: center;
-  position: relative; /* 确保内部使用绝对定位的元素相对于这个容器定位 */
-
-}
-
-.image {
-  position: absolute;
-  left: 2%; 
-  height: 80%;
-
-}
-
-.titleText{
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  gap: 16px;
   color: #fff;
-  font-size: 1rem;
-
 }
 
-.titleClock {
-  position: absolute;
-  top: 50%;
-  right: 2%; /* 将 titleClock 定位到右侧 */
-  transform: translate(0, -50%);
+.brandLogo {
+  height: 48px;
+}
+
+.brandInfo h1 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.brandInfo p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #ffe7e7;
+}
+
+.headerClock {
   color: #fff;
-
+  font-weight: 500;
 }
 
-.tag {
-  display: flex;
-  height: 45rem; /* 可根据需要调整 */
-  width: 100%;
-  flex-direction: column; /* 垂直排列 */
-}
-
-.tag > div {
+.appBody {
   flex: 1;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  /* writing-mode: vertical-rl; 文字垂直排列 */
-  /* text-orientation: mixed;   保持文字正常方向 */
-  cursor: pointer;
-  border-bottom: 2px solid #680303ea;    
-  transition: background-color 0.3s;
-  font-weight: 1000;
-  font-size: large;
-  color: #e6f7ff;
+  min-height: 0;
+  height: calc(100% - var(--header-height));
 }
 
-.custom-anchor {
-  
-}
-
-.custom-anchor .ant-anchor-ink {
-  display: none ; /* 隐藏默认的锚点滑动条 */
-  background-color:#9b0000 !important ;
-}
-
-.anchor-item {
-  width: 2.5rem;
-  height: 10.5rem; /* 设置每个锚点的高度 */
-  background-color: #f0f0f0; /* 设置背景颜色 */
+.appSider {
+  background: #151515 !important;
+  padding: 0px 10px;
   display: flex;
+  flex-direction: column;
+  min-height: min(
+    calc(100vh - var(--header-height)),
+    calc(var(--target-screen-height) - var(--header-height))
+  );
+}
+
+.appNavMenu {
+  flex: 1;
+  background: transparent !important;
+  border-inline-end: none !important;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0;
+}
+
+.navItemContent {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  writing-mode: vertical-rl; /* 垂直文字模式 */
-    text-orientation: mixed; /* 文字方向 */
+  width: 100%;
+  height: 100%;
+  gap: 10px;
 }
 
-.experiment {
-  height: 22.5rem; /* 设置每个锚点的高度 */
-  
+.navItemIcon {
+  font-size: 1.9rem;
+  line-height: 1;
+  padding: 0 !important;
+
+}
+.ant-menu .ant-menu-item .anticon +span{
+  margin-inline-start: 0px;
+}
+.navItemText {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
 }
 
-.custom-anchor .ant-anchor-link{
-  padding-inline:0 !important;
-  background-color:#fff !important
+.appNavMenu .ant-menu-item {
+  margin: 0 !important;
+  flex: 1;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 83px 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
-
-.anchor-item:hover {
-  background-color: #9b0000; /* 鼠标悬停时的背景颜色 */
-  color: white;
+.appNavMenu .ant-menu-item::after {
+  display: none;
 }
 
-.custom-anchor .ant-anchor-link-active .anchor-item {
-  background-color: #9b0000; /* 激活时的背景颜色 */
-  color: white;
+.appNavMenu .ant-menu-item .ant-menu-item-icon {
+  margin-inline-end: 0;
+  font-size: 1.9rem;
 }
 
-.tag_experiment {
-  background-color: #9b0000;
+.appNavMenu .ant-menu-item-selected {
+  background: linear-gradient(145deg, #f43f5e, #be123c) !important;
+  box-shadow: 10 0px 30px rgba(190, 18, 60, 0.35);
+  transform: translateY(-2px);
 }
 
-.tag_method {
-  background-color: #9b0000;
+.appNavMenu .ant-menu-item:not(.ant-menu-item-selected):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(255, 255, 255, 0.15);
 }
 
-.tag_historical {
-  background-color: #fff7e6;
+.appContent {
+  padding: 7px;
+  background: var(--layout-bg);
+  overflow: auto;
 }
 
-.tag > div:hover {
-  /* background-color: #460101;  鼠标悬停时的颜色*/
+.appContent > * {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 13px;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
 }
 
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+@media (max-width: 800px) {
+  .appHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0px;
   }
-  to {
-    transform: rotate(360deg);
+
+  .appContent {
+    padding: 16px;
   }
 }

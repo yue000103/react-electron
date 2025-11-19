@@ -1,121 +1,97 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState } from "react";
 
-import logo from "./logo.svg";
 import "./App.css";
 import Choramatograph from "./views/index";
 import Method from "./method/index";
 import Historical from "./historical/index";
-import Test from "./views/test";
-import { Radio, Space, Tabs, Row, Col, Flex, Layout, Anchor } from "antd";
+import { Layout, Menu } from "antd";
+import {
+    ExperimentOutlined,
+    ProfileOutlined,
+    ToolOutlined,
+} from "@ant-design/icons";
 import Clock from "@components/clock/index";
 
 import pkuImage from "@/assets/image/pku.png";
 import "@components/css/overlay.css";
 
+const { Header, Sider, Content } = Layout;
+
+const NAV_ITEMS = [
+    {
+        key: "method",
+        label: "方法设置",
+        icon: ToolOutlined,
+    },
+    {
+        key: "experiment",
+        label: "实验监控",
+        icon: ExperimentOutlined,
+    },
+    {
+        key: "historical",
+        label: "历史数据",
+        icon: ProfileOutlined,
+    },
+];
+
+const menuItems = NAV_ITEMS.map(({ key, label, icon: IconComponent }) => ({
+    key,
+    label: (
+        <div className="navItemContent">
+            <IconComponent className="navItemIcon" />
+            <span className="navItemText">{label}</span>
+        </div>
+    ),
+}));
+
 function App() {
-    const { Link } = Anchor;
-    const [showExperiment, setShowExperiment] = useState(true);
-    const [showMethod, setShowMethod] = useState(false);
-    const [showHistorical, setShowHistorical] = useState(false);
-    const [activeLink, setActiveLink] = useState("#2"); // 设置默认激活的链接
+    const [activeView, setActiveView] = useState("experiment");
 
-    const handleClick = (e, link) => {
-        e.preventDefault();
-        console.log("1101  link", link);
-        console.log("1101  e", e);
-        const anchorKey = link["href"];
-        setActiveLink(anchorKey);
-
-        if (Number(link["href"].substring(1)) === 1) {
-            setShowMethod(true);
-            setShowExperiment(false);
-            setShowHistorical(false);
-        } else if (Number(link["href"].substring(1)) === 2) {
-            setShowExperiment(true);
-            setShowMethod(false);
-            setShowHistorical(false);
-        } else if (Number(link["href"].substring(1)) === 3) {
-            setShowMethod(false);
-            setShowExperiment(false);
-            setShowHistorical(true);
+    const renderCurrentView = () => {
+        switch (activeView) {
+            case "method":
+                return <Method />;
+            case "historical":
+                return <Historical />;
+            default:
+                return <Choramatograph />;
         }
     };
 
-    // 获取当前激活的锚点
-    const getCurrentAnchor = () => {
-        return activeLink;
-    };
-    useEffect(() => {
-        getCurrentAnchor();
-    });
-
     return (
-        <Flex gap="middle" wrap className="container">
-            <Layout className="layoutStyle">
-                <Row>
-                    <div className="title">
-                        {" "}
-                        <img src={pkuImage} alt="pku" className="image" />
-                        <div className="titleText">
-                            <h3>Chromatography Instrument</h3>
-                        </div>
-                        <div className="titleClock">
-                            <Clock></Clock>
-                        </div>
+        <Layout className="appShell">
+            <Header className="appHeader">
+                <div className="brandBlock">
+                    <img src={pkuImage} alt="pku" className="brandLogo" />
+                    <div className="brandInfo">
+                        <h1>Chromatography Instrument</h1>
                     </div>
-                </Row>
-                <Row>
-                    <Col span={1}>
-                        <Anchor
-                            affix={true}
-                            onClick={handleClick}
-                            getCurrentAnchor={getCurrentAnchor}
-                            className="custom-anchor"
-                            // defaultActiveKey="#1" // 设置初始高亮的锚点
-                            // defaultSelectedKeys={["1"]}
-                            // getCurrentAnchor={() => currentAnchor} // 使用 currentAnchor 控制当前选中项
-                            targetOffset={0}
-                            items={[
-                                {
-                                    key: "1",
-                                    href: "#1",
-                                    title: (
-                                        <div className="anchor-item">
-                                            方&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;法
-                                        </div>
-                                    ),
-                                },
-
-                                {
-                                    key: "2",
-                                    href: "#2",
-                                    title: (
-                                        <div className="anchor-item experiment">
-                                            实&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;验
-                                        </div>
-                                    ),
-                                },
-                                {
-                                    key: "3",
-                                    href: "#3",
-                                    title: (
-                                        <div className="anchor-item">
-                                            历&nbsp;史&nbsp;数&nbsp;据&nbsp;
-                                        </div>
-                                    ),
-                                },
-                            ]}
-                        />
-                    </Col>
-                    <Col span={22}>
-                        {showExperiment ? <Choramatograph /> : null}{" "}
-                        {showMethod ? <Method /> : null}{" "}
-                        {showHistorical ? <Historical /> : null}{" "}
-                    </Col>
-                </Row>
-                {/* <Test></Test> */}
+                </div>
+                <div className="headerClock">
+                    <Clock />
+                </div>
+            </Header>
+            <Layout className="appBody">
+                <Sider
+                    className="appSider"
+                    width={120}
+                    breakpoint="lg"
+                    collapsedWidth={64}
+                >
+                    <Menu
+                        className="appNavMenu"
+                        mode="inline"
+                        theme="dark"
+                        selectedKeys={[activeView]}
+                        items={menuItems}
+                        onClick={({ key }) => setActiveView(key)}
+                        style={{ height: "100%" }}
+                    />
+                </Sider>
+                <Content className="appContent">{renderCurrentView()}</Content>
             </Layout>
-        </Flex>
+        </Layout>
     );
 }
 

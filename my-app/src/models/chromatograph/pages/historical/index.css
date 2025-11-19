@@ -1,7 +1,7 @@
 .data-main{
   margin-top: 20px;
-  height: 44rem;
-  overflow: auto;
+  /* 移除固定高度和滚动，改用分页 */
+  min-height: 200px;
 }
 /* .ant-collapse-content-active {
   transition: max-height 5s ease-out, opacity 5s ease-out;
