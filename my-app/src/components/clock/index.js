@@ -19,6 +19,7 @@ const Clock = () => {
 
             const formattedTime = `${year}/${month}/${day} ${hour}:${minute}:${second} ${period}`;
             setTime(formattedTime);
+            console.log("1126 ------------");
         }, 1000);
 
         // 清除定时器

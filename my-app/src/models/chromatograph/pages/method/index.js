@@ -39,7 +39,10 @@ import {
     CheckCircleOutlined,
 } from "@ant-design/icons";
 import { uploadMethodFlag, UpdatePrepChromParamsAPI } from "../../api/methods";
-import { UpdateCleanListAPI, UpdateModuleListAPI } from "../../api/eluent_curve";
+import {
+    UpdateCleanListAPI,
+    UpdateModuleListAPI,
+} from "../../api/eluent_curve";
 import { getAllTubes } from "../../api/status";
 
 import "./index.css";
@@ -130,8 +133,6 @@ const Method = () => {
         }
     }, [methodID]);
 
- 
-
     const saveMethod = () => {
         const methodId = localStorage.getItem("methodId");
         if (methodId) {
@@ -184,13 +185,11 @@ const Method = () => {
             localStorage.setItem("uploadFlag", 1);
             setSpinning(false);
             messageApi.open({
-              type: "success",
-              content: "上传成功！",
+                type: "success",
+                content: "上传成功！",
             });
         });
-        
 
-        
         // uploadMethod();
     };
     const showModal = () => {
@@ -268,12 +267,14 @@ const Method = () => {
         setMethodName(item.methodName);
 
         // 解析 cleanList 和 retainList
-        const parsedCleanList = JSON.parse(item.cleanList || '[]');
-        const parsedRetainList = JSON.parse(item.retainList || '[]');
+        const parsedCleanList = JSON.parse(item.cleanList || "[]");
+        const parsedRetainList = JSON.parse(item.retainList || "[]");
 
         // 从 cleanList 和 retainList 中提取体积值（取第一个模块的体积，如果存在）
-        const cleanVolume = parsedCleanList.length > 0 ? parsedCleanList[0].liquid_volume : 0;
-        const retainVolume = parsedRetainList.length > 0 ? parsedRetainList[0].liquid_volume : 0;
+        const cleanVolume =
+            parsedCleanList.length > 0 ? parsedCleanList[0].liquid_volume : 0;
+        const retainVolume =
+            parsedRetainList.length > 0 ? parsedRetainList[0].liquid_volume : 0;
 
         const basisDatas = {
             methodName: item.methodName,
@@ -309,26 +310,38 @@ const Method = () => {
     const methodItems = methodDatas.map((item) => {
         // 基础参数数据
         const basicDataSource = [
-            { key: '1', label: '采集时间', value: `${item.samplingTime} min` },
-            { key: '2', label: '检测器波长', value: item.detectorWavelength },
-            { key: '3', label: '总流速', value: `${item.totalFlowRate} mL/min` },
-            { key: '4', label: '平衡柱子', value: item.equilibrationColumn == 1 ? '是' : '否' },
+            { key: "1", label: "采集时间", value: `${item.samplingTime} min` },
+            { key: "2", label: "检测器波长", value: item.detectorWavelength },
+            {
+                key: "3",
+                label: "总流速",
+                value: `${item.totalFlowRate} mL/min`,
+            },
+            {
+                key: "4",
+                label: "平衡柱子",
+                value: item.equilibrationColumn == 1 ? "是" : "否",
+            },
         ];
 
         if (item.equilibrationColumn == 1) {
             basicDataSource.push(
-                { key: '5', label: '速度', value: `${item.speed}%` },
-                { key: '6', label: '润柱时间', value: `${item.equilibrationTime} min` }
+                { key: "5", label: "速度", value: `${item.speed}%` },
+                {
+                    key: "6",
+                    label: "润柱时间",
+                    value: `${item.equilibrationTime} min`,
+                }
             );
         }
 
         const basicColumns = [
-            { title: '参数', dataIndex: 'label', key: 'label', width: '30%' },
-            { title: '值', dataIndex: 'value', key: 'value' },
+            { title: "参数", dataIndex: "label", key: "label", width: "30%" },
+            { title: "值", dataIndex: "value", key: "value" },
         ];
 
         // 洗脱模式数据
-        const elutionMode = item.isocratic == 1 ? '等度洗脱' : '二元高压梯度';
+        const elutionMode = item.isocratic == 1 ? "等度洗脱" : "二元高压梯度";
 
         return {
             key: item.methodId.toString(),
@@ -351,12 +364,29 @@ const Method = () => {
                     {item.isocratic == 1 ? (
                         <Table
                             dataSource={[
-                                { key: '1', label: '泵A流速', value: `${item.pumpA}%` },
-                                { key: '2', label: '泵B流速', value: `${item.pumpB}%` },
+                                {
+                                    key: "1",
+                                    label: "泵A流速",
+                                    value: `${item.pumpA}%`,
+                                },
+                                {
+                                    key: "2",
+                                    label: "泵B流速",
+                                    value: `${item.pumpB}%`,
+                                },
                             ]}
                             columns={[
-                                { title: '参数', dataIndex: 'label', key: 'label', width: '30%' },
-                                { title: '值', dataIndex: 'value', key: 'value' },
+                                {
+                                    title: "参数",
+                                    dataIndex: "label",
+                                    key: "label",
+                                    width: "30%",
+                                },
+                                {
+                                    title: "值",
+                                    dataIndex: "value",
+                                    key: "value",
+                                },
                             ]}
                             pagination={false}
                             size="small"
@@ -366,10 +396,26 @@ const Method = () => {
                         <Table
                             dataSource={JSON.parse(item.pumpList)}
                             columns={[
-                                { title: '时间 (min)', dataIndex: 'time', key: 'time' },
-                                { title: '泵A (%)', dataIndex: 'pumpA', key: 'pumpA' },
-                                { title: '泵B (%)', dataIndex: 'pumpB', key: 'pumpB' },
-                                { title: '总流速', dataIndex: 'flowRate', key: 'flowRate' },
+                                {
+                                    title: "时间 (min)",
+                                    dataIndex: "time",
+                                    key: "time",
+                                },
+                                {
+                                    title: "泵A (%)",
+                                    dataIndex: "pumpA",
+                                    key: "pumpA",
+                                },
+                                {
+                                    title: "泵B (%)",
+                                    dataIndex: "pumpB",
+                                    key: "pumpB",
+                                },
+                                {
+                                    title: "总流速",
+                                    dataIndex: "flowRate",
+                                    key: "flowRate",
+                                },
                             ]}
                             pagination={false}
                             size="small"
@@ -592,7 +638,6 @@ const Method = () => {
             console.error(error);
         }
     };
-   
 
     useEffect(() => {
         const methodId = localStorage.getItem("methodId");
@@ -634,19 +679,19 @@ const Method = () => {
     useEffect(() => {
         const handleKeyPress = (e) => {
             // Ctrl+S 保存方法
-            if (e.ctrlKey && e.key === 's') {
+            if (e.ctrlKey && e.key === "s") {
                 e.preventDefault();
                 saveMethod();
                 messageApi.open({
-                    type: 'info',
-                    content: '正在保存方法...',
+                    type: "info",
+                    content: "正在保存方法...",
                     duration: 1,
                 });
             }
         };
 
-        window.addEventListener('keydown', handleKeyPress);
-        return () => window.removeEventListener('keydown', handleKeyPress);
+        window.addEventListener("keydown", handleKeyPress);
+        return () => window.removeEventListener("keydown", handleKeyPress);
     }, []);
 
     const handleReceiveFlags = (cleanList, retainList) => {
@@ -660,9 +705,9 @@ const Method = () => {
     const handleCleanVolumeChange = (value) => {
         if (value !== null && value !== undefined) {
             // 构建简单的 module_list
-            const moduleList = cleanList.map(item => ({
+            const moduleList = cleanList.map((item) => ({
                 ...item,
-                liquid_volume: value
+                liquid_volume: value,
             }));
 
             // 如果 cleanList 为空，创建一个默认项
@@ -670,16 +715,18 @@ const Method = () => {
                 moduleList.push({
                     module_id: 1,
                     liquid_volume: value,
-                    tube_id: []
+                    tube_id: [],
                 });
             }
 
             setCleanList(moduleList);
-            UpdateCleanListAPI({ module_list: moduleList }).then(response => {
-                console.log("清洗体积已更新:", response);
-            }).catch(error => {
-                console.error("更新清洗体积失败:", error);
-            });
+            UpdateCleanListAPI({ module_list: moduleList })
+                .then((response) => {
+                    console.log("清洗体积已更新:", response);
+                })
+                .catch((error) => {
+                    console.error("更新清洗体积失败:", error);
+                });
         }
     };
 
@@ -687,9 +734,9 @@ const Method = () => {
     const handleRetainVolumeChange = (value) => {
         if (value !== null && value !== undefined) {
             // 构建简单的 module_list
-            const moduleList = retainList.map(item => ({
+            const moduleList = retainList.map((item) => ({
                 ...item,
-                liquid_volume: value
+                liquid_volume: value,
             }));
 
             // 如果 retainList 为空，创建一个默认项
@@ -697,16 +744,18 @@ const Method = () => {
                 moduleList.push({
                     module_id: 1,
                     liquid_volume: value,
-                    tube_id: []
+                    tube_id: [],
                 });
             }
 
             setRetainList(moduleList);
-            UpdateModuleListAPI({ module_list: moduleList }).then(response => {
-                console.log("收集体积已更新:", response);
-            }).catch(error => {
-                console.error("更新收集体积失败:", error);
-            });
+            UpdateModuleListAPI({ module_list: moduleList })
+                .then((response) => {
+                    console.log("收集体积已更新:", response);
+                })
+                .catch((error) => {
+                    console.error("更新收集体积失败:", error);
+                });
         }
     };
 
@@ -744,10 +793,17 @@ const Method = () => {
                             <Row gutter={14}>
                                 <Col span={6}>
                                     <Form.Item
-                                        label={<span className="important-label">方法名称</span>}
+                                        label={
+                                            <span className="important-label">
+                                                方法名称
+                                            </span>
+                                        }
                                         name="methodName"
                                     >
-                                        <Input disabled={true} placeholder="当前方法名称" />
+                                        <Input
+                                            disabled={true}
+                                            placeholder="当前方法名称"
+                                        />
                                     </Form.Item>
                                 </Col>
                                 <Col span={6}>
@@ -755,7 +811,10 @@ const Method = () => {
                                         label="采集时间 (min)"
                                         name="samplingTime"
                                         rules={[
-                                            { required: true, message: '请输入采集时间' }
+                                            {
+                                                required: true,
+                                                message: "请输入采集时间",
+                                            },
                                         ]}
                                     >
                                         <Input placeholder="请输入采集时间" />
@@ -792,10 +851,7 @@ const Method = () => {
                                     </Form.Item>
                                 </Col>
                                 <Col span={6}>
-                                    <Form.Item
-                                        label="泵B比例 (%)"
-                                        name="speed"
-                                    >
+                                    <Form.Item label="泵B比例 (%)" name="speed">
                                         <Input placeholder="请输入泵B比例" />
                                     </Form.Item>
                                 </Col>
@@ -824,7 +880,10 @@ const Method = () => {
                                         label="目标化合物SMILES"
                                         name="smiles"
                                     >
-                                        <Input type="text" placeholder="可选填" />
+                                        <Input
+                                            type="text"
+                                            placeholder="可选填"
+                                        />
                                     </Form.Item>
                                 </Col>
                                 <Col span={8}>
@@ -833,11 +892,13 @@ const Method = () => {
                                         name="cleaningSpeed"
                                     >
                                         <InputNumber
-                                            style={{ width: '100%' }}
+                                            style={{ width: "100%" }}
                                             min={0}
                                             step={0.1}
                                             placeholder="请输入清洗体积"
-                                            onChange={(value) => handleCleanVolumeChange(value)}
+                                            onChange={(value) =>
+                                                handleCleanVolumeChange(value)
+                                            }
                                         />
                                     </Form.Item>
                                 </Col>
@@ -847,11 +908,13 @@ const Method = () => {
                                         name="drainSpeed"
                                     >
                                         <InputNumber
-                                            style={{ width: '100%' }}
+                                            style={{ width: "100%" }}
                                             min={0}
                                             step={0.1}
                                             placeholder="请输入收集体积"
-                                            onChange={(value) => handleRetainVolumeChange(value)}
+                                            onChange={(value) =>
+                                                handleRetainVolumeChange(value)
+                                            }
                                         />
                                     </Form.Item>
                                 </Col>
@@ -916,7 +979,6 @@ const Method = () => {
                             <Radio value={2}>二元高压梯度</Radio>
                         </Radio.Group>
                     </div>
-
                     {value === 1 && (
                         <div className="isocratic">
                             <Row justify="center">
@@ -929,10 +991,16 @@ const Method = () => {
                                         form={formElution}
                                         onFinish={onFinishElution}
                                     >
-                                        <Form.Item label="泵A流速 (%)" name="pumpA">
+                                        <Form.Item
+                                            label="泵A流速 (%)"
+                                            name="pumpA"
+                                        >
                                             <Input placeholder="请输入泵A流速" />
                                         </Form.Item>
-                                        <Form.Item label="泵B流速 (%)" name="pumpB">
+                                        <Form.Item
+                                            label="泵B流速 (%)"
+                                            name="pumpB"
+                                        >
                                             <Input placeholder="请输入泵B流速" />
                                         </Form.Item>
                                     </Form>
@@ -944,11 +1012,11 @@ const Method = () => {
                     {value === 2 && (
                         <div className="pressure">
                             <Row gutter={24} justify="center">
-                                <Col span={10}>
+                                <Col span={12}>
                                     <div className="dynamic-line">
                                         <DynamicLine
                                             widthLine={400}
-                                            heightLine={280}
+                                            heightLine={250}
                                             samplingTime={samplingTime}
                                             pressure={pressure}
                                         />

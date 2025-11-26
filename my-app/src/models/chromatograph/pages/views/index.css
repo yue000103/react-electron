@@ -150,7 +150,8 @@
   max-height: 400px;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 8px 4px 8px 0;
+
+  padding: 0px 0px 0px 0;
 }
 
 .bottomStyle {
@@ -393,7 +394,8 @@
 }
 
 .collapsible-section__body {
-  margin-top: 12px;
+
+  margin-top: 0px;
   animation: slideDown 0.3s ease;
 }
 
@@ -409,7 +411,9 @@
 }
 
 .bottom-panels {
-  margin-top: 16px;
+
+  margin-top: 0px;
+
 }
 
 /* 简化的面板样式 - 去除卡片边框，节省空间 */
@@ -611,3 +615,5 @@
   flex: 1;
   text-align: center;
 }
+
+

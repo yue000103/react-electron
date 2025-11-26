@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import {
     QuestionCircleOutlined,
     SyncOutlined,
@@ -21,26 +21,26 @@ import {
     Table,
     Row,
     Col,
-    Card,
-    Statistic,
     Tooltip,
     Switch,
     message,
     Spin,
     Input,
     Button,
+    InputNumber,
 } from "antd";
 import DynamicLine from "./dynamicLine";
 import DynamicForm from "@components/form/dynamicForm";
 import parameterDescription from "../config/parameter_description.json";
 
 import {
-    getDeviceStatus,
     getCodes,
-    switchManualTest,
-    pumpOperation,
     postInitDeviceMode,
     getInitDeviceMode,
+    multiwayValveControl,
+    diaphragmPumpControl,
+    solenoidValveControl,
+    bubbleSensorStatus,
 } from "../../api/status";
 
 import io from "socket.io-client";
@@ -58,7 +58,6 @@ const translateType = (codeInfo) => {
 
     // 匹配并返回对应的中文描述
 };
-let lineFlag = 0;
 
 const App = (props) => {
     const { onDeviceStatusChange, onOperatingTimeChange } = props;
@@ -71,21 +70,25 @@ const App = (props) => {
     const [size, setSize] = useState();
     const [warningCode, setWarningCode] = useState(0);
     const [peristaltic, setPeristalic] = useState({});
-    const [pump, setPump] = useState({
-        use_manual: false,
-        spray_switch: false,
-        peristaltic_switch: false,
-        drain_speed: 1000,
-        clean_volume: 2000,
-        clean_count: 1000,
-        tube_id: 10,
-        module_id: 1,
-    });
-    const [runningFlag, setRunningFlag] = useState(0);
-    const [dynamicHeight, setDynamicHeight] = useState();
+
     const [isChecked, setIsChecked] = useState(false);
     const [messageApi, contextHolder] = message.useMessage();
     const [spinning, setSpinning] = React.useState(false);
+    const [sprayConfig, setSprayConfig] = useState({
+        enabled: false,
+        frequency: 0,
+        interval: 0,
+    });
+    const [bubbleStatus, setBubbleStatus] = useState("");
+    const [valveControl, setValveControl] = useState({
+        station: 1,
+        port: 1,
+    });
+    const [airPumpEnabled, setAirPumpEnabled] = useState(false);
+    const [solenoidControl, setSolenoidControl] = useState({
+        id: "",
+        enabled: false,
+    });
 
     const [alarmData, setAlarmData] = useState([
         {
@@ -104,16 +107,6 @@ const App = (props) => {
         // },
     ]);
 
-    const [deviceStatus, setDeviceStatus] = useState({
-        PowerStatus: { value: false },
-        CurrentTube: { value: "0-0" },
-        Detector: { value: 0 },
-        PumpASpeed: { value: 0 },
-        PumpBSpeed: { value: 0 },
-    });
-
-    const [operatingTime, setOperatingTime] = useState(0);
-
     useEffect(() => {
         const socket = io("http://localhost:5000"); // 确保 URL 正确
         socket.on("connect", () => {
@@ -122,7 +115,7 @@ const App = (props) => {
 
         socket.on("DeviceStatusEnum", (data) => {
             // console.log("1024   DeviceStatusEnum", data);
-            setDeviceStatus(data.DeviceStatusEnum);
+            // setDeviceStatus(data.DeviceStatusEnum);
             // 传递机器状态给父组件
             if (onDeviceStatusChange) {
                 onDeviceStatusChange(data.DeviceStatusEnum);
@@ -131,7 +124,7 @@ const App = (props) => {
         socket.on("OperatingTime", (data) => {
             // console.log("1024   OperatingTime", data);
 
-            setOperatingTime(data.operating_time);
+            // setOperatingTime(data.operating_time);
             // 传递运行时间给父组件
             if (onOperatingTimeChange) {
                 onOperatingTimeChange(data.operating_time);
@@ -223,52 +216,6 @@ const App = (props) => {
         );
     };
 
-    const handleStatus = (type, status) => {
-        console.log("1022   handleStatus type :", type);
-        console.log("1022   handleStatus status :", status);
-        let pumpType = "";
-        switchManualTest({
-            use_manual: status["use_manual"],
-        }).then((response) => {
-            if (!response.error) {
-            }
-        });
-        console.log(
-            "1022    status[peristaltic_switch]",
-            status["peristaltic_switch"]
-        );
-        console.log("1022    status[spray_switch]", status["spray_switch"]);
-
-        pumpType = "abandon";
-        let pumpOperationData = {
-            pump_type: pumpType,
-            pump_status: status["peristaltic_switch"],
-            drain_speed: status["drain_speed"],
-            clean_volume: status["clean_volume"],
-            clean_count: status["clean_count"],
-            tube_id: status["tube_id"],
-            module_id: status["module_id"],
-        };
-        pumpOperation(pumpOperationData).then((response) => {
-            if (!response.error) {
-            }
-        });
-
-        pumpType = "clean";
-        let pumpOperationData2 = {
-            pump_type: pumpType,
-            pump_status: status["spray_switch"],
-            drain_speed: status["drain_speed"],
-            clean_volume: status["clean_volume"],
-            clean_count: status["clean_count"],
-            tube_id: status["tube_id"],
-            module_id: status["module_id"],
-        };
-        pumpOperation(pumpOperationData2).then((response) => {
-            if (!response.error) {
-            }
-        });
-    };
     const handleOffline = (checked) => {
         postInitDeviceMode({ use_mock: checked }).then((response) => {
             if (!response.error) {
@@ -300,6 +247,124 @@ const App = (props) => {
         }, 1000);
     };
 
+    const applySprayDebug = () => {
+        const freq = Number(sprayConfig.frequency);
+        const duty = Number(sprayConfig.interval);
+        if (Number.isNaN(freq) || Number.isNaN(duty)) {
+            messageApi.error("请输入有效的频率和间隔");
+            return;
+        }
+
+        const payload = {
+            ifon: sprayConfig.enabled ? 1 : 0,
+            freq,
+            duty,
+        };
+
+        diaphragmPumpControl(payload)
+            .then((response) => {
+                if (!response.error) {
+                    messageApi.success(
+                        `喷淋泵：${payload.ifon ? "开启" : "关闭"}，频率 ${freq}，间隔 ${duty}`
+                    );
+                } else {
+                    messageApi.error("喷淋泵控制失败");
+                }
+            })
+            .catch(() => {
+                messageApi.error("喷淋泵控制异常");
+            });
+    };
+
+    const applyValveControl = () => {
+        const stationNum = Number(valveControl.station);
+        const portNum = Number(valveControl.port);
+        if (Number.isNaN(stationNum) || Number.isNaN(portNum)) {
+            messageApi.error("请输入有效的阀站号和阀口号");
+            return;
+        }
+
+        const payload = { valve_num: stationNum, num: portNum };
+        multiwayValveControl(payload)
+            .then((response) => {
+                if (!response.error) {
+                    messageApi.success(
+                        `阀控制成功：阀站号 ${stationNum}，阀口号 ${portNum}`
+                    );
+                } else {
+                    messageApi.error("阀控制失败");
+                }
+            })
+            .catch(() => {
+                messageApi.error("阀控制异常");
+            });
+    };
+
+    const applyAirPump = () => {
+        messageApi.success(`空气泵：${airPumpEnabled ? "开启" : "关闭"}`);
+    };
+
+    const applySolenoid = () => {
+        const pin = Number(solenoidControl.id);
+        if (Number.isNaN(pin)) {
+            messageApi.error("请输入有效的阀 ID");
+            return;
+        }
+        const payload = { pin_num: pin, value: solenoidControl.enabled ? 1 : 0 };
+
+        solenoidValveControl(payload)
+            .then((response) => {
+                if (!response.error) {
+                    messageApi.success(
+                        `电磁阀：ID ${pin}，${
+                            payload.value === 1 ? "开启" : "关闭"
+                        } 成功`
+                    );
+                } else {
+                    messageApi.error("电磁阀控制失败");
+                }
+            })
+            .catch(() => {
+                messageApi.error("电磁阀控制异常");
+            });
+    };
+
+    const queryBubbleSensor = () => {
+        bubbleSensorStatus()
+            .then((response) => {
+                if (!response.error) {
+                    const statusText =
+                        response?.data?.status ?? response?.data ?? "未知状态";
+                    setBubbleStatus(statusText);
+                    messageApi.info(`气泡传感器状态：${statusText}`);
+                } else {
+                    messageApi.error("查询气泡传感器状态失败");
+                }
+            })
+            .catch(() => {
+                messageApi.error("查询气泡传感器状态异常");
+            });
+    };
+
+    // 设备状态：独立 1s 轮询（已注释以避免因 props 变化触发）
+    // useEffect(() => {
+    //     let cancelled = false;
+    //     const fetchStatus = () => {
+    //         getDeviceStatus().then((res) => {
+    //             if (cancelled) return;
+    //             if (!res.error) {
+    //                 // 鎸夐渶鏇存柊鐘舵€佹垨閫氱煡鐖剁粍浠?
+    //             }
+    //         });
+    //     };
+    //     fetchStatus();
+    //     const timer = setInterval(fetchStatus, 1000);
+    //     return () => {
+    //         cancelled = true;
+    //         clearInterval(timer);
+    //     };
+    // }, []);
+
     useEffect(() => {
         if (props.warningCode.code !== warningCode) {
             showDrawerWarning();
@@ -310,7 +375,7 @@ const App = (props) => {
                     console.log("1017 res", res);
                     const codes = res.data.codes;
 
-                    // 根据 props.warningCode 查找对应的 message 和 type
+                    // 根据 props.warningCode 查找对应 message 和 type
                     const codeInfo = codes.find(
                         (code) => code.code_id === props.warningCode.code
                     );
@@ -326,25 +391,19 @@ const App = (props) => {
                         ]);
                         console.log("warningCode", warningCode);
                     } else {
-                        console.warn(`未找到报警代码: ${props.warningCode}`);
+                        console.warn(`未找到报警代码 ${props.warningCode}`);
                     }
                 })
                 .catch((error) => {
                     console.error("获取 codes 失败:", error);
                 });
         }
-        setDynamicHeight(props.dynamicHeight);
         // console.log("8672 -----------   dynamicHeight :", dynamicHeight);
 
         console.log("props peristaltic :", peristaltic);
-        getDeviceStatus().then((res) => {
-            if (!res.error) {
-                // console.log("1024  getDeviceStatus", res);
-            }
-        });
         const useMock = localStorage.getItem("useMock");
         setIsChecked(useMock);
-    }, [props]);
+    }, [props.warningCode.code, props.warningCode.time, props.dynamicHeight]);
     return (
         <>
             {contextHolder}
@@ -427,117 +486,191 @@ const App = (props) => {
                 size={size}
             >
                 <Spin spinning={spinning}>
-                    <Row>
-                        <Col span={24} style={{ marginBottom: "2rem" }}>
-                            <Card title="是否开启离线模式">
-                                <Switch
-                                    checkedChildren="开启"
-                                    unCheckedChildren="关闭"
-                                    checked={isChecked}
-                                    onChange={handleOffline}
-                                    style={{
-                                        margin: "2rem",
-                                        width: "90%",
-                                        height: "90%",
-                                    }}
-                                />
-                            </Card>
-                        </Col>
-                        <Col span={24} style={{ marginBottom: "2rem" }}>
-                            <Card title="泵设置">
-                                <FormStatus
-                                    type={"pump"}
-                                    decideParameter={"use_manual"}
-                                    data={pump}
-                                    runningFlag={runningFlag}
-                                    callback={handleStatus}
-                                ></FormStatus>
-                            </Card>
-                        </Col>
-                        <Col span={24} style={{ marginBottom: "2rem" }}>
-                            <Card title="梯度曲线设置" bordered={false}>
-                                <div className="pressure">
-                                    <Row>
-                                        <Col span={24}>
-                                            <div className="dynamic-line">
-                                                <DynamicLine></DynamicLine>
-                                            </div>
-                                        </Col>
-                                    </Row>
-                                </div>{" "}
-                            </Card>
-                        </Col>
-                        <Col span={24} style={{ marginBottom: "2rem" }}>
-                            <Card title="机器状态" bordered={false}>
-                                <Row gutter={16} style={{ margin: "1rem" }}>
-                                    <Col span={12}>
-                                        <Statistic
-                                            title="设备状态"
-                                            value={
-                                                deviceStatus?.PowerStatus?.value
-                                                    ? "接通"
-                                                    : "断开"
-                                            }
-                                            prefix={<ApiOutlined />}
-                                            suffix=""
-                                        />
-                                    </Col>
-                                    <Col span={12}>
-                                        <Statistic
-                                            title="运行时间"
-                                            value={operatingTime} // 固定值，根据需要调整
-                                            prefix={
-                                                <RadiusBottomleftOutlined />
-                                            }
-                                            suffix="H"
-                                        />
-                                    </Col>
-                                    <Col span={12}>
-                                        <Statistic
-                                            title="泵A速度"
-                                            value={(
-                                                deviceStatus?.PumpASpeed
-                                                    ?.value / 1000
-                                            ).toFixed(2)} // 假设需要转换为 ml/s
-                                            prefix={<SlidersOutlined />}
-                                            suffix="ml/s"
-                                        />
-                                    </Col>
-                                    <Col span={12}>
-                                        <Statistic
-                                            title="泵B速度"
-                                            value={(
-                                                deviceStatus?.PumpBSpeed
-                                                    ?.value / 1000
-                                            ).toFixed(2)} // 假设需要转换为 ml/s
-                                            prefix={<SlidersOutlined />}
-                                            suffix="ml/s"
-                                        />
-                                    </Col>
-                                    <Col span={12}>
-                                        <Statistic
-                                            title="检测器"
-                                            value={
-                                                deviceStatus?.Detector?.value
-                                            }
-                                            prefix={<LineChartOutlined />}
-                                            suffix=""
-                                        />
-                                    </Col>
-                                    <Col span={12}>
-                                        <Statistic
-                                            title="当前试管"
-                                            value={
-                                                deviceStatus?.CurrentTube?.value
-                                            }
-                                            prefix={<ApartmentOutlined />}
-                                            suffix="号"
-                                        />
-                                    </Col>
-                                </Row>
-                            </Card>
-                        </Col>
-                    </Row>
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 16,
+                        }}
+                    >
+                        <div>
+                            <div style={{ fontWeight: 600, marginBottom: 8 }}>
+                                是否开启离线模式
+                            </div>
+                            <Switch
+                                checkedChildren="开启"
+                                unCheckedChildren="关闭"
+                                checked={isChecked}
+                                onChange={handleOffline}
+                            />
+                        </div>
+
+                        <div
+                            style={{
+                                padding: "12px 0",
+                                borderTop: "1px solid #f0f0f0",
+                            }}
+                        >
+                            <div style={{ fontWeight: 600, marginBottom: 12 }}>
+                                喷淋泵调试
+                            </div>
+                            <Row gutter={12} align="middle">
+                                <Col>
+                                    <Switch
+                                        checkedChildren="开"
+                                        unCheckedChildren="关"
+                                        checked={sprayConfig.enabled}
+                                        onChange={(v) =>
+                                            setSprayConfig((p) => ({
+                                                ...p,
+                                                enabled: v,
+                                            }))
+                                        }
+                                    />
+                                </Col>
+                                <Col>
+                                    <InputNumber
+                                        min={0}
+                                        placeholder="频率"
+                                        value={sprayConfig.frequency}
+                                        onChange={(v) =>
+                                            setSprayConfig((p) => ({
+                                                ...p,
+                                                frequency: v || 0,
+                                            }))
+                                        }
+                                    />
+                                </Col>
+                                <Col>
+                                    <InputNumber
+                                        min={0}
+                                        placeholder="间隔"
+                                        value={sprayConfig.interval}
+                                        onChange={(v) =>
+                                            setSprayConfig((p) => ({
+                                                ...p,
+                                                interval: v || 0,
+                                            }))
+                                        }
+                                    />
+                                </Col>
+                                <Col>
+                                    <Button
+                                        type="primary"
+                                        onClick={applySprayDebug}
+                                    >
+                                        执行
+                                    </Button>
+                                </Col>
+                            </Row>
+                        </div>
+
+                        <div
+                            style={{
+                                padding: "12px 0",
+                                borderTop: "1px solid #f0f0f0",
+                            }}
+                        >
+                            <div style={{ fontWeight: 600, marginBottom: 12 }}>
+                                阀控制
+                            </div>
+                            <Row gutter={12} align="middle">
+                                <Col>
+                                    <InputNumber
+                                        min={1}
+                                        placeholder="阀站号"
+                                        value={valveControl.station}
+                                        onChange={(v) =>
+                                            setValveControl((p) => ({
+                                                ...p,
+                                                station: v || 1,
+                                            }))
+                                        }
+                                    />
+                                </Col>
+                                <Col>
+                                    <InputNumber
+                                        min={1}
+                                        placeholder="阀口号"
+                                        value={valveControl.port}
+                                        onChange={(v) =>
+                                            setValveControl((p) => ({
+                                                ...p,
+                                                port: v || 1,
+                                            }))
+                                        }
+                                    />
+                                </Col>
+                                <Col>
+                                    <Button
+                                        type="primary"
+                                        onClick={applyValveControl}
+                                    >
+                                        执行
+                                    </Button>
+                                </Col>
+                            </Row>
+                        </div>
+
+                        <div
+                            style={{
+                                padding: "12px 0",
+                                borderTop: "1px solid #f0f0f0",
+                            }}
+                        >
+                            <div style={{ fontWeight: 600, marginBottom: 12 }}>
+                                电磁阀控制
+                            </div>
+                            <Row gutter={12} align="middle">
+                                <Col>
+                                    <Input
+                                        placeholder="阀 ID"
+                                        value={solenoidControl.id}
+                                        onChange={(e) =>
+                                            setSolenoidControl((p) => ({
+                                                ...p,
+                                                id: e.target.value,
+                                            }))
+                                        }
+                                        style={{ width: 140 }}
+                                    />
+                                </Col>
+                                <Col>
+                                    <Switch
+                                        checkedChildren="开"
+                                        unCheckedChildren="关"
+                                        checked={solenoidControl.enabled}
+                                        onChange={(v) =>
+                                            setSolenoidControl((p) => ({
+                                                ...p,
+                                                enabled: v,
+                                            }))
+                                        }
+                                    />
+                                </Col>
+                                <Col>
+                                    <Button
+                                        type="primary"
+                                        onClick={applySolenoid}
+                                    >
+                                        执行
+                                    </Button>
+                                </Col>
+                            </Row>
+                        </div>
+
+                        <div
+                            style={{
+                                padding: "12px 0",
+                                borderTop: "1px solid #f0f0f0",
+                            }}
+                        >
+                            <div style={{ fontWeight: 600, marginBottom: 12 }}>
+                                气泡传感器状态: {bubbleStatus || "--"}
+                            </div>
+                            <Button onClick={queryBubbleSensor}>查询</Button>
+                        </div>
+                    </div>
                 </Spin>
             </Drawer>
         </>

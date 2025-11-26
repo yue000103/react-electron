@@ -1,0 +1,21 @@
+.step-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 0px;
+}
+
+.abandon-icon-img {
+  width: 2.5rem;
+  height: 2.5rem;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 4px;
+}
+
+.step-flow-img {
+  max-width: 52%;
+  height: auto;
+  display: block;
+}

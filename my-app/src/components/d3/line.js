@@ -55,21 +55,21 @@ const renderCurve = (
     samplingTime,
     xScale
 ) => {
-    // console.log("data", data);
+    // // console.log("data", data);
     //data{time: '17:46:47', value: 81.41712213857508}
 
     const parsedData = data?.map((d) => ({
         ...d,
         time: parseTime(d.time),
     }));
-    console.log("0920   data--------------------", parsedData);
+    // console.log("0920   data--------------------", parsedData);
     const valueExtent = d3.extent(parsedData, (d) => d.value);
     const [minValue = -3, maxValue = 53] = valueExtent || [-3, 50]; // 榛樿鍊间负 [0, 50]
 
     let newMinValue = parseFloat(minValue) - parseFloat(maxValue) * 0.05;
     let newMaxValue = parseFloat(maxValue) + parseFloat(maxValue) * 0.05;
-    console.log("0920  newMinValue ---- :", newMinValue);
-    console.log("0920  newMaxValue ---- :", newMaxValue);
+    // console.log("0920  newMinValue ---- :", newMinValue);
+    // console.log("0920  newMaxValue ---- :", newMaxValue);
     if (newMinValue > newMaxValue) {
         [newMinValue, newMaxValue] = [newMaxValue, newMinValue];
     }
@@ -78,8 +78,8 @@ const renderCurve = (
         newMaxValue += 2;
     }
 
-    console.log("0920  newMinValue :", newMinValue);
-    console.log("0920  newMaxValue :", newMaxValue);
+    // console.log("0920  newMinValue :", newMinValue);
+    // console.log("0920  newMaxValue :", newMaxValue);
 
     endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
 
@@ -136,7 +136,7 @@ const renderCurve = (
         .attr("stop-color", "#0097a7")
         .attr("stop-opacity", 1);
 
-    // console.log("par", parsedData);
+    // // console.log("par", parsedData);
     svg.append("path")
         .datum(parsedData)
         .attr("fill", "none")
@@ -157,14 +157,14 @@ const renderCurve = (
     //     .attr("stroke-width", 2)
     //     .attr("d", lineX);
     renderVertical(svg, xScale, height);
-    console.log("cleanFlag", cleanFlag);
+    // console.log("cleanFlag", cleanFlag);
     // if (cleanFlag == 0) {
     renderArea(svg, xScale, yScale, height);
     // }
 };
 
 const renderVertical = (svg, xScale, height) => {
-    // console.log("9090--------num-", num);
+    // // console.log("9090--------num-", num);
 
     const parsedData = num?.map((d) => ({
         ...d,
@@ -204,7 +204,7 @@ const renderVertical = (svg, xScale, height) => {
 };
 
 const renderArea = (svg, xScale, yScale, height) => {
-    console.log("1118  renderArea start", Date.now());
+    // console.log("1118  renderArea start", Date.now());
     // 清除旧的填充，避免重复叠加
     svg.selectAll(".fill-area").remove();
 
@@ -215,12 +215,12 @@ const renderArea = (svg, xScale, yScale, height) => {
         .y1((d) => yScale(d.value))
         .curve(d3.curveLinear);
 
-    console.log("1021   num:", num);
-    console.log("1021   selected:", selected);
-    console.log("1118 selected count", selected.length);
+    // console.log("1021   num:", num);
+    // console.log("1021   selected:", selected);
+    // console.log("1118 selected count", selected.length);
     selected.forEach((selectTube) => {
-        console.log("1021 selectTube", selectTube);
-        console.log("1021   selectTube :", selectTube);
+        // console.log("1021 selectTube", selectTube);
+        // console.log("1021   selectTube :", selectTube);
 
         const fillColor = selectTube.color;
         const fillArea = data
@@ -233,13 +233,13 @@ const renderArea = (svg, xScale, yScale, height) => {
                 ...item,
                 color: fillColor,
             }));
-        console.log(
-            "1118  fillArea length",
-            fillArea.length,
-            "time range",
-            selectTube.time_start,
-            selectTube.time_end
-        );
+        // console.log(
+        //     "1118  fillArea length",
+        //     fillArea.length,
+        //     "time range",
+        //     selectTube.time_start,
+        //     selectTube.time_end
+        // );
         const sortedArea = [...fillArea].sort((a, b) => a.time - b.time);
         fillAreaDatas = [
             ...fillAreaDatas,
@@ -248,7 +248,7 @@ const renderArea = (svg, xScale, yScale, height) => {
     });
 
     fillAreaDatas.forEach((fill) => {
-        console.log("fill :", fill);
+        // console.log("fill :", fill);
         const parsedData = fill.area?.map((d) => ({
             ...d,
             time: parseTime(d.time),
@@ -264,7 +264,7 @@ const renderArea = (svg, xScale, yScale, height) => {
                 .attr("d", area);
         }
     });
-    console.log("1118  fill-area paths", svg.selectAll(".fill-area").size());
+    // console.log("1118  fill-area paths", svg.selectAll(".fill-area").size());
     fillAreaDatas = [];
 };
 const parseTime = (timeString) => {
@@ -305,7 +305,7 @@ const renderLine = (
     lineFlag,
     xScale
 ) => {
-    console.log("1012 time linePointChange :", linePointChange);
+    // console.log("1012 time linePointChange :", linePointChange);
     linePointChange?.sort((a, b) => {
         // 灏嗘椂闂村瓧绗︿覆杞崲涓虹鏁拌繘琛屾瘮杈?
         const timeA = a.time
@@ -357,7 +357,7 @@ const renderLine = (
         .x((d) => xScale(d.time))
         .y((d) => yScale(d.value))
         .curve(d3.curveLinear); // 浣跨敤 Cardinal 鏇茬嚎鎻掑€?
-    console.log("8672 parsedData", parsedData);
+    // console.log("8672 parsedData", parsedData);
     // 缁樺埗鎶樼嚎璺緞
     svg.append("path")
         .attr("class", "line")
@@ -409,7 +409,7 @@ const renderLine = (
         const point = d3.select(this);
         point
             .on("mouseover", function (event, d) {
-                console.log("1101   event", event, d);
+                // console.log("1101   event", event, d);
 
                 // d3.select(this).style("opacity", 1);
                 const dateObj = new Date(d.time);
@@ -434,7 +434,7 @@ const renderLine = (
 
     // .call(drag); // 搴旂敤鎷栨嫿琛屼负
     const handleClick = (event, d) => {
-        // console.log("lineFlag", lineFlag);
+        // // console.log("lineFlag", lineFlag);
         // if (lineFlag == 1) {
         setSelectedPoint({
             time: parseTimeString(d.time),
@@ -467,7 +467,7 @@ const LineChart = (props) => {
 
     const [scrollPosition, setScrollPosition] = useState(0);
     const [realPosition, setRealPosition] = useState(0);
-    const [maxScrollPosition, setMaxScrollPosition] = useState(100); // 鍋囪鏈€澶ф粴鍔ㄨ寖鍥翠负1000
+    const [maxScrollPosition, setMaxScrollPosition] = useState(100);
 
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -483,10 +483,9 @@ const LineChart = (props) => {
     const [lineLoading, setLineLoading] = useState(props.lineLoading);
     endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
 
-    // console.log("8672  samplingTime", samplingTime);
-    // console.log("lineFlag   lineFlag", lineFlag);
+    // // console.log("8672  samplingTime", samplingTime);
+    // // console.log("lineFlag   lineFlag", lineFlag);
 
-    // 淇敼鐘舵€?
     const [zoomState, setZoomState] = useState({
         k: 1,
         x: 0,
@@ -505,9 +504,9 @@ const LineChart = (props) => {
     // if (linePointChange.length == 0) {
     //     setlinePointChange(linePoint);
     // }
-    console.log("1118  selectedAllTubes", props.selectedAllTubes);
+    // console.log("1118  selectedAllTubes", props.selectedAllTubes);
     selected = props.selectedAllTubes;
-    console.log("1021   selected", selected);
+    // console.log("1021   selected", selected);
 
     useEffect(() => {
         setSamplingTime(props.samplingTime);
@@ -521,7 +520,7 @@ const LineChart = (props) => {
 
     // 鍦ㄧ粍浠舵寕杞芥椂璁剧疆linePointChange鐨勫垵濮嬪€?
     useEffect(() => {
-        console.log("1029  props.linePoint", props.linePoint);
+        // console.log("1029  props.linePoint", props.linePoint);
 
         setlinePointChange((pre) => props.linePoint);
 
@@ -572,7 +571,7 @@ const LineChart = (props) => {
                 zoomState.x - realPosition,
                 width * zoomState.k + zoomState.x - realPosition,
             ]);
-        console.log("1021    props---------------5");
+        // console.log("1021    props---------------5");
 
         // 缁樺埗鏇茬嚎
         renderCurve(
@@ -615,7 +614,7 @@ const LineChart = (props) => {
     ]);
 
     useEffect(() => {
-        console.log("1014    props", props);
+        // console.log("1014    props", props);
         setlinePointChange((pre) => props.linePoint);
 
         drawChart();
@@ -639,10 +638,10 @@ const LineChart = (props) => {
         newData = newData.sort((a, b) => parseTime(a.time) - parseTime(b.time));
         setlinePointChange(newData);
 
-        // console.log("lineFlag    newData :", newData);
+        // // console.log("lineFlag    newData :", newData);
         props.callback(newData); // 纭繚璋冪敤浜嗗洖璋冨嚱鏁?
-        // console.log("lineFlag  linePoint----------- :", linePoint);
-        // console.log("lineFlag  linePointChange----------- :", linePointChange);
+        // // console.log("lineFlag  linePoint----------- :", linePoint);
+        // // console.log("lineFlag  linePointChange----------- :", linePointChange);
         setIsModalVisible(false);
     };
 
@@ -653,7 +652,7 @@ const LineChart = (props) => {
     const handleInputChange = (e) => {
         let time = e.$d ? e.$d : inputValues.time;
         let value = e.$d ? inputValues.value : e;
-        console.log("inputNumber value :", value);
+        // console.log("inputNumber value :", value);
 
         setInputValues({
             flow_rate: inputValues.flow_rate,
@@ -666,8 +665,8 @@ const LineChart = (props) => {
 
     const handleReceiveFlags = (inputNumber) => {
         // inputNumber
-        console.log("inputRef.current :", inputRef.current);
-        console.log("inputRef.timeRef :", timeRef.current);
+        // console.log("inputRef.current :", inputRef.current);
+        // console.log("inputRef.timeRef :", timeRef.current);
         if (inputRef.current) {
             inputRef.current.focus();
             let result = NaN;

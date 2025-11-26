@@ -16,6 +16,7 @@ import {
     InputNumber,
     Input,
     Switch,
+    Tabs,
 } from "antd";
 import "./index.css";
 import Line from "@components/d3/line";
@@ -25,6 +26,7 @@ import FloatB from "../systemSet/index";
 import TaskTable from "./taskTable";
 import DynamicCard from "@components/cards/dynamicCard";
 import { Empty } from "antd";
+import StepFlow from "./stepFlow";
 import {
     getEluentCurve,
     getEluentVertical,
@@ -101,38 +103,6 @@ const statusLabelMap = {
     abandon: "废弃",
     retain: "保留",
 };
-const CollapsibleSection = ({ title, open, onToggle, children }) => (
-    <div className={`collapsible-section ${open ? "collapsible-open" : ""}`}>
-        <div className="collapsible-section__header" onClick={onToggle}>
-            <div className="collapsible-section__title">
-                <span className="collapsible-section__icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path d="M9 3H4C3.44772 3 3 3.44772 3 4V9C3 9.55228 3.44772 10 4 10H9C9.55228 10 10 9.55228 10 9V4C10 3.44772 9.55228 3 9 3Z" fill="currentColor" opacity="0.3"/>
-                        <path d="M20 3H15C14.4477 3 14 3.44772 14 4V9C14 9.55228 14.4477 10 15 10H20C20.5523 10 21 9.55228 21 9V4C21 3.44772 20.5523 3 20 3Z" fill="currentColor" opacity="0.3"/>
-                        <path d="M9 14H4C3.44772 14 3 14.4477 3 15V20C3 20.5523 3.44772 21 4 21H9C9.55228 21 10 20.5523 10 20V15C10 14.4477 9.55228 14 9 14Z" fill="currentColor" opacity="0.3"/>
-                        <path d="M20 14H15C14.4477 14 14 14.4477 14 15V20C14 20.5523 14.4477 21 15 21H20C20.5523 21 21 20.5523 21 20V15C21 14.4477 20.5523 14 20 14Z" fill="currentColor"/>
-                    </svg>
-                </span>
-                <span className="collapsible-section__text">{title}</span>
-            </div>
-            <div className="collapsible-section__toggle">
-                <span className="collapsible-section__toggle-text">
-                    {open ? "收起" : "展开"}
-                </span>
-                <svg
-                    className={`collapsible-section__arrow ${open ? "collapsible-section__arrow--up" : ""}`}
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                >
-                    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-            </div>
-        </div>
-        {open && <div className="collapsible-section__body">{children}</div>}
-    </div>
-);
 const App = () => {
     const [loading, setLoading] = React.useState(false);
     const [lineLoading, setLineLoading] = useState(false);
@@ -149,8 +119,10 @@ const App = () => {
     const [methodFlag, setMethodFlag] = useState(0);
     //  1 可以修改折线 0 不可以修改折线
     const [lineFlag, setLineFlag] = useState(1);
-    const [operationsPanelOpen, setOperationsPanelOpen] = useState(true);
+    const [activePanelTab, setActivePanelTab] = useState("control");
     const [selected_reverse, setSelectedReverse] = useState([]);
+    // 模拟步骤进度（0-3），用于控制面板的步骤展示
+    const [stepProgressIndex] = useState(1);
     const isScrollable = true;
     const [linePoint, setLine] = useState([]);
     const [messageApi, contextHolder] = message.useMessage();
@@ -281,14 +253,14 @@ const App = () => {
     useEffect(() => {
         const socket = io("http://localhost:5000"); // 确保 URL 正确
         socket.on("connect", () => {
-            // console.log("Connected to WebSocket server");
+            console.log("1026   connect");
         });
         socket.on("new_point", (data) => {
-            console.log("1017   new_point", data);
+            console.log("1026   new_point", data);
             setNum((prevNum) => [...prevNum, data.point]);
         });
         socket.on("new_curve_point", (responseData) => {
-            console.log("0705   autoGradient", autoGradient, autoGradientLet);
+            console.log("1026   autoGradient", autoGradient, autoGradientLet);
             getEluentLine().then((responseData) => {
                 if (!responseData.error) {
                     setLine(responseData.data.point);
@@ -301,13 +273,13 @@ const App = () => {
                 code: responseData.code,
                 time: responseData.time,
             });
-            console.log("warningCode :", warningCode);
+            console.log("1026 :", warningCode);
             setErrorCode((pre) => [...pre, responseData.code]);
             terminate();
         });
         socket.on("current_tube", (responseData) => {
             console.log(
-                "0911   current_tube---------------------",
+                "1026   current_tube---------------------",
                 responseData.tube_id,
                 responseData.task_id
             );
@@ -317,7 +289,7 @@ const App = () => {
         });
         socket.on("device_free", (responseData) => {
             console.log(
-                "0911   device_free---------------------",
+                "1026   device_free---------------------",
                 responseData
             );
             setExcuteTaskFlag(responseData.flag);
@@ -326,6 +298,10 @@ const App = () => {
             // updateExcuteTask(currentTubeId, responseData.task_id);
         });
         socket.on("equilibration_flag", (responseData) => {
+            console.log(
+                "1026   equilibration_flag---------------------",
+                responseData
+            );
             if (responseData.flag === 1) {
                 setEquilibrationLoading(false);
                 setOpenEquilibration(false);
@@ -337,12 +313,14 @@ const App = () => {
             }
         });
         socket.on("module_flag", (responseData) => {
-            console.log("1017   responseData :", responseData);
+            console.log("1026   responseData :", responseData);
         });
         socket.on("disconnect", () => {
-            console.log("Disconnected from WebSocket server");
+            console.log("1026   Disconnected from WebSocket server");
         });
         socket.on("pressure", (responseData) => {
+            console.log("1026   pressure");
+
             console.log(responseData.pressure_value);
         });
         // Clean up the connection on component unmount
@@ -1156,9 +1134,10 @@ const App = () => {
                                 检测器
                             </span>
                             <span className="machine-status-bar__value">
-                                {typeof deviceStatus?.Detector?.value === 'number'
+                                {typeof deviceStatus?.Detector?.value ===
+                                "number"
                                     ? deviceStatus.Detector.value.toFixed(3)
-                                    : deviceStatus?.Detector?.value || '0.000'}
+                                    : deviceStatus?.Detector?.value || "0.000"}
                             </span>
                         </div>
                         <div className="machine-status-bar__separator"></div>
@@ -1196,133 +1175,194 @@ const App = () => {
                         </Col>
                     </Row>
 
-                    {/* 控制面板区域 - 当操作面板展开时隐藏 */}
-                    {!operationsPanelOpen && (
-                        <Row gutter={16} style={{ marginTop: "16px" }}>
-                            <Col span={24}>
-                                <div className="control-panel">
-                                    <div className="control-panel__header">
-                                        控制面板
-                                    </div>
-                                    <div className="control-panel__buttons-grid">
-                                        {actionButtons.map(
-                                            ({
-                                                key,
-                                                label,
-                                                onClick,
-                                                disabled,
-                                                danger,
-                                                className: customClass,
-                                            }) => (
-                                                <Button
-                                                    key={key}
-                                                    type="primary"
-                                                    danger={danger}
-                                                    size="middle"
-                                                    className={`control-panel__button ${
-                                                        customClass || ""
-                                                    }`.trim()}
-                                                    onClick={onClick}
-                                                    disabled={disabled}
-                                                >
-                                                    {label}
-                                                </Button>
-                                            )
-                                        )}
-                                    </div>
-                                </div>
-                            </Col>
-                        </Row>
-                    )}
-                </div>
-
-                <CollapsibleSection
-                    title={"操作面板"}
-                    open={operationsPanelOpen}
-                    onToggle={() => setOperationsPanelOpen((prev) => !prev)}
-                >
-                    <Row gutter={16} className="bottom-panels">
-                        <Col span={15}>
-                            <div className="panel-section">
-                                {num.length >= 0 && methodFlag !== 0 ? (
-                                    <div className="buttonTubeFun">
-                                        <Buttons
-                                            num={num}
-                                            callback={handleReceiveFlags}
-                                            selected={selected_reverse}
-                                            clean_flag={clean_flag}
-                                            isScrollable={isScrollable}
-                                            selectedAllTubes={selectedAllTubes}
-                                            reverseFlag={reverseFlag}
-                                        ></Buttons>
-                                        <Row>
-                                            <Col span={6}>
-                                                <Button
-                                                    type="primary"
-                                                    className={`button button1`}
-                                                    onClick={() =>
-                                                        retainFlags()
+                    <Row gutter={16} style={{ marginTop: "0px" }}>
+                        <Col span={24}>
+                            <Tabs
+                                activeKey={activePanelTab}
+                                onChange={setActivePanelTab}
+                                items={[
+                                    {
+                                        key: "control",
+                                        label: "控制面板",
+                                        children: (
+                                            <div className="control-panel">
+                                                <div className="control-panel__buttons-grid">
+                                                    {actionButtons.map(
+                                                        ({
+                                                            key,
+                                                            label,
+                                                            onClick,
+                                                            disabled,
+                                                            danger,
+                                                            className:
+                                                                customClass,
+                                                        }) => (
+                                                            <Button
+                                                                key={key}
+                                                                type="primary"
+                                                                danger={danger}
+                                                                size="middle"
+                                                                className={`control-panel__button ${
+                                                                    customClass ||
+                                                                    ""
+                                                                }`.trim()}
+                                                                onClick={
+                                                                    onClick
+                                                                }
+                                                                disabled={
+                                                                    disabled
+                                                                }
+                                                            >
+                                                                {label}
+                                                            </Button>
+                                                        )
+                                                    )}
+                                                </div>
+                                                <StepFlow
+                                                    progressIndex={
+                                                        stepProgressIndex
                                                     }
-                                                >
-                                                    保留
-                                                </Button>
-                                            </Col>
-                                            <Col span={6}>
-                                                <Button
-                                                    type="primary"
-                                                    className={`button button2`}
-                                                    onClick={() =>
-                                                        abandonFlags()
-                                                    }
-                                                >
-                                                    废弃
-                                                </Button>
-                                            </Col>
-                                            <Col span={6}>
-                                                <Button
-                                                    type="primary"
-                                                    className={`button button3`}
-                                                    onClick={() =>
-                                                        reverseFlags()
-                                                    }
-                                                >
-                                                    反转
-                                                </Button>
-                                            </Col>
-                                            <Col span={6}>
-                                                <Button
-                                                    type="primary"
-                                                    className={`button button4`}
-                                                    onClick={() => clean()}
-                                                >
-                                                    清洗
-                                                </Button>
+                                                />
+                                            </div>
+                                        ),
+                                    },
+                                    {
+                                        key: "operate",
+                                        label: "操作面板",
+                                        children: (
+                                            <Row
+                                                gutter={16}
+                                                className="bottom-panels"
+                                            >
+                                                <Col span={15}>
+                                                    <div className="panel-section">
+                                                        {num.length >= 0 &&
+                                                        methodFlag !== 0 ? (
+                                                            <div className="buttonTubeFun">
+                                                                <Buttons
+                                                                    num={num}
+                                                                    callback={
+                                                                        handleReceiveFlags
+                                                                    }
+                                                                    selected={
+                                                                        selected_reverse
+                                                                    }
+                                                                    clean_flag={
+                                                                        clean_flag
+                                                                    }
+                                                                    isScrollable={
+                                                                        isScrollable
+                                                                    }
+                                                                    selectedAllTubes={
+                                                                        selectedAllTubes
+                                                                    }
+                                                                    reverseFlag={
+                                                                        reverseFlag
+                                                                    }
+                                                                ></Buttons>
+                                                                <Row>
+                                                                    <Col
+                                                                        span={6}
+                                                                    >
+                                                                        <Button
+                                                                            type="primary"
+                                                                            className={`button button1`}
+                                                                            onClick={() =>
+                                                                                retainFlags()
+                                                                            }
+                                                                        >
+                                                                            保留
+                                                                        </Button>
+                                                                    </Col>
+                                                                    <Col
+                                                                        span={6}
+                                                                    >
+                                                                        <Button
+                                                                            type="primary"
+                                                                            className={`button button2`}
+                                                                            onClick={() =>
+                                                                                abandonFlags()
+                                                                            }
+                                                                        >
+                                                                            废弃
+                                                                        </Button>
+                                                                    </Col>
+                                                                    <Col
+                                                                        span={6}
+                                                                    >
+                                                                        <Button
+                                                                            type="primary"
+                                                                            className={`button button3`}
+                                                                            onClick={() =>
+                                                                                reverseFlags()
+                                                                            }
+                                                                        >
+                                                                            反转
+                                                                        </Button>
+                                                                    </Col>
+                                                                    <Col
+                                                                        span={6}
+                                                                    >
+                                                                        <Button
+                                                                            type="primary"
+                                                                            className={`button button4`}
+                                                                            onClick={() =>
+                                                                                clean()
+                                                                            }
+                                                                        >
+                                                                            清洗
+                                                                        </Button>
+                                                                    </Col>
+                                                                </Row>
+                                                            </div>
+                                                        ) : (
+                                                            <Empty
+                                                                image={
+                                                                    Empty.PRESENTED_IMAGE_SIMPLE
+                                                                }
+                                                                imageStyle={{
+                                                                    height: 100,
+                                                                }}
+                                                                description={
+                                                                    <span>
+                                                                        暂无试管
+                                                                    </span>
+                                                                }
+                                                            />
+                                                        )}
+                                                    </div>
+                                                </Col>
+                                            <Col span={9}>
+                                                <div className="panel-section">
+                                                    <TaskTable
+                                                        selected_tubes={
+                                                            selected_tubes
+                                                            }
+                                                            title={""}
+                                                            buttonFlag={1}
+                                                            callback={
+                                                                undoReceiveFlags
+                                                            }
+                                                            selectedAllTubes={
+                                                                selectedTask
+                                                        }
+                                                        runningInfo={
+                                                            runningTaskInfo
+                                                        }
+                                                        excuteTaskFlag={
+                                                            excuteTaskFlag
+                                                        }
+                                                    ></TaskTable>
+                                                </div>
                                             </Col>
                                         </Row>
-                                    </div>
-                                ) : (
-                                    <Empty
-                                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                        imageStyle={{ height: 100 }}
-                                        description={<span>暂无试管</span>}
-                                    />
-                                )}
-                            </div>
-                        </Col>
-                        <Col span={9}>
-                            <div className="panel-section">
-                                <TaskTable
-                                    selected_tubes={selected_tubes}
-                                    title={""}
-                                    buttonFlag={1}
-                                    callback={undoReceiveFlags}
-                                    selectedAllTubes={selectedTask}
-                                    runningInfo={runningTaskInfo}
-                                ></TaskTable>
-                            </div>
+                                        ),
+                                    },
+                                ]}
+                            />
                         </Col>
                     </Row>
-                </CollapsibleSection>
+                </div>
             </Layout>
             <Modal
                 title="初始化"

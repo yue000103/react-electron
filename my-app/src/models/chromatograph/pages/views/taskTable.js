@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { Button, Flex, Checkbox, Tag, Empty } from "antd";
 import { pauseTube, resumeTube } from "@/models/chromatograph/api/tube";
 import "./taskTable.css";
@@ -11,7 +11,13 @@ const STATUS_MAP = {
 };
 
 const TaskTable = (props) => {
-    const { callback, selectedAllTubes, runningInfo, buttonFlag } = props;
+    const {
+        callback,
+        selectedAllTubes,
+        runningInfo,
+        buttonFlag,
+        excuteTaskFlag,
+    } = props;
 
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [runningKeys, setRunningKeys] = useState([]);
@@ -34,28 +40,34 @@ const TaskTable = (props) => {
             });
     }, [selectedAllTubes]);
 
-    // 判断任务状态
+    // 判断任务状态：仅当前运行的任务显示运行，其余视为空闲
     const getItemStatus = useCallback(
-        (key) => {
-            if (completedKeys.includes(key)) return "completed";
-            if (runningKeys.includes(key)) return "running";
+        (item) => {
+            if (completedKeys.includes(item.key)) return "completed";
+            const isRunning =
+                excuteTaskFlag === 1 &&
+                runningInfo &&
+                runningInfo.moduleId === item.moduleIndex + 1 &&
+                runningInfo.tubeId &&
+                item.tubes.includes(runningInfo.tubeId);
+            if (isRunning) return "running";
             return "normal";
         },
-        [completedKeys, runningKeys]
+        [completedKeys, runningInfo]
     );
 
     // 点击任务项
     const handleItemClick = useCallback(
-        (key) => {
-            const status = getItemStatus(key);
+        (item) => {
+            const status = getItemStatus(item);
             // 运行中的任务不能选中
             if (status === "running") return;
 
             setSelectedRowKeys((prev) => {
-                if (prev.includes(key)) {
-                    return prev.filter((k) => k !== key);
+                if (prev.includes(item.key)) {
+                    return prev.filter((k) => k !== item.key);
                 } else {
-                    return [...prev, key];
+                    return [...prev, item.key];
                 }
             });
         },
@@ -103,7 +115,15 @@ const TaskTable = (props) => {
 
     const hasSelected = selectedRowKeys.length > 0;
     const allSelected =
-        dataSource.length > 0 && selectedRowKeys.length === dataSource.length;
+        dataSource.length > 0 &&
+        dataSource.every((item) => selectedRowKeys.includes(item.key));
+
+    // 清理已选中但不在当前数据源的 key，避免误判全选
+    useEffect(() => {
+        setSelectedRowKeys((prev) =>
+            prev.filter((k) => dataSource.some((item) => item.key === k))
+        );
+    }, [dataSource]);
 
     const pause = useCallback(() => {
         setLoading(true);
@@ -137,11 +157,12 @@ const TaskTable = (props) => {
                 <>
                     <div className="task-list">
                         {dataSource.map((item) => {
-                            const status = getItemStatus(item.key);
+                            const status = getItemStatus(item);
                             const isSelected = selectedRowKeys.includes(
                                 item.key
                             );
                             const isRunning =
+                                excuteTaskFlag === 1 &&
                                 runningInfo &&
                                 runningInfo.moduleId === item.moduleIndex + 1 &&
                                 runningInfo.tubeId &&
@@ -153,7 +174,7 @@ const TaskTable = (props) => {
                                     className={`task-item ${status} ${
                                         isSelected ? "selected" : ""
                                     }`}
-                                    onClick={() => handleItemClick(item.key)}
+                                    onClick={() => handleItemClick(item)}
                                 >
                                     <div className="task-checkbox">
                                         <Checkbox
@@ -161,7 +182,7 @@ const TaskTable = (props) => {
                                             disabled={status === "running"}
                                             onChange={(e) => {
                                                 e.stopPropagation();
-                                                handleItemClick(item.key);
+                                                handleItemClick(item);
                                             }}
                                             onClick={(e) => e.stopPropagation()}
                                         />

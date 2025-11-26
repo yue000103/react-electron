@@ -9,7 +9,6 @@
 
 /* 底部配置区域 */
 .clean {
-  margin: var(--spacing-md);
   margin-left: var(--spacing-lg);
   margin-right: var(--spacing-lg);
 }
@@ -18,7 +17,6 @@
 .config-card {
   background: var(--card-bg);
   border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
   box-shadow: var(--shadow-sm);
   transition: all 0.3s ease;
 }
@@ -29,7 +27,7 @@
 
 /* 按钮样式统一 */
 .button {
-  width: 100%;
+  width: 60%;
   margin-bottom: var(--spacing-sm);
   border-radius: var(--radius-sm);
   font-weight: 500;
@@ -98,8 +96,6 @@
 
 /* 二元高压梯度区域 */
 .pressure {
-  padding: var(--spacing-lg);
-  margin-top: var(--spacing-md);
   background: var(--card-bg);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
@@ -205,6 +201,6 @@
   }
 
   .config-card {
-    padding: var(--spacing-md);
+    /* padding: var(--spacing-md); */
   }
 }

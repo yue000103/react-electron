@@ -31,3 +31,19 @@ export function switchManualTest(data) {
 export function pumpOperation(data) {
     return axiosInstance.post("/status/pump_operation", data);
 }
+
+export function multiwayValveControl(data) {
+    return axiosInstance.post("/status/multiway_valve_control", data);
+}
+
+export function diaphragmPumpControl(data) {
+    return axiosInstance.post("/status/diaphragm_pump_control", data);
+}
+
+export function solenoidValveControl(data) {
+    return axiosInstance.post("/status/solenoid_valve_control", data);
+}
+
+export function bubbleSensorStatus() {
+    return axiosInstance.get("/status/bubble_sensor_status");
+}

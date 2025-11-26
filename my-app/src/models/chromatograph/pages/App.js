@@ -10,7 +10,7 @@ import {
     ProfileOutlined,
     ToolOutlined,
 } from "@ant-design/icons";
-import Clock from "@components/clock/index";
+// import Clock from "@components/clock/index";
 
 import pkuImage from "@/assets/image/pku.png";
 import "@components/css/overlay.css";
@@ -68,9 +68,9 @@ function App() {
                         <h1>Chromatography Instrument</h1>
                     </div>
                 </div>
-                <div className="headerClock">
+                {/* <div className="headerClock">
                     <Clock />
-                </div>
+                </div> */}
             </Header>
             <Layout className="appBody">
                 <Sider
