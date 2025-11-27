@@ -281,7 +281,7 @@ const parseTimeString = (time) => {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
-        hour12: false, // 浣跨敤 24 灏忔椂鍒?
+        hour12: false,
     });
     return parseTimeString;
 };
@@ -307,7 +307,6 @@ const renderLine = (
 ) => {
     // console.log("1012 time linePointChange :", linePointChange);
     linePointChange?.sort((a, b) => {
-        // 灏嗘椂闂村瓧绗︿覆杞崲涓虹鏁拌繘琛屾瘮杈?
         const timeA = a.time
             .split(":")
             .reduce((acc, time) => 60 * acc + +time, 0);
@@ -346,19 +345,14 @@ const renderLine = (
         .attr("transform", `translate(${margin.right - 1}, 0)`)
         .style("color", "#f57c00")
         .call(y2Axis);
-    yAxisG
-        .selectAll(".tick text")
-        .attr("x", -10)
-        .attr("y", 0)
-        .style("text-anchor", "end"); // 鍙冲榻愭枃鏈?
+    yAxisG.selectAll(".tick text").attr("x", -10).attr("y", 0); // 鍙冲榻愭枃鏈?
 
     const line2 = d3
         .line()
         .x((d) => xScale(d.time))
         .y((d) => yScale(d.value))
-        .curve(d3.curveLinear); // 浣跨敤 Cardinal 鏇茬嚎鎻掑€?
+        .curve(d3.curveLinear);
     // console.log("8672 parsedData", parsedData);
-    // 缁樺埗鎶樼嚎璺緞
     svg.append("path")
         .attr("class", "line")
         .datum(parsedData)
@@ -366,31 +360,27 @@ const renderLine = (
         .attr("stroke", "#ff9800")
         .attr("stroke-width", 3)
         .attr("d", line2)
-        .style("pointer-events", "none"); // 纭繚绾夸笉浼氶樆鎸＄偣鐨勪簨浠?
+        .style("pointer-events", "none");
 
     const points = svg
         .selectAll("circle.point")
         .data(parsedData)
-        .join("circle") // 浣跨敤 join 浠ｆ浛 enter().append()
+        .join("circle")
         .attr("class", "point")
         .attr("cx", (d) => xScale(d.time))
         .attr("cy", (d) => yScale(d.value))
-        .attr("r", 5)
+        .attr("r", 1)
         .style("opacity", 1)
         .attr("fill", "#ff9800")
-        .attr("stroke", "#ffffff")
         .attr("stroke-width", 2)
-        .style("cursor", "pointer") // 娣诲姞榧犳爣鎸囬拡鏍峰紡
-        .style("pointer-events", "all"); // 纭繚鐐瑰彲浠ユ帴鏀朵簨浠?
-    // 娣诲姞妯嚎缃戞牸
+        .style("cursor", "pointer")
+        .style("pointer-events", "all");
     const gridLines = svg
         .append("g")
         .attr("class", "grid-lines")
         .attr("transform", `translate(0, 0)`);
-    // 鐢熸垚鍒诲害鍊?
-    const ticks = d3.range(0, 105, 10); // 浠?鍒?00锛岄棿闅斾负5
+    const ticks = d3.range(0, 105, 10);
 
-    // 缁樺埗妯嚎
     gridLines
         .selectAll("line")
         .data(ticks)
@@ -432,7 +422,7 @@ const renderLine = (
             });
     });
 
-    // .call(drag); // 搴旂敤鎷栨嫿琛屼负
+    // .call(drag);
     const handleClick = (event, d) => {
         // // console.log("lineFlag", lineFlag);
         // if (lineFlag == 1) {
@@ -445,12 +435,10 @@ const renderLine = (
             time: d.time,
             value: d.value,
         });
-        // setIsModalVisible(true);
-        // }
+        setIsModalVisible(true);
     };
-    // 鎶樼嚎鐢熸垚鍣?
 
-    const dragThreshold = 300; // 鎷栨嫿鍚姩闃堝€硷紝鍗曚綅涓哄儚绱?
+    const dragThreshold = 300;
     let startX, startY;
     let isDragging = false;
     let dragTimeout;
@@ -671,8 +659,8 @@ const LineChart = (props) => {
             inputRef.current.focus();
             let result = NaN;
             if (typeof inputNumber !== "number") {
-                const concatenatedStr = inputNumber.join(""); // 鎷兼帴鏁扮粍涓殑瀛楃涓?
-                result = concatenatedStr; // 灏嗘嫾鎺ュ悗鐨勫瓧绗︿覆杞崲涓烘暟瀛?
+                const concatenatedStr = inputNumber.join("");
+                result = concatenatedStr;
             } else {
                 result = inputNumber;
             }
@@ -685,8 +673,6 @@ const LineChart = (props) => {
         // if (timeRef.current) {
         //     timeRef.current.focus();
         // }
-
-        // setInputValues({ value: result });
     };
 
     const handleZoomOut = useCallback(() => {
@@ -711,7 +697,7 @@ const LineChart = (props) => {
 
     const updateMaxScroll = (position, k) => {
         const maxScroll = dimensions.width * k - dimensions.width;
-        const percentage = (position / 100) * maxScroll; // 灏?newPosition 杞崲涓?0 鍒?1 涔嬮棿鐨勬暟
+        const percentage = (position / 100) * maxScroll;
         setRealPosition(percentage);
     };
 
@@ -775,7 +761,7 @@ const LineChart = (props) => {
                 </Row>
             </div>
             <Modal
-                title="姊害鏇茬嚎"
+                title="梯度洗脱"
                 open={isModalVisible}
                 onOk={handleOk}
                 onCancel={handleCancel}
@@ -801,7 +787,7 @@ const LineChart = (props) => {
                     // onChange={handleInputChange}
                     controls={false}
                 />
-                <Input
+                {/* <Input
                     ref={inputRef}
                     className="input-number"
                     value={inputValues.flow_rate}
@@ -812,7 +798,7 @@ const LineChart = (props) => {
                     // onChange={handleInputChange}
                     controls={false}
                     disabled
-                />
+                /> */}
                 <KeyboardNumber
                     className="input-keyboard"
                     value={inputValues.value}
