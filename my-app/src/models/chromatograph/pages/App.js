@@ -68,7 +68,7 @@ function App() {
                         <h1>Chromatography Instrument</h1>
                     </div>
                 </div>
-                {/* <div className="headerClock">
+                {/*<div className="headerClock">
                     <Clock />
                 </div> */}
             </Header>

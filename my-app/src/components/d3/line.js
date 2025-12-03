@@ -40,7 +40,7 @@ let endTime;
 const _ = require("lodash");
 
 now = new Date();
-now.setHours(0, 0, 0);
+now.setHours(0, 0, 0, 0); // 起点固定为当天 00:00
 
 // let now = new Date();
 // now.setHours(1, 0, 0);
@@ -57,36 +57,46 @@ const renderCurve = (
 ) => {
     // // console.log("data", data);
     //data{time: '17:46:47', value: 81.41712213857508}
+    const parsedData =
+        data?.map((d) => ({
+            ...d,
+            time: parseTime(d.time),
+            value: Number(d.value),
+        })) || [];
+    // 过滤掉非法时间或非法数值，避免 y/x 轴 domain 退化
+    const validData = parsedData
+        .filter(
+            (d) =>
+                Number.isFinite(d.value) &&
+                d.time instanceof Date &&
+                !isNaN(d.time.getTime())
+        )
+        .sort((a, b) => a.time - b.time); // 按时间排序，避免乱序导致曲线异常
+    const hasValidData = validData.length > 0;
 
-    const parsedData = data?.map((d) => ({
-        ...d,
-        time: parseTime(d.time),
-    }));
-    // console.log("0920   data--------------------", parsedData);
-    const valueExtent = d3.extent(parsedData, (d) => d.value);
-    const [minValue = -3, maxValue = 53] = valueExtent || [-3, 50]; // 榛樿鍊间负 [0, 50]
+    console.log("0920   data--------------------", validData);
+    const valueExtent = d3.extent(
+        hasValidData ? validData : [{ value: 0 }],
+        (d) => d.value
+    );
 
-    let newMinValue = parseFloat(minValue) - parseFloat(maxValue) * 0.05;
-    let newMaxValue = parseFloat(maxValue) + parseFloat(maxValue) * 0.05;
-    // console.log("0920  newMinValue ---- :", newMinValue);
-    // console.log("0920  newMaxValue ---- :", newMaxValue);
-    if (newMinValue > newMaxValue) {
-        [newMinValue, newMaxValue] = [newMaxValue, newMinValue];
+    let [minValue, maxValue] = valueExtent || [];
+    if (!Number.isFinite(minValue) || !Number.isFinite(maxValue)) {
+        // 数据全无效时使用默认轴范围，保证轴始终存在
+        minValue = -3;
+        maxValue = 53;
     }
-    if (Math.abs(newMaxValue - newMinValue) < 1e-3) {
-        newMinValue -= 2; // 缁欏€间竴涓皬鐨勫亸绉婚噺
-        newMaxValue += 2;
+
+    if (minValue === maxValue) {
+        minValue -= 2; // 全 0 时给出上下边界
+        maxValue += 2;
     }
-
-    // console.log("0920  newMinValue :", newMinValue);
-    // console.log("0920  newMaxValue :", newMaxValue);
-
-    endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
+    const padding = Math.max(Math.abs(maxValue), 1) * 0.05;
 
     // const xScale = d3.scaleTime().domain([now, endTime]).range([0, width]);
     const yScale = d3
         .scaleLinear()
-        .domain([newMinValue, newMaxValue])
+        .domain([minValue - padding, maxValue + padding])
         .range([height, 0]);
 
     const xAxis = d3.axisTop(xScale).tickFormat((d) => {
@@ -106,7 +116,6 @@ const renderCurve = (
         .attr("transform", `translate(0, 0)`)
         .style("color", "#00838f")
         .call(yAxis);
-
     const line = d3
         .line()
         .x((d) => xScale(d.time))
@@ -137,13 +146,42 @@ const renderCurve = (
         .attr("stop-opacity", 1);
 
     // // console.log("par", parsedData);
+    // 单个点/无效数据时兜底：复制点或画一条水平线，避免路径瞬间消失
+    const baseValue = hasValidData ? validData[0].value : 0;
+    const allTimesSame =
+        hasValidData &&
+        validData.every(
+            (d) => d.time.getTime() === validData[0].time.getTime()
+        );
+    // 时间全相同或无数据时，用 x 轴两端生成基线，避免 0 长度路径瞬间消失
+    const lineData =
+        hasValidData && !allTimesSame
+            ? validData.length === 1
+                ? [validData[0], { ...validData[0] }]
+                : validData
+            : [
+                  { time: now, value: baseValue },
+                  { time: endTime, value: baseValue },
+              ];
+    console.log("1201   validData--------------------", validData);
+
+    console.log("1201   lineData--------------------", lineData);
     svg.append("path")
-        .datum(parsedData)
+        .datum(lineData)
         .attr("fill", "none")
         .attr("stroke", `url(#${gradientId})`)
         .attr("stroke-width", 3)
         .attr("d", line)
         .style("filter", "drop-shadow(0px 2px 4px rgba(0, 188, 212, 0.3))");
+
+    // 单个点时额外画一个点标记
+    if (hasValidData && validData.length === 1) {
+        svg.append("circle")
+            .attr("cx", xScale(validData[0].time))
+            .attr("cy", yScale(validData[0].value))
+            .attr("r", 3)
+            .attr("fill", `url(#${gradientId})`);
+    }
     // const lineX = d3
     //     .line()
     //     .x((d) => xScale(d.time))
@@ -216,7 +254,7 @@ const renderArea = (svg, xScale, yScale, height) => {
         .curve(d3.curveLinear);
 
     // console.log("1021   num:", num);
-    // console.log("1021   selected:", selected);
+    console.log("1203 selectedAllTubes  selected:", selected);
     // console.log("1118 selected count", selected.length);
     selected.forEach((selectTube) => {
         // console.log("1021 selectTube", selectTube);
@@ -535,6 +573,9 @@ const LineChart = (props) => {
         // console.log("1014   dimensions", dimensions);
 
         if (!data || dimensions.width === 0 || dimensions.height === 0) return;
+
+        const safeSampling = samplingTime > 0 ? samplingTime : 1;
+        endTime = new Date(now.getTime() + safeSampling * 60 * 1000); // 保持从 00:00 开始的固定跨度
 
         const svg = d3.select(svgRef.current);
         svg.selectAll("*").remove();

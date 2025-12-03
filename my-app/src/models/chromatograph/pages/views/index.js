@@ -98,6 +98,7 @@ let flagStartTime = 1; //  1 实验从头开始  0 实验继续
 let newPoints = [];
 let counter = 0;
 let selectTubeTransfer = [];
+let statusClearTimeout;
 const statusLabelMap = {
     clean: "清洗",
     abandon: "废弃",
@@ -156,6 +157,12 @@ const App = () => {
         Detector: { value: 0 },
     });
     const [operatingTime, setOperatingTime] = useState(0);
+    const formatToThreeDecimals = (value) => {
+        if (typeof value === "number") {
+            return Number(value.toFixed(3));
+        }
+        return value;
+    };
     const runningTaskInfo = useMemo(() => {
         console.log("=== 状态栏调试信息 ===");
         console.log("currentTaskId:", currentTaskId);
@@ -260,12 +267,15 @@ const App = () => {
             setNum((prevNum) => [...prevNum, data.point]);
         });
         socket.on("new_curve_point", (responseData) => {
-            console.log("1026   autoGradient", autoGradient, autoGradientLet);
-            getEluentLine().then((responseData) => {
-                if (!responseData.error) {
-                    setLine(responseData.data.point);
-                }
-            });
+            console.log("1026   responseData", responseData);
+            if (autoGradient == true) {
+                getEluentLine().then((responseData) => {
+                    if (!responseData.error) {
+                        setLine(responseData.data.point);
+                    }
+                });
+            }
+
             setData((prevData) => [...prevData, responseData.point]);
         });
         socket.on("warning", (responseData) => {
@@ -312,6 +322,160 @@ const App = () => {
                 });
             }
         });
+        socket.on("current_status", (responseData) => {
+            const status =
+                typeof responseData === "string"
+                    ? responseData
+                    : responseData?.status;
+            if (!status) return;
+            if (status == "clear") {
+                if (statusClearTimeout) {
+                    clearTimeout(statusClearTimeout);
+                }
+                statusClearTimeout = setTimeout(() => {
+                    setData(() => []);
+                    setSelectedReverse([]);
+                    setNum([]);
+                }, 2000);
+            }
+            if (status == "start_collection") {
+                clearData();
+            }
+            if (status == "start_retain") {
+                let selectTubeTransfer_1 = [
+                    {
+                        module_index: 0,
+                        tube_index: 1,
+                        status: "retain",
+                        flag: true,
+                        color: "One",
+                    },
+                    {
+                        module_index: 0,
+                        tube_index: 2,
+                        status: "retain",
+                        flag: true,
+                        color: "One",
+                    },
+                    {
+                        module_index: 0,
+                        tube_index: 3,
+                        status: "retain",
+                        flag: true,
+                        color: "One",
+                    },
+                    {
+                        module_index: 0,
+                        tube_index: 4,
+                        status: "retain",
+                        flag: true,
+                        color: "One",
+                    },
+                ];
+                setSelectedAllTubes((prevNum) => {
+                    return [
+                        ...prevNum,
+                        ...processGroupedData(selectTubeTransfer_1),
+                    ];
+                });
+                let selectTubeTransfer_2 = [
+                    {
+                        module_index: 0,
+                        tube_index: 7,
+                        status: "retain",
+                        flag: true,
+                        color: "One",
+                    },
+                ];
+                setSelectedAllTubes((prevNum) => {
+                    return [
+                        ...prevNum,
+                        ...processGroupedData(selectTubeTransfer_2),
+                    ];
+                });
+                let selectTubeTransfer_3 = [
+                    {
+                        module_index: 0,
+                        tube_index: 0,
+                        status: "abandon",
+                        flag: false,
+                        color: "Zero",
+                    },
+                ];
+                setSelectedAllTubes((prevNum) => {
+                    return [
+                        ...prevNum,
+                        ...processGroupedData(selectTubeTransfer_3),
+                    ];
+                });
+                let selectTubeTransfer_4 = [
+                    {
+                        module_index: 0,
+                        tube_index: 5,
+                        status: "abandon",
+                        flag: false,
+                        color: "Zero",
+                    },
+                    {
+                        module_index: 0,
+                        tube_index: 6,
+                        status: "abandon",
+                        flag: false,
+                        color: "Zero",
+                    },
+                ];
+                setSelectedAllTubes((prevNum) => {
+                    return [
+                        ...prevNum,
+                        ...processGroupedData(selectTubeTransfer_4),
+                    ];
+                });
+                let selectTubeTransfer_5 = [
+                    {
+                        module_index: 0,
+                        tube_index: 8,
+                        status: "abandon",
+                        flag: false,
+                        color: "Zero",
+                    },
+                    {
+                        module_index: 0,
+                        tube_index: 9,
+                        status: "abandon",
+                        flag: false,
+                        color: "Zero",
+                    },
+                ];
+
+                setSelectedAllTubes((prevNum) => {
+                    return [
+                        ...prevNum,
+                        ...processGroupedData(selectTubeTransfer_5),
+                    ];
+                });
+                console.log("selectedAllTubes", selectedAllTubes);
+            }
+        });
+        socket.on("device_status", (responseData) => {
+            console.log(
+                "1203-----------------------device_status-------",
+                responseData
+            );
+            setDeviceStatus({
+                PowerStatus: { value: !!responseData.PowerStatus },
+                CurrentTube: { value: responseData.CurrentTube || "-" },
+                PumpASpeed: {
+                    value: responseData.PumpASpeed,
+                },
+                PumpBSpeed: {
+                    value: responseData.PumpBSpeed,
+                },
+                Detector: {
+                    value: responseData.Detector,
+                },
+            });
+        });
+
         socket.on("module_flag", (responseData) => {
             console.log("1026   responseData :", responseData);
         });
@@ -382,7 +546,7 @@ const App = () => {
         }
         console.log("1101   newTubes", newTubes);
         selectTubeTransfer = [...newTubes];
-        console.log("1101   selectTubeTransfer  2  ", selectTubeTransfer);
+        console.log("1203   selectTubeTransfer  2  ", selectTubeTransfer);
         if (clean_flag !== 1) {
             setSelectedAllTubes((prevNum) => {
                 return [...prevNum, ...processGroupedData(selectTubeTransfer)];
@@ -402,7 +566,7 @@ const App = () => {
             }
             groupedData[key].push(item.tube_index);
         });
-        console.log("1101   groupedData", groupedData);
+        console.log("selectedAllTubes   groupedData", groupedData);
         let result = [];
         Object.keys(groupedData).forEach((key) => {
             console.log("1021   key", key);
@@ -441,7 +605,7 @@ const App = () => {
             // 查找对应的时间
             let start_time = null;
             let end_time = null;
-            // console.log("1021  ---------num", num);
+            console.log("1021  selectedAllTubes   num", num);
             // 遍历 groupsOrigin 查找对应 module_index 和 tube_index 的时间
             num.forEach((group) => {
                 if (group.module_index === module_index) {
@@ -459,7 +623,7 @@ const App = () => {
                 entry.time_end = end_time;
             }
         });
-        console.log("1101    result", result);
+        console.log("1101    selectedAllTubes  result", result);
         return result;
     };
     const retainFlags = () => {
@@ -475,7 +639,8 @@ const App = () => {
             } else {
                 colorNum = 1;
             }
-            console.log("0926   selected_tube   ---2", selected_tube);
+            console.log("1203   selected_tube", selected_tube);
+
             process_data_flag(selected_tube, true, colorMap[colorNum]);
             setSelectedReverse([]);
             selected_tube = [];
@@ -1110,9 +1275,7 @@ const App = () => {
                                 泵A
                             </span>
                             <span className="machine-status-bar__value">
-                                {(
-                                    deviceStatus?.PumpASpeed?.value / 1000
-                                ).toFixed(2)}{" "}
+                                {(deviceStatus?.PumpASpeed?.value).toFixed(2)}{" "}
                                 ml/s
                             </span>
                         </div>
@@ -1122,9 +1285,7 @@ const App = () => {
                                 泵B
                             </span>
                             <span className="machine-status-bar__value">
-                                {(
-                                    deviceStatus?.PumpBSpeed?.value / 1000
-                                ).toFixed(2)}{" "}
+                                {(deviceStatus?.PumpBSpeed?.value).toFixed(2)}{" "}
                                 ml/s
                             </span>
                         </div>
@@ -1332,11 +1493,11 @@ const App = () => {
                                                         )}
                                                     </div>
                                                 </Col>
-                                            <Col span={9}>
-                                                <div className="panel-section">
-                                                    <TaskTable
-                                                        selected_tubes={
-                                                            selected_tubes
+                                                <Col span={9}>
+                                                    <div className="panel-section">
+                                                        <TaskTable
+                                                            selected_tubes={
+                                                                selected_tubes
                                                             }
                                                             title={""}
                                                             buttonFlag={1}
@@ -1345,17 +1506,17 @@ const App = () => {
                                                             }
                                                             selectedAllTubes={
                                                                 selectedTask
-                                                        }
-                                                        runningInfo={
-                                                            runningTaskInfo
-                                                        }
-                                                        excuteTaskFlag={
-                                                            excuteTaskFlag
-                                                        }
-                                                    ></TaskTable>
-                                                </div>
-                                            </Col>
-                                        </Row>
+                                                            }
+                                                            runningInfo={
+                                                                runningTaskInfo
+                                                            }
+                                                            excuteTaskFlag={
+                                                                excuteTaskFlag
+                                                            }
+                                                        ></TaskTable>
+                                                    </div>
+                                                </Col>
+                                            </Row>
                                         ),
                                     },
                                 ]}
