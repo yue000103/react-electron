@@ -1187,13 +1187,7 @@ const App = () => {
             disabled: methodFlag === 0,
             className: "button4",
         },
-        {
-            key: "manualHold",
-            label: "\u624b\u52a8\u4fdd\u6301",
-            onClick: () => setOpenManualHold(true),
-            disabled: methodFlag === 0,
-            className: "button5",
-        },
+
         {
             key: "switchTube",
             label: "\u5207\u6362\u8bd5\u7ba1",
@@ -1228,6 +1222,13 @@ const App = () => {
             onClick: () => handleAutoGradientToggle(!autoGradient),
             disabled: methodFlag === 0,
             className: `button3 ${autoGradient ? "button-active" : ""}`,
+        },
+        {
+            key: "manualHold",
+            label: "\u624b\u52a8\u4fdd\u6301",
+            onClick: () => setOpenManualHold(true),
+            disabled: autoGradient === false,
+            className: "button5",
         },
     ];
     return (

@@ -46,17 +46,7 @@ now.setHours(0, 0, 0, 0); // 起点固定为当天 00:00
 // now.setHours(1, 0, 0);
 // const endTime = new Date(now.getTime() + 5 * 60 * 1000);
 
-const renderCurve = (
-    svg,
-    width,
-    height,
-    margin,
-    cleanFlag,
-    samplingTime,
-    xScale
-) => {
-    // // console.log("data", data);
-    //data{time: '17:46:47', value: 81.41712213857508}
+const renderCurve = (svg, height, xScale) => {
     const parsedData =
         data?.map((d) => ({
             ...d,
@@ -74,7 +64,6 @@ const renderCurve = (
         .sort((a, b) => a.time - b.time); // 按时间排序，避免乱序导致曲线异常
     const hasValidData = validData.length > 0;
 
-    console.log("0920   data--------------------", validData);
     const valueExtent = d3.extent(
         hasValidData ? validData : [{ value: 0 }],
         (d) => d.value
@@ -93,7 +82,6 @@ const renderCurve = (
     }
     const padding = Math.max(Math.abs(maxValue), 1) * 0.05;
 
-    // const xScale = d3.scaleTime().domain([now, endTime]).range([0, width]);
     const yScale = d3
         .scaleLinear()
         .domain([minValue - padding, maxValue + padding])
@@ -122,83 +110,16 @@ const renderCurve = (
         .y((d) => yScale(d.value))
         .curve(d3.curveBasis);
 
-    // 创建渐变定义
-    const gradientId = "curveGradient";
-    const defs = svg.append("defs");
-    const gradient = defs
-        .append("linearGradient")
-        .attr("id", gradientId)
-        .attr("x1", "0%")
-        .attr("x2", "100%")
-        .attr("y1", "0%")
-        .attr("y2", "0%");
-
-    gradient
-        .append("stop")
-        .attr("offset", "0%")
-        .attr("stop-color", "#00bcd4")
-        .attr("stop-opacity", 1);
-
-    gradient
-        .append("stop")
-        .attr("offset", "100%")
-        .attr("stop-color", "#0097a7")
-        .attr("stop-opacity", 1);
-
-    // // console.log("par", parsedData);
-    // 单个点/无效数据时兜底：复制点或画一条水平线，避免路径瞬间消失
-    const baseValue = hasValidData ? validData[0].value : 0;
-    const allTimesSame =
-        hasValidData &&
-        validData.every(
-            (d) => d.time.getTime() === validData[0].time.getTime()
-        );
-    // 时间全相同或无数据时，用 x 轴两端生成基线，避免 0 长度路径瞬间消失
-    const lineData =
-        hasValidData && !allTimesSame
-            ? validData.length === 1
-                ? [validData[0], { ...validData[0] }]
-                : validData
-            : [
-                  { time: now, value: baseValue },
-                  { time: endTime, value: baseValue },
-              ];
-    console.log("1201   validData--------------------", validData);
-
-    console.log("1201   lineData--------------------", lineData);
     svg.append("path")
-        .datum(lineData)
+        .datum(validData)
         .attr("fill", "none")
-        .attr("stroke", `url(#${gradientId})`)
+        .attr("stroke", `#0097a7`)
         .attr("stroke-width", 3)
         .attr("d", line)
         .style("filter", "drop-shadow(0px 2px 4px rgba(0, 188, 212, 0.3))");
 
-    // 单个点时额外画一个点标记
-    if (hasValidData && validData.length === 1) {
-        svg.append("circle")
-            .attr("cx", xScale(validData[0].time))
-            .attr("cy", yScale(validData[0].value))
-            .attr("r", 3)
-            .attr("fill", `url(#${gradientId})`);
-    }
-    // const lineX = d3
-    //     .line()
-    //     .x((d) => xScale(d.time))
-    //     .y(height)
-    //     .curve(d3.curveLinear);
-
-    // svg.append("path")
-    //     .datum(data)
-    //     .attr("fill", "none")
-    //     .attr("stroke", "red")
-    //     .attr("stroke-width", 2)
-    //     .attr("d", lineX);
     renderVertical(svg, xScale, height);
-    // console.log("cleanFlag", cleanFlag);
-    // if (cleanFlag == 0) {
     renderArea(svg, xScale, yScale, height);
-    // }
 };
 
 const renderVertical = (svg, xScale, height) => {
@@ -209,11 +130,9 @@ const renderVertical = (svg, xScale, height) => {
         timeStart: parseTime(d.time_start),
         timeEnd: parseTime(d.time_end),
     }));
-    // 鐢熸垚鍨傜洿铏氱嚎鐨勮矾寰勭敓鎴愬櫒
     const lineVertical = (d) => {
         return `M${xScale(d.timeEnd)},${height}V${0}`;
     };
-    // 缁樺埗鍨傜洿铏氱嚎
     svg.selectAll(".vertical-line")
         .data(parsedData)
         .enter()
@@ -224,7 +143,6 @@ const renderVertical = (svg, xScale, height) => {
         .attr("stroke-dasharray", "5,5") // 璁剧疆铏氱嚎鏍峰紡
         .attr("d", lineVertical)
         .style("opacity", 0.8);
-    // //鐢熸垚flag
     svg.selectAll(".flag-text")
         .data(parsedData)
         .enter()
@@ -323,7 +241,6 @@ const parseTimeString = (time) => {
     });
     return parseTimeString;
 };
-//鏍煎紡鍖栦负涓€鑷寸殑鏍煎紡锛堝'00:06:00'锛夛紝鐒跺悗鍐嶆瘮杈?
 const normalizeTime = (time) => time.padStart(8, "0");
 const isEqual = (p1, p2) =>
     normalizeTime(p1.time) === normalizeTime(p2.time) && p1.value === p2.value;
@@ -431,9 +348,8 @@ const renderLine = (
         .attr("stroke", "#e0e0e0")
         .attr("stroke-width", 1)
         .attr("stroke-dasharray", "3,3")
-        .style("opacity", 0.6); // 璁剧疆铏氱嚎鏍峰紡
+        .style("opacity", 0.6);
     points.each(function () {
-        // 浣跨敤 each 鏉ョ‘淇濇瘡涓偣閮界粦瀹氫簡浜嬩欢
         const point = d3.select(this);
         point
             .on("mouseover", function (event, d) {
@@ -475,17 +391,6 @@ const renderLine = (
         });
         setIsModalVisible(true);
     };
-
-    const dragThreshold = 300;
-    let startX, startY;
-    let isDragging = false;
-    let dragTimeout;
-
-    // 鎷栨嫿寮€濮嬪墠鐨勫噯澶?
-    function prepareDrag(event, d) {
-        startX = event.x;
-        startY = event.y;
-    }
 };
 
 const LineChart = (props) => {
@@ -603,15 +508,7 @@ const LineChart = (props) => {
         // console.log("1021    props---------------5");
 
         // 缁樺埗鏇茬嚎
-        renderCurve(
-            gContent,
-            zoomedWidth,
-            height,
-            margin,
-            props.clean_flag,
-            samplingTime,
-            zoomedXScale
-        );
+        renderCurve(gContent, height, zoomedXScale);
         renderLine(
             zoomedWidth,
             height,
