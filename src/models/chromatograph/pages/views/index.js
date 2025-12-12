@@ -680,6 +680,7 @@ const App = () => {
         terminateEluentLine().then((responseData) => {});
         setAutoGradient(false)
         handleOkRest()
+        
     };
 
     function formatTimeWithRegex(timeStr) {
@@ -789,17 +790,16 @@ const App = () => {
         saveExcute(experimentId);
         saveExperiment(experimentId);
         setOpenReset(false);
-        if (autoGradient == true){
-          getDetectedPeaks().then((responseData) => {
-            if (!responseData.error) {
-            }
-        });
-        } 
+        // if (autoGradient == true){
+        //   getDetectedPeaks().then((responseData) => {
+        //     if (!responseData.error) {
+        //     }
+        // });
+        // } 
         messageApi.open({
           type: "success",
           content: "保存成功！",
         });
-        // clearData();
     };
     const handleCancelReset = () => {
         const experimentId = generateTaskId();
@@ -1618,16 +1618,16 @@ const App = () => {
                     form={autoGradientForm} 
                     layout="vertical"
                     initialValues={{
-                        start_ratio: 0,
-                        end_ratio: 100,
+                        start_ratio: 98,
+                        end_ratio: 95,
                         n1_volumes: 1,
-                        gradient_rate: 5,
+                        gradient_rate: 0.1,
                         peak_threshold: 0.1,
-                        column_volume: 1.0,
-                        sg_window: 5,
-                        sg_order: 2,
-                        baseline_window: 10,
-                        k_factor: 1.0
+                        column_volume: 57,
+                        sg_window: 21,
+                        sg_order: 3,
+                        baseline_window: 180,
+                        k_factor: 20
                     }}
                 >
                     <Row gutter={8}>
