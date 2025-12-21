@@ -50,7 +50,12 @@ import {
     uploadMethodOperate,
     UpdatePrepChromParamsAPI,
 } from "../../api/methods";
-import { columnEquilibration, stopColumnEquilibration } from "../../api/column";
+import {
+    columnEquilibration,
+    stopColumnEquilibration,
+    purgeColumnfunction,
+    stopPurgeColumn,
+} from "../../api/column";
 import { saveExperimentData, executionMethod } from "../../api/experiment";
 import { uploadMethodFlag } from "../../api/methods";
 import { timeout } from "d3";
@@ -241,8 +246,10 @@ const App = () => {
         }
     };
     const [openEquilibration, setOpenEquilibration] = useState(false);
+    const [purgeColumn, setPurgeColumn] = useState(false);
+    const [purgeColumnLoading, setPurgeColumnLoading] = useState(false);
+
     const [equilibrationLoading, setEquilibrationLoading] = useState(false);
-    const [equilibrationStatus, setEquilibrationStatus] = useState(false);
     // 自动梯度相关状态变量
     const [openAutoGradientModal, setOpenAutoGradientModal] = useState(false);
     const [autoGradientLoading, setAutoGradientLoading] = useState(false);
@@ -315,10 +322,23 @@ const App = () => {
             if (responseData.flag === 1) {
                 setEquilibrationLoading(false);
                 setOpenEquilibration(false);
-                setEquilibrationStatus(false);
                 messageApi.open({
                     type: "success",
                     content: "润柱完成！",
+                });
+            }
+        });
+        socket.on("purge_column_flag", (responseData) => {
+            console.log(
+                "1026   purge_column_flag---------------------",
+                responseData
+            );
+            if (responseData.flag === 1) {
+                setPurgeColumnLoading(false);
+                setPurgeColumn(false);
+                messageApi.open({
+                    type: "success",
+                    content: "吹扫完成！",
                 });
             }
         });
@@ -1101,10 +1121,15 @@ const App = () => {
     };
     const handleEquilibrationStart = () => {
         setEquilibrationLoading(true);
-        const methodId = localStorage.getItem("methodId");
         columnEquilibration().then((response) => {
             if (!response.error) {
-                setEquilibrationStatus(true);
+            }
+        });
+    };
+    const handlePurgeColumnStart = () => {
+        setPurgeColumnLoading(true);
+        purgeColumnfunction().then((response) => {
+            if (!response.error) {
             }
         });
     };
@@ -1113,10 +1138,20 @@ const App = () => {
             if (!response.error) {
                 setEquilibrationLoading(false);
                 setOpenEquilibration(false);
-                setEquilibrationStatus(false);
                 messageApi.open({
                     type: "info",
                     content: "已停止润柱！",
+                });
+            }
+        });
+    };
+    const handlePurgeColumnStop = () => {
+        stopPurgeColumn().then((response) => {
+            if (!response.error) {
+                setPurgeColumn(false);
+                messageApi.open({
+                    type: "info",
+                    content: "已停止吹扫！",
                 });
             }
         });
@@ -1229,6 +1264,13 @@ const App = () => {
             onClick: () => setOpenManualHold(true),
             disabled: autoGradient === false,
             className: "button5",
+        },
+        {
+            key: "manualHold",
+            label: "吹扫柱子",
+            onClick: () => setPurgeColumn(true),
+            disabled: methodFlag === 0,
+            className: "button1",
         },
     ];
     return (
@@ -1718,6 +1760,27 @@ const App = () => {
                             开始
                         </Button>
                         <Button onClick={handleEquilibrationStop}>结束</Button>
+                    </div>
+                </div>
+            </Modal>
+            <Modal
+                title="吹扫色谱柱"
+                open={purgeColumn}
+                onCancel={handlePurgeColumnStop}
+                footer={null}
+            >
+                <div style={{ textAlign: "center", padding: "20px" }}>
+                    <p>是否开始吹扫？</p>
+                    <div style={{ marginTop: "20px" }}>
+                        <Button
+                            type="primary"
+                            onClick={handlePurgeColumnStart}
+                            loading={purgeColumnLoading}
+                            style={{ marginRight: "10px" }}
+                        >
+                            开始
+                        </Button>
+                        <Button onClick={handlePurgeColumnStop}>结束</Button>
                     </div>
                 </div>
             </Modal>
