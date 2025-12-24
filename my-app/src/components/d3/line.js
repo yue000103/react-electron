@@ -174,7 +174,8 @@ const renderArea = (svg, xScale, yScale, height) => {
     // console.log("1021   num:", num);
     console.log("1203 selectedAllTubes  selected:", selected);
     // console.log("1118 selected count", selected.length);
-    selected.forEach((selectTube) => {
+    const safeSelected = Array.isArray(selected) ? selected : [];
+    safeSelected.forEach((selectTube) => {
         // console.log("1021 selectTube", selectTube);
         // console.log("1021   selectTube :", selectTube);
 
@@ -261,7 +262,10 @@ const renderLine = (
     xScale
 ) => {
     // console.log("1012 time linePointChange :", linePointChange);
-    linePointChange?.sort((a, b) => {
+    const safeLinePoints = Array.isArray(linePointChange)
+        ? linePointChange
+        : [];
+    safeLinePoints.sort((a, b) => {
         const timeA = a.time
             .split(":")
             .reduce((acc, time) => 60 * acc + +time, 0);
@@ -270,7 +274,7 @@ const renderLine = (
             .reduce((acc, time) => 60 * acc + +time, 0);
         return timeA - timeB; // 浠庡皬鍒板ぇ鎺掑簭
     });
-    const parsedData = linePointChange?.map((d) => ({
+    const parsedData = safeLinePoints.map((d) => ({
         ...d,
         time: parseTime(d.time),
     }));

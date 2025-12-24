@@ -42,7 +42,8 @@ const renderCurve = (svg, height, samplingTime, xScale) => {
     // console.log("data", data);
     //data{time: '17:46:47', value: 81.41712213857508}
 
-    const parsedData = data?.map((d) => ({
+    const safeData = Array.isArray(data) ? data : [];
+    const parsedData = safeData.map((d) => ({
         ...d,
         time: parseTime(d.time),
     }));
@@ -196,7 +197,10 @@ const renderLine = (
     xScale
 ) => {
     console.log("1012 linePointChange :", linePointChange);
-    const parsedData = linePointChange?.map((d) => ({
+    const safeLinePoints = Array.isArray(linePointChange)
+        ? linePointChange
+        : [];
+    const parsedData = safeLinePoints.map((d) => ({
         ...d,
         time: parseTime(d.time),
     }));
