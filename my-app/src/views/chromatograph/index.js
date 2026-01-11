@@ -107,7 +107,7 @@ const App = () => {
         <Flex gap="middle" wrap className="container">
             <Layout className="layoutStyle">
                 <div className="headerStyle">
-                    <Line data={data} num={num}></Line>
+                    <Line data={data} num={num} selectedAllTubes={[]}></Line>
                     {/* <Test data={data}></Test> */}
                 </div>
                 <Layout>
