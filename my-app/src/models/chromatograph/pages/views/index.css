@@ -463,7 +463,7 @@
 .machine-status-bar__content {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 13px;
   flex: 1;
   justify-content: space-between;
 }
@@ -487,8 +487,11 @@
   font-size: 13px;
   font-weight: 600;
   font-family: 'Courier New', monospace;
-  min-width: 45px;
-  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 12ch;
+  white-space: nowrap;
   background: rgba(0, 0, 0, 0.2);
   padding: 2px 8px;
   border-radius: 3px;

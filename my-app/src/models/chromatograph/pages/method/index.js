@@ -594,7 +594,9 @@ const Method = () => {
     };
     const clearMethod = () => {
         console.log();
-        localStorage.clear();
+        localStorage.removeItem("methodId");
+        localStorage.removeItem("uploadFlag");
+        localStorage.removeItem("updateLineFlag");
         formBasis.resetFields();
         // formPump.resetFields();
         formElution.resetFields();

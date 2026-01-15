@@ -200,6 +200,15 @@ body, html, #root {
   overflow: auto;
 }
 
+.appView {
+  display: none;
+  height: 100%;
+}
+
+.appViewActive {
+  display: block;
+}
+
 .appContent > * {
   background: var(--card-bg);
   border-radius: 12px;

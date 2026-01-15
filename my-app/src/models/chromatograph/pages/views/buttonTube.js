@@ -10,27 +10,7 @@ import { linkHorizontal } from "d3";
 import useIndexedDB from "../../hooks/useIndexedDB";
 
 let select_tube = [];
-let groupsOrigin = [
-    // [
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 1 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 2 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 3 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 4 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 5 },
-    // ],
-    // [
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 1 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 2 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 3 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 4 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 5 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 6 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 7 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 8 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 9 },
-    //     { time_start: "00:00:00", time_end: "00:00:00", tube_index: 10 },
-    // ],
-];
+const initialGroupsOrigin = [];
 
 const desc = [
     "0.1",
@@ -48,14 +28,8 @@ const tubeV = 120;
 let select_tube_flag = [];
 
 // 新的数据格式：将mode和tubeValues合并为一个数组的元组
-let modeAndValues = [
-    // [1, 50],
-    // [2, 80],
-    // [3, 30],
-    // [4, 80],
-];
+const initialModeAndValues = [];
 let moduleList = [];
-let flag = 0;
 
 const App = ({
     num,
@@ -70,7 +44,13 @@ const App = ({
     const [selectedFlag, setSelectedFlags] = useState([]);
     const [cleanFlag, setCleanFlag] = useState(0);
     const [forceUpdate, setForceUpdate] = useState(0);
-    const [groupsOfTen, setGroupsOfTen] = useState(_.cloneDeep(groupsOrigin));
+    const [groupsOrigin, setGroupsOrigin] = useState(initialGroupsOrigin);
+    const [modeAndValues, setModeAndValues] = useState(
+        initialModeAndValues
+    );
+    const [groupsOfTen, setGroupsOfTen] = useState(
+        _.cloneDeep(initialGroupsOrigin)
+    );
     const [value, setValue] = useState([]);
     const storedMethodId = Number(localStorage.getItem("methodId")); // 转换为数字
     const { data, loading, error } = useIndexedDB(storedMethodId); // 使用 Hook
@@ -104,21 +84,19 @@ const App = ({
         console.log("1018  moduleList", moduleList);
     };
 
-    if (flag == 0) {
-        console.log("1024   flag", flag);
+    useEffect(() => {
         getAllTubes().then((res) => {
             if (!res.error) {
                 console.log("1024  res", res);
-
-                groupsOrigin = res.data.groups_origin;
-                console.log("1024  groupsOrigin", groupsOrigin);
-
-                modeAndValues = res.data.mode_volume;
-                console.log("1030  getAllTubes  modeAndValues", modeAndValues);
+                setGroupsOrigin(res.data.groups_origin || []);
+                setModeAndValues(res.data.mode_volume || []);
             }
         });
-        flag += 1;
-    }
+    }, []);
+
+    useEffect(() => {
+        setGroupsOfTen(_.cloneDeep(groupsOrigin));
+    }, [groupsOrigin]);
 
     function findColorByModuleAndTube(module_index, tube_index) {
         const matchingObject = selectedAllTubes.find(
@@ -140,9 +118,11 @@ const App = ({
         }
         if (selected) {
             setSelectedFlags(selected);
+            select_tube_flag = selected;
             callback(selected);
         } else {
             setSelectedFlags([]);
+            select_tube_flag = [];
         }
 
         return () => {
@@ -186,21 +166,31 @@ const App = ({
 
     useEffect(() => {
         console.log("1030  data", data);
-        let _retain_ = [];
+        let retainList = [];
         if (data) {
             console.log(
                 "1030  typeof data.retainList :",
                 typeof data.retainList
             );
-
             if (typeof data.retainList === "string") {
-                _retain_ = JSON.parse(data.retainList);
-            } else {
-                _retain_ = data.retainList;
+                try {
+                    retainList = JSON.parse(data.retainList);
+                } catch (error) {
+                    console.log("1030  invalid retainList json", error);
+                    retainList = [];
+                }
+            } else if (Array.isArray(data.retainList)) {
+                retainList = data.retainList;
             }
-            console.log("1030   _retain_", _retain_);
-            calculateRetainValues(setValue, _retain_);
         }
+
+        if (!retainList || retainList.length === 0) {
+            setValue([]);
+            return;
+        }
+
+        console.log("1030   retainList", retainList);
+        calculateRetainValues(setValue, retainList);
     }, [data, modeAndValues]);
     const calculateRetainValues = (set, ListDy) => {
         let _value_ = [];

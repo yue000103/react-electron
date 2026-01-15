@@ -9,7 +9,7 @@ import {
 
 import "./stepFlow.css";
 
-const StepFlow = () => {
+const StepFlow = ({ onDemoStart, onDemoStop }) => {
     const steps = useMemo(
         () => [
             {
@@ -138,12 +138,19 @@ const StepFlow = () => {
         const action = map[command];
         if (!action) return;
         try {
+            if (command === "start") {
+                onDemoStart?.();
+            }
             setSending(true);
             await action();
             if (command === "stop") {
                 resetFlow();
+                onDemoStop?.();
             }
         } catch (error) {
+            if (command === "start") {
+                onDemoStop?.();
+            }
             console.error("控制指令发送失败:", error);
         } finally {
             setSending(false);

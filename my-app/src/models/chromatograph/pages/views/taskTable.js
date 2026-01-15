@@ -36,6 +36,7 @@ const TaskTable = (props) => {
                     tube_list: `${tube.module_index + 1} - ${tubes.join(", ")}`,
                     moduleIndex: tube.module_index,
                     tubes: tubes,
+                    taskId: tube.task_id ?? tube.taskId,
                 };
             });
     }, [selectedAllTubes]);
@@ -49,11 +50,14 @@ const TaskTable = (props) => {
                 runningInfo &&
                 runningInfo.moduleId === item.moduleIndex + 1 &&
                 runningInfo.tubeId &&
-                item.tubes.includes(runningInfo.tubeId);
+                item.tubes.includes(runningInfo.tubeId) &&
+                runningInfo.taskId !== undefined &&
+                item.taskId !== undefined &&
+                runningInfo.taskId === item.taskId;
             if (isRunning) return "running";
             return "normal";
         },
-        [completedKeys, runningInfo]
+        [completedKeys, excuteTaskFlag, runningInfo]
     );
 
     // 点击任务项
@@ -138,18 +142,6 @@ const TaskTable = (props) => {
             });
     }, []);
 
-    const resume = useCallback(() => {
-        setLoading(true);
-        resumeTube()
-            .then((res) => {
-                if (!res.error) {
-                    // 处理成功逻辑
-                }
-            })
-            .finally(() => {
-                setLoading(false);
-            });
-    }, []);
 
     return (
         <div className="task-table-container">
@@ -166,7 +158,10 @@ const TaskTable = (props) => {
                                 runningInfo &&
                                 runningInfo.moduleId === item.moduleIndex + 1 &&
                                 runningInfo.tubeId &&
-                                item.tubes.includes(runningInfo.tubeId);
+                                item.tubes.includes(runningInfo.tubeId) &&
+                                runningInfo.taskId !== undefined &&
+                                item.taskId !== undefined &&
+                                runningInfo.taskId === item.taskId;
 
                             return (
                                 <div
@@ -256,15 +251,9 @@ const TaskTable = (props) => {
                                     onClick={pause}
                                     loading={loading}
                                 >
-                                    暂停
+                                    终止
                                 </Button>
-                                <Button
-                                    type="default"
-                                    onClick={resume}
-                                    loading={loading}
-                                >
-                                    继续
-                                </Button>
+
                             </div>
                         </div>
                     )}

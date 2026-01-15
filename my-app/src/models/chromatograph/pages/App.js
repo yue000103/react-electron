@@ -48,17 +48,6 @@ const menuItems = NAV_ITEMS.map(({ key, label, icon: IconComponent }) => ({
 function App() {
     const [activeView, setActiveView] = useState("experiment");
 
-    const renderCurrentView = () => {
-        switch (activeView) {
-            case "method":
-                return <Method />;
-            case "historical":
-                return <Historical />;
-            default:
-                return <Choramatograph />;
-        }
-    };
-
     return (
         <Layout className="appShell">
             <Header className="appHeader">
@@ -89,7 +78,27 @@ function App() {
                         style={{ height: "100%" }}
                     />
                 </Sider>
-                <Content className="appContent">{renderCurrentView()}</Content>
+                <Content className="appContent">
+                    <div
+                        className={`appView ${
+                            activeView === "experiment"
+                                ? "appViewActive"
+                                : ""
+                        }`}
+                    >
+                        <Choramatograph />
+                    </div>
+                    {activeView === "method" ? (
+                        <div className="appView appViewActive">
+                            <Method />
+                        </div>
+                    ) : null}
+                    {activeView === "historical" ? (
+                        <div className="appView appViewActive">
+                            <Historical />
+                        </div>
+                    ) : null}
+                </Content>
             </Layout>
         </Layout>
     );

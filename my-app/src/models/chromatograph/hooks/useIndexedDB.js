@@ -14,7 +14,7 @@ const useIndexedDB = (methodId) => {
             return;
         }
 
-        const request = indexedDB.open("MyDatabase", 1);
+        const request = indexedDB.open("MyDatabase");
         console.log("1023  request", request);
 
         request.onsuccess = (event) => {

@@ -46,6 +46,9 @@ import {
 import io from "socket.io-client";
 
 const translateType = (codeInfo) => {
+    if (!codeInfo || !codeInfo.type) {
+        return "未知类型";
+    }
     // 提取 parameter 数组
     const parameters = parameterDescription.error_type.parameter;
     const descriptions = parameterDescription.error_type.description;
@@ -91,13 +94,13 @@ const App = (props) => {
     });
 
     const [alarmData, setAlarmData] = useState([
-        {
-            key: "1",
-            level: 3,
-            type: "火灾报警",
-            time: "2024-07-19 12:00:00",
-            description: "火灾报警描述",
-        },
+        // {
+        //     key: "1",
+        //     level: 3,
+        //     type: "火灾报警",
+        //     time: "2024-07-19 12:00:00",
+        //     description: "火灾报警描述",
+        // },
         // {
         //     key: "2",
         //     level: 4,
@@ -160,7 +163,6 @@ const App = (props) => {
         setOpenWarning(true);
     };
     const onCloseWarning = () => {
-        // setAlarmData([]);
         setOpenWarning(false);
     };
 
@@ -376,23 +378,26 @@ const App = (props) => {
                     const codes = res.data.codes;
 
                     // 根据 props.warningCode 查找对应 message 和 type
+                    const codeValue = String(props.warningCode.code);
                     const codeInfo = codes.find(
-                        (code) => code.code_id === props.warningCode.code
+                        (code) => String(code.code_id) === codeValue
                     );
-                    if (codeInfo) {
-                        setAlarmData((prevData) => [
-                            ...prevData,
-                            {
-                                key: (prevData.length + 1).toString(),
-                                type: translateType(codeInfo), // 从获取的 codes 中获取 type
-                                time: props.warningCode.time,
-                                description: `报警代码: ${props.warningCode.code}`, // 添加 message
-                            },
-                        ]);
-                        console.log("warningCode", warningCode);
-                    } else {
+                    const description =
+                        codeInfo?.message ||
+                        `报警代码: ${props.warningCode.code}`;
+                    setAlarmData((prevData) => [
+                        ...prevData,
+                        {
+                            key: (prevData.length + 1).toString(),
+                            type: translateType(codeInfo), // 从获取的 codes 中获取 type
+                            time: props.warningCode.time,
+                            description,
+                        },
+                    ]);
+                    if (!codeInfo) {
                         console.warn(`未找到报警代码 ${props.warningCode}`);
                     }
+                    console.log("warningCode", warningCode);
                 })
                 .catch((error) => {
                     console.error("获取 codes 失败:", error);
