@@ -18,7 +18,7 @@ const TaskTable = (props) => {
         buttonFlag,
         excuteTaskFlag,
     } = props;
-
+    console.log("0116  TaskTable props:", props);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [runningKeys, setRunningKeys] = useState([]);
     const [completedKeys, setCompletedKeys] = useState([]);
@@ -64,6 +64,7 @@ const TaskTable = (props) => {
     const handleItemClick = useCallback(
         (item) => {
             const status = getItemStatus(item);
+            console.log("0116 handleItemClick status:", item);
             // 运行中的任务不能选中
             if (status === "running") return;
 

@@ -142,7 +142,15 @@ const StepFlow = ({ onDemoStart, onDemoStop }) => {
                 onDemoStart?.();
             }
             setSending(true);
-            await action();
+            if (command === "start") {
+                const storedMethodId = Number(localStorage.getItem("methodId"));
+                const methodId = Number.isNaN(storedMethodId)
+                    ? 0
+                    : storedMethodId;
+                await action({ method_id: methodId });
+            } else {
+                await action();
+            }
             if (command === "stop") {
                 resetFlow();
                 onDemoStop?.();

@@ -1,7 +1,7 @@
 import axiosInstance from "./axiosInstance";
 
-export function gradientDemo() {
-    return axiosInstance.post("/task/gradient_demo");
+export function gradientDemo(data) {
+    return axiosInstance.post("/task/gradient_demo", data);
 }
 
 export function gradientDemoStop() {

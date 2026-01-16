@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const useIndexedDB = (methodId) => {
+const useIndexedDB = (methodId, refreshKey) => {
     // console.log("1023  methoodId", methodId);
 
     const [data, setData] = useState(null);
@@ -51,7 +51,7 @@ const useIndexedDB = (methodId) => {
             setError("打开 IndexedDB 时出错:" + event.target.error);
             setLoading(false); // 设置加载状态为 false
         };
-    }, [methodId]);
+    }, [methodId, refreshKey]);
 
     return { data, loading, error }; // 返回数据、加载状态和错误信息
 };

@@ -47,3 +47,7 @@ export function solenoidValveControl(data) {
 export function bubbleSensorStatus() {
     return axiosInstance.get("/status/bubble_sensor_status");
 }
+
+export function highPressurePumpControl(data) {
+    return axiosInstance.post("/status/high_pressure_pump_control", data);
+}

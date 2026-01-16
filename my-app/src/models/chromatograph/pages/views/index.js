@@ -312,6 +312,7 @@ const App = () => {
     });
 
     const [currentMethod, setCurrentMethod] = useState({});
+    const [methodRefreshKey, setMethodRefreshKey] = useState(0);
 
     const [excutedTubes, setExcutedTubes] = useState([]);
 
@@ -370,9 +371,9 @@ const App = () => {
 
     const persistMethodToIndexedDB = (method, methodId) => {
         if (!method || !methodId || !window.indexedDB) {
-            return;
+            return Promise.resolve();
         }
-        storeData(method, Number(methodId)).catch(() => {});
+        return storeData(method, Number(methodId));
     };
 
     const syncCurrentMethod = (methodId) => {
@@ -384,7 +385,11 @@ const App = () => {
         }).then((response) => {
             const methodFromResponse = response?.data?.methods?.[0];
             setCurrentMethod(methodFromResponse);
-            persistMethodToIndexedDB(methodFromResponse, methodId);
+            return persistMethodToIndexedDB(methodFromResponse, methodId)
+                .catch(() => {})
+                .finally(() => {
+                    setMethodRefreshKey((prev) => prev + 1);
+                });
         });
     };
 
@@ -967,7 +972,7 @@ const App = () => {
 
             });
 
-            // console.log("1026 warningCode:", responseData);
+            console.log("1026 warningCode:", responseData);
 
             setErrorCode((pre) => [...pre, responseData.code]);
 
@@ -2762,14 +2767,7 @@ const App = () => {
             disabled: isActionDisabled("clear", methodFlag === 0),
             className: "button4",
         },
-        {
 
-            key: "equilibration",
-            label: "\u6da6\u67f1",
-            onClick: () => setOpenEquilibration(true),
-            disabled: isActionDisabled("equilibration", methodFlag === 0),
-            className: "button7",
-        },
         {
 
             key: "start",
@@ -2799,6 +2797,7 @@ const App = () => {
             disabled: isActionDisabled("continue"),
             className: "button1",
         },
+
         {
             key: "terminate",
             label: "\u7ec8\u6b62",
@@ -2809,12 +2808,13 @@ const App = () => {
             ),
             className: "button1",
         },
-        {
-            key: "save",
-            label: "\u4fdd\u5b58",
-            onClick: () => handleOkRest(),
-            disabled: isActionDisabled("save", methodFlag === 0),
-            className: "button4",
+          {
+
+            key: "equilibration",
+            label: "\u6da6\u67f1",
+            onClick: () => setOpenEquilibration(true),
+            disabled: isActionDisabled("equilibration", methodFlag === 0),
+            className: "button7",
         },
 
 
@@ -2871,6 +2871,8 @@ const App = () => {
 
         },
 
+
+
         {
 
             key: "purgeColumn",
@@ -2883,6 +2885,13 @@ const App = () => {
 
             className: "button1",
 
+        },
+           {
+            key: "save",
+            label: "\u4fdd\u5b58",
+            onClick: () => handleOkRest(),
+            disabled: isActionDisabled("save", methodFlag === 0),
+            className: "button4",
         },
 
     ];
@@ -3294,6 +3303,9 @@ const App = () => {
 
                                                                         reverseFlag
 
+                                                                    }
+                                                                    methodRefreshKey={
+                                                                        methodRefreshKey
                                                                     }
 
                                                                 ></Buttons>

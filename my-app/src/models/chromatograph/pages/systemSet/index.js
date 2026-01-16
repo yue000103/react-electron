@@ -22,6 +22,7 @@ import {
     Row,
     Col,
     Tooltip,
+    Modal,
     Switch,
     message,
     Spin,
@@ -41,6 +42,7 @@ import {
     diaphragmPumpControl,
     solenoidValveControl,
     bubbleSensorStatus,
+    highPressurePumpControl,
 } from "../../api/status";
 
 import io from "socket.io-client";
@@ -82,6 +84,9 @@ const App = (props) => {
         frequency: 0,
         interval: 0,
     });
+    const [bubblePumpModalOpen, setBubblePumpModalOpen] = useState(false);
+    const [pendingBubbleAlarm, setPendingBubbleAlarm] = useState(null);
+    const [bubblePumpLoading, setBubblePumpLoading] = useState(false);
     const [bubbleStatus, setBubbleStatus] = useState("");
     const [valveControl, setValveControl] = useState({
         station: 1,
@@ -163,6 +168,10 @@ const App = (props) => {
         setOpenWarning(true);
     };
     const onCloseWarning = () => {
+        if (alarmData.length > 0) {
+            messageApi.warning("请先清除警报后再关闭");
+            return;
+        }
         setOpenWarning(false);
     };
 
@@ -211,11 +220,72 @@ const App = (props) => {
             ), // 在最后一列添加按钮
         },
     ];
-    const cleanCurrentCode = (record) => {
-        // 按钮点击事件处理逻辑
+    const removeAlarmRecord = (record) => {
+        if (!record) {
+            return;
+        }
         setAlarmData((prevData) =>
             prevData.filter((item) => item.key !== record.key)
         );
+    };
+
+    const markBubbleAlarmHandled = (record) => {
+        if (!record) {
+            return;
+        }
+        setAlarmData((prevData) =>
+            prevData.map((item) =>
+                item.key === record.key
+                    ? { ...item, bubbleHandled: true }
+                    : item
+            )
+        );
+    };
+
+    const openBubblePumpModal = (record) => {
+        setPendingBubbleAlarm(record);
+        setBubblePumpModalOpen(true);
+    };
+
+    const closeBubblePumpModal = () => {
+        setBubblePumpModalOpen(false);
+        setPendingBubbleAlarm(null);
+    };
+
+    const handleBubblePumpAction = async (enabled) => {
+        if (!pendingBubbleAlarm) {
+            return;
+        }
+        setBubblePumpLoading(true);
+        try {
+            await highPressurePumpControl({ enabled });
+            markBubbleAlarmHandled(pendingBubbleAlarm);
+        } catch (error) {
+            messageApi.error("高压泵控制失败，请重试");
+            console.error("高压泵控制失败:", error);
+        } finally {
+            setBubblePumpLoading(false);
+        }
+    };
+
+    const handleBubblePumpCancel = () => {
+        markBubbleAlarmHandled(pendingBubbleAlarm);
+    };
+
+    const cleanCurrentCode = (record) => {
+        const codeValue =
+            record?.code !== undefined && record?.code !== null
+                ? String(record.code)
+                : "";
+        if (codeValue === "510") {
+            if (record?.bubbleHandled) {
+                removeAlarmRecord(record);
+                return;
+            }
+            openBubblePumpModal(record);
+            return;
+        }
+        removeAlarmRecord(record);
     };
 
     const handleOffline = (checked) => {
@@ -368,46 +438,59 @@ const App = (props) => {
     // }, []);
 
     useEffect(() => {
-        if (props.warningCode.code !== warningCode) {
-            showDrawerWarning();
-            setWarningCode(props.warningCode.code);
-            // 获取 codes 数据
-            getCodes()
-                .then((res) => {
-                    console.log("1017 res", res);
-                    const codes = res.data.codes;
+        const useMock = localStorage.getItem("useMock");
+        setIsChecked(useMock);
 
-                    // 根据 props.warningCode 查找对应 message 和 type
-                    const codeValue = String(props.warningCode.code);
-                    const codeInfo = codes.find(
-                        (code) => String(code.code_id) === codeValue
-                    );
-                    const description =
-                        codeInfo?.message ||
-                        `报警代码: ${props.warningCode.code}`;
-                    setAlarmData((prevData) => [
-                        ...prevData,
-                        {
-                            key: (prevData.length + 1).toString(),
-                            type: translateType(codeInfo), // 从获取的 codes 中获取 type
-                            time: props.warningCode.time,
-                            description,
-                        },
-                    ]);
-                    if (!codeInfo) {
-                        console.warn(`未找到报警代码 ${props.warningCode}`);
-                    }
-                    console.log("warningCode", warningCode);
-                })
-                .catch((error) => {
-                    console.error("获取 codes 失败:", error);
-                });
+        const warningCodeValue = props.warningCode?.code;
+        const warningTime = props.warningCode?.time;
+        const hasWarning =
+            warningTime &&
+            warningCodeValue !== undefined &&
+            warningCodeValue !== null &&
+            String(warningCodeValue) !== "0";
+
+        if (!hasWarning) {
+            return;
         }
+
+        showDrawerWarning();
+        setWarningCode(warningCodeValue);
+        // 获取 codes 数据
+        getCodes()
+            .then((res) => {
+                console.log("1017 res", res);
+                const codes = res.data.codes;
+
+                // 根据 props.warningCode 查找对应 message 和 type
+                const codeValue = String(props.warningCode.code);
+                const codeInfo = codes.find(
+                    (code) => String(code.code_id) === codeValue
+                );
+                const description =
+                    codeInfo?.message ||
+                    `报警代码: ${props.warningCode.code}`;
+                setAlarmData((prevData) => [
+                    ...prevData,
+                    {
+                        key: (prevData.length + 1).toString(),
+                        code: Number(codeValue),
+                        type: translateType(codeInfo), // 从获取的 codes 中获取 type
+                        time: props.warningCode.time,
+                        description,
+                    },
+                ]);
+                if (!codeInfo) {
+                    console.warn(`未找到报警代码 ${props.warningCode}`);
+                }
+                console.log("warningCode", warningCode);
+            })
+            .catch((error) => {
+                console.error("获取 codes 失败:", error);
+            });
+
         // console.log("8672 -----------   dynamicHeight :", dynamicHeight);
 
         console.log("props peristaltic :", peristaltic);
-        const useMock = localStorage.getItem("useMock");
-        setIsChecked(useMock);
     }, [props.warningCode.code, props.warningCode.time, props.dynamicHeight]);
     return (
         <>
@@ -678,6 +761,38 @@ const App = (props) => {
                     </div>
                 </Spin>
             </Drawer>
+            <Modal
+                title="排气泡提示"
+                open={bubblePumpModalOpen}
+                onCancel={closeBubblePumpModal}
+                footer={[
+                    <Button
+                        key="start"
+                        type="primary"
+                        loading={bubblePumpLoading}
+                        onClick={() => handleBubblePumpAction(true)}
+                    >
+                        开始排气泡
+                    </Button>,
+                    <Button
+                        key="stop"
+                        loading={bubblePumpLoading}
+                        onClick={() => handleBubblePumpAction(false)}
+                    >
+                        结束排气泡
+                    </Button>,
+                    <Button
+                        key="cancel"
+                        disabled={bubblePumpLoading}
+                        onClick={handleBubblePumpCancel}
+                    >
+                        取消排气泡
+                    </Button>,
+                ]}
+            >
+                <p>是否启动高压泵开始排气泡？</p>
+                <p>请将色谱柱上面的管子拆卸下来，拿烧杯接着。</p>
+            </Modal>
         </>
     );
 };

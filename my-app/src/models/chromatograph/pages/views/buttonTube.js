@@ -38,6 +38,7 @@ const App = ({
     clean_flag,
     selectedAllTubes,
     reverseFlag,
+    methodRefreshKey,
 }) => {
     const _ = require("lodash");
 
@@ -52,8 +53,12 @@ const App = ({
         _.cloneDeep(initialGroupsOrigin)
     );
     const [value, setValue] = useState([]);
+    const [retainVolumeByModule, setRetainVolumeByModule] = useState({});
     const storedMethodId = Number(localStorage.getItem("methodId")); // 转换为数字
-    const { data, loading, error } = useIndexedDB(storedMethodId); // 使用 Hook
+    const { data, loading, error } = useIndexedDB(
+        storedMethodId,
+        methodRefreshKey
+    ); // 使用 Hook
 
     const handleRateChange = (newValue, index, subGroup) => {
         const updatedValue = [...value];
@@ -80,6 +85,15 @@ const App = ({
             })
             .filter((item) => item.liquid_volume > 0);
         UpdateModuleListAPI({ module_list: moduleList }).then(() => {});
+        const nextVolumes = {};
+        moduleList.forEach((item) => {
+            const moduleId = Number(item.module_id);
+            const volume = Number(item.liquid_volume);
+            if (!Number.isNaN(moduleId) && Number.isFinite(volume)) {
+                nextVolumes[moduleId] = volume;
+            }
+        });
+        setRetainVolumeByModule(nextVolumes);
         console.log("1018  updatedValue", updatedValue, dividedArray, subGroup);
         console.log("1018  moduleList", moduleList);
     };
@@ -186,10 +200,20 @@ const App = ({
 
         if (!retainList || retainList.length === 0) {
             setValue([]);
+            setRetainVolumeByModule({});
             return;
         }
 
         console.log("1030   retainList", retainList);
+        const nextVolumes = {};
+        retainList.forEach((item) => {
+            const moduleId = Number(item.module_id);
+            const volume = Number(item.liquid_volume);
+            if (!Number.isNaN(moduleId) && Number.isFinite(volume)) {
+                nextVolumes[moduleId] = volume;
+            }
+        });
+        setRetainVolumeByModule(nextVolumes);
         calculateRetainValues(setValue, retainList);
     }, [data, modeAndValues]);
     const calculateRetainValues = (set, ListDy) => {
@@ -214,35 +238,28 @@ const App = ({
         set(_value_);
     };
 
-    const getCurrentTubeVolume = (groupIndex, subGroupIndex) => {
-        if (!modeAndValues.length) {
+    const getModuleIdByIndex = (groupIndex, subGroupIndex) => {
+        const moduleIndex = groupIndex * 2 + subGroupIndex;
+        const moduleId = moduleIndex + 1;
+        return Number.isNaN(moduleId) ? null : moduleId;
+    };
+
+    const getRetainVolumeByIndex = (groupIndex, subGroupIndex) => {
+        const moduleId = getModuleIdByIndex(groupIndex, subGroupIndex);
+        if (moduleId === null) {
             return null;
         }
+        const volume = retainVolumeByModule[moduleId];
+        return Number.isFinite(volume) ? volume : null;
+    };
 
-        const idx = calculateIndex(groupIndex, subGroupIndex);
-        const rateValue = value[idx];
-
-        if (typeof rateValue !== "number" || Number.isNaN(rateValue)) {
+    const getCurrentTubeVolume = (groupIndex, subGroupIndex) => {
+        const volume = getRetainVolumeByIndex(groupIndex, subGroupIndex);
+        if (volume === null) {
             // 尚未设置保留体积
             return null;
         }
-
-        if (rateValue <= 0) {
-            return 0;
-        }
-
-        const descIndex = Math.max(
-            0,
-            Math.min(desc.length - 1, Math.floor(rateValue * 2) - 1)
-        );
-        const descValue = Number(desc[descIndex]);
-        const modeValue = getModeAndValue(idx);
-        if (!modeValue) {
-            return null;
-        }
-
-        const currentNum = descValue * modeValue[1];
-        return Number.isFinite(currentNum) ? currentNum : null;
+        return volume;
     };
 
     const canSelectTubeByVolume = (groupIndex, subGroupIndex) => {
@@ -516,50 +533,30 @@ const App = ({
                                 }
                                 allowHalf
                             />
-                            {value[
-                                calculateIndex(groupIndex, subGroupIndex)
-                            ] ? (
-                                <span>
-                                    {
-                                        getModeAndValue(
-                                            calculateIndex(
-                                                groupIndex,
-                                                subGroupIndex
-                                            )
-                                        )[0]
-                                    }
-                                    模块 -
-                                    {desc[
-                                        Math.floor(
-                                            value[
-                                                calculateIndex(
-                                                    groupIndex,
-                                                    subGroupIndex
-                                                )
-                                            ] * 2
-                                        ) - 1
-                                    ] *
-                                        getModeAndValue(
-                                            calculateIndex(
-                                                groupIndex,
-                                                subGroupIndex
-                                            )
-                                        )[1]}
-                                    ml
-                                </span>
-                            ) : (
-                                <span>
-                                    {
-                                        getModeAndValue(
-                                            calculateIndex(
-                                                groupIndex,
-                                                subGroupIndex
-                                            )
-                                        )[0]
-                                    }
-                                    模块
-                                </span>
-                            )}
+                            {(() => {
+                                const moduleLabel = getModuleIdByIndex(
+                                    groupIndex,
+                                    subGroupIndex
+                                );
+                                const retainVolume = getRetainVolumeByIndex(
+                                    groupIndex,
+                                    subGroupIndex
+                                );
+                                if (retainVolume === null) {
+                                    return (
+                                        <span>
+                                            {moduleLabel}
+                                            模块
+                                        </span>
+                                    );
+                                }
+                                return (
+                                    <span>
+                                        {moduleLabel}
+                                        模块 - {retainVolume} ml
+                                    </span>
+                                );
+                            })()}
                         </div>
                     ))}
                 </Row>
