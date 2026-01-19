@@ -44,23 +44,19 @@ import Line from "@components/d3/line";
 
 import Buttons from "./buttonTube";
 
-import TaskList from "@components/taskList/index";
 
 import FloatB from "../systemSet/index";
 
 import TaskTable from "./taskTable";
 
-import DynamicCard from "@components/cards/dynamicCard";
 
 import { Empty } from "antd";
 
-import StepFlow from "./stepFlow";
 
 import {
 
     getEluentCurve,
 
-    getEluentVertical,
 
     getEluentLine,
 
@@ -74,7 +70,6 @@ import {
 
     initLine,
 
-    UpdateModuleListAPI,
 
     SetSampleStatusAPI,
 
@@ -92,11 +87,9 @@ import {
 
 import {
 
-    startEquilibration,
 
     setCurrentMethodOperate,
 
-    uploadMethodOperate,
 
     UpdatePrepChromParamsAPI,
 
@@ -128,35 +121,11 @@ import io from "socket.io-client";
 
 import createDB from "../../hooks/createDB";
 
-let num = [
 
-    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 1 },
 
-    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 2 },
-
-    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 3 },
-
-    // { timeStart: "17:46:47", timeEnd: "17:48:37", tube: 4 },
-
-];
-
-let data = [
-
-    // { time: "17:46:47", value: 81.41712213857508 },
-
-    // { time: "17:48:37", value: 88.51848125394666 },
-
-    // { time: "17:48:40", value: 88.51848125394666 },
-
-    // { time: "17:48:60", value: 20.51848125394666 },
-
-];
 
 let excutedTubesUpdateFlag = false;
 
-let linePoint = [];
-
-const tube_list = [];
 
 const colorMap = {
     0: "Zero",
@@ -217,11 +186,7 @@ let excuted_tubes = []; //执行的试管列表
 
 let excute_status = 0;
 
-// let selected_reverse = [];
 
-let intervalId1;
-
-let intervalId2;
 
 let startTime;
 
@@ -285,7 +250,6 @@ const App = () => {
     const [selected_reverse, setSelectedReverse] = useState([]);
     // 模拟步骤进度（0-3），用于控制面板的步骤展示
 
-    const [stepProgressIndex] = useState(1);
 
     const isScrollable = true;
 
@@ -293,7 +257,11 @@ const App = () => {
 
     const [messageApi, contextHolder] = message.useMessage();
 
-    const [warningCode, setWarningCode] = useState({ code: 0, time: "" });
+    const [warningCode, setWarningCode] = useState({
+        code: 0,
+        time: "",
+        operate: undefined,
+    });
 
     const [errorCodes, setErrorCode] = useState([]);
 
@@ -970,45 +938,37 @@ const App = () => {
 
                 time: responseData.time,
 
+                operate: responseData.operate,
+
             });
+
+
 
             console.log("1026 warningCode:", responseData);
 
             setErrorCode((pre) => [...pre, responseData.code]);
 
             terminate();
+            if (responseData.operate == "terminate") {
+                setExperimentStatus(EXPERIMENT_STATUS.idle);
+            }
 
         });
 
         socket.on("current_tube", (responseData) => {
 
-            // console.log(
-            //
-            //     "1026   current_tube---------------------",
-            //
-            //     responseData.tube_id,
-            //
-            //     responseData.task_id
-            //
-            // );
+
 
             setCurrentTubeId(responseData.tube_id);
 
             setCurrentTaskId(responseData.task_id);
 
-            // updateExcuteTask(responseData.tube_id,responseData.task_id);
+
 
         });
 
         socket.on("device_free", (responseData) => {
-            //
-            // console.log(
-            //
-            //     "1026   device_free---------------------",
-            //
-            //     responseData
-            //
-            // );
+
 
             setExcuteTaskFlag(responseData.flag);
 
@@ -1016,19 +976,12 @@ const App = () => {
 
             excute_status = responseData.flag;
 
-            // updateExcuteTask(currentTubeId, responseData.task_id);
 
         });
 
         socket.on("equilibration_flag", (responseData) => {
 
-            // console.log(
-            //
-            //     "1026   equilibration_flag---------------------",
-            //
-            //     responseData
-            //
-            // );
+
 
             if (responseData.flag === 1) {
 
@@ -1346,13 +1299,7 @@ const App = () => {
 
         socket.on("device_status", (responseData) => {
 
-            // console.log(
-            //
-            //     "1203-----------------------device_status-------",
-            //
-            //     responseData
-            //
-            // );
+
 
             setDeviceStatus({
 
@@ -1392,13 +1339,12 @@ const App = () => {
 
         socket.on("disconnect", () => {
 
-            // console.log("1026   Disconnected from WebSocket server");
+
 
         });
 
         socket.on("pressure", (responseData) => {
 
-            // console.log("1026   pressure");
 
 
 
@@ -1846,19 +1792,23 @@ const App = () => {
 
         if (result[0].flag === "run") {
 
+            const taskIdByIndex = new Map();
             const tasks = result.map((res) => {
 
                 let flag = res.flag;
 
                 let index = res.index;
 
-                const taskId = generateTaskId();
+                let taskId = generateTaskId();
 
                 if (taskId === undefined) {
 
                     taskId = generateTaskId();
 
                 }
+
+                const numericTaskId = Number(taskId);
+                taskIdByIndex.set(index, numericTaskId);
 
                 return {
 
@@ -1874,7 +1824,7 @@ const App = () => {
 
                     method_id: Number(methodId),
 
-                    task_id: Number(taskId),
+                    task_id: numericTaskId,
 
                 };
 
@@ -1883,6 +1833,21 @@ const App = () => {
            //console.log("9012   tasks", tasks);
 
             excutedTubesUpdateFlag = false;
+
+            setSelectedTask((prev) =>
+                prev.map((item, idx) =>
+                    taskIdByIndex.has(idx)
+                        ? { ...item, task_id: taskIdByIndex.get(idx) }
+                        : item
+                )
+            );
+            setSelectedAllTubes((prev) =>
+                prev.map((item, idx) =>
+                    taskIdByIndex.has(idx)
+                        ? { ...item, task_id: taskIdByIndex.get(idx) }
+                        : item
+                )
+            );
 
             setExcutedTubes((prevExcutedTubes) => [
 
@@ -2138,6 +2103,7 @@ const App = () => {
         setLoading(false);
 
         terminateEluentLine().then((responseData) => {});
+
         if (experimentStatus === EXPERIMENT_STATUS.collect) {
             setExperimentStatus(EXPERIMENT_STATUS.operate);
         }
@@ -2747,17 +2713,8 @@ const App = () => {
         }
     }, [isOperateTabLocked, activePanelTab]);
 
-    const handleDemoStart = () => {
-        if (experimentStatus !== EXPERIMENT_STATUS.demo) {
-            demoReturnStatusRef.current = experimentStatus;
-            setExperimentStatus(EXPERIMENT_STATUS.demo);
-        }
-    };
-    const handleDemoStop = () => {
-        if (experimentStatus === EXPERIMENT_STATUS.demo) {
-            setExperimentStatus(demoReturnStatusRef.current || EXPERIMENT_STATUS.idle);
-        }
-    };
+
+
 
     const actionButtons = [
 {
@@ -3217,37 +3174,7 @@ const App = () => {
                                                     )}
 
                                                 </div>
-
-                                                <StepFlow
-
-                                                    progressIndex={
-
-                                                        stepProgressIndex
-
-                                                    }
-                                                    onDemoStart={handleDemoStart}
-                                                    onDemoStop={handleDemoStop}
-
-                                                />
-
-                                            </div>
-
-                                        ),
-
-                                    },
-
-                                    {
-
-                                        key: "operate",
-
-                                        label: "操作面板",
-
-                                        forceRender: true,
-                                        disabled: isOperateTabLocked,
-
-                                        children: (
-
-                                            <Row
+                                                 <Row
 
                                                 gutter={16}
 
@@ -3501,10 +3428,13 @@ const App = () => {
                                                 </Col>
 
                                             </Row>
+                                            </div>
 
                                         ),
 
                                     },
+
+
 
                                 ]}
 

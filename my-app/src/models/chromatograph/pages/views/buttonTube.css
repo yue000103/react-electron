@@ -34,19 +34,19 @@
   
 }
 
-.card{
-  border: 2px solid #9a0000;
-  margin-right: 0.5rem;
-  margin-left: 0.8rem;
-  margin-top: 0.5rem;
+.button-div .card{
+  border: 2px solid ;
+  margin-right: 0.1rem;
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(70, 45, 45, 0.1);
+  box-shadow: 0 4px 8px ;
   display: flex; /* 使用Flexbox */
   flex-direction: column; /* 垂直排列子元素 */
   justify-content: center; /* 垂直居中 */
   align-items: center; /* 水平居中 */
-  width: 45%;
-
+  width: 70%;
+  max-width: calc((100% - 3 * 0.8rem) / 4);
+  box-sizing: border-box;
+  background-color: #ffffff;
 }
 .card-button{
   cursor: pointer;
@@ -77,5 +77,5 @@
   width: 100%;
   display: flex;
   flex-wrap: wrap;
-  gap: 0;
+  gap: 1rem;
 }

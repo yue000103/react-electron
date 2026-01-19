@@ -46,6 +46,7 @@ import {
 } from "../../api/status";
 
 import io from "socket.io-client";
+import StepFlow from "../views/stepFlow";
 
 const translateType = (codeInfo) => {
     if (!codeInfo || !codeInfo.type) {
@@ -757,6 +758,18 @@ const App = (props) => {
                                 气泡传感器状态: {bubbleStatus || "--"}
                             </div>
                             <Button onClick={queryBubbleSensor}>查询</Button>
+                        </div>
+
+                        <div
+                            style={{
+                                padding: "12px 0",
+                                borderTop: "1px solid #f0f0f0",
+                            }}
+                        >
+                            <div style={{ fontWeight: 600, marginBottom: 12 }}>
+                                步骤流程
+                            </div>
+                            <StepFlow />
                         </div>
                     </div>
                 </Spin>

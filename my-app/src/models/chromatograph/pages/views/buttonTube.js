@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Button, Flex, Row, Col, Card, Rate } from "antd";
+import { Button, Row, Col, Slider } from "antd";
 import "./buttonTube.css";
 import color from "@components/color/index";
 import { getAllTubes } from "../../api/status";
 import { convertLegacyProps } from "antd/es/button";
-import { HeartOutlined, AliyunOutlined } from "@ant-design/icons";
 import { UpdateModuleListAPI } from "../../api/eluent_curve";
 import { linkHorizontal } from "d3";
 import useIndexedDB from "../../hooks/useIndexedDB";
@@ -60,25 +59,34 @@ const App = ({
         methodRefreshKey
     ); // 使用 Hook
 
+    const getSliderRangeValue = (sliderValue) => {
+        if (Array.isArray(sliderValue)) {
+            const upperValue = Number(sliderValue[1]);
+            return [0, Number.isFinite(upperValue) ? upperValue : 0];
+        }
+        const upperValue = Number(sliderValue);
+        return [0, Number.isFinite(upperValue) ? upperValue : 0];
+    };
+
+    const getSliderVolume = (sliderValue) =>
+        getSliderRangeValue(sliderValue)[1];
+
     const handleRateChange = (newValue, index, subGroup) => {
         const updatedValue = [...value];
-        updatedValue[index] = newValue;
+        updatedValue[index] = getSliderRangeValue(newValue);
         setValue(updatedValue);
 
-        const dividedArray = updatedValue.map((u) => u / 5);
-        moduleList = dividedArray
-            .map((value, index) => {
-                // 计算 liquid_volume，使用乘法
-                const liquidVolume =
-                    value !== null ? value * modeAndValues[index][1] : 0; // 处理空值
-
-                // 根据 subGroup 长度生成 tube_id
+        moduleList = modeAndValues
+            .map((mode, modeIndex) => {
+                const liquidVolume = getSliderVolume(
+                    updatedValue[modeIndex]
+                );
                 const tubeId = Array.from(
-                    { length: groupsOrigin[index].length },
+                    { length: groupsOrigin[modeIndex]?.length || 0 },
                     (_, i) => i + 1
                 );
                 return {
-                    module_id: modeAndValues[index][0],
+                    module_id: mode[0],
                     liquid_volume: liquidVolume,
                     tube_id: tubeId,
                 };
@@ -94,7 +102,7 @@ const App = ({
             }
         });
         setRetainVolumeByModule(nextVolumes);
-        console.log("1018  updatedValue", updatedValue, dividedArray, subGroup);
+        console.log("1018  updatedValue", updatedValue, subGroup);
         console.log("1018  moduleList", moduleList);
     };
 
@@ -199,7 +207,7 @@ const App = ({
         }
 
         if (!retainList || retainList.length === 0) {
-            setValue([]);
+            setValue(modeAndValues.map(() => [0, 0]));
             setRetainVolumeByModule({});
             return;
         }
@@ -217,7 +225,7 @@ const App = ({
         calculateRetainValues(setValue, retainList);
     }, [data, modeAndValues]);
     const calculateRetainValues = (set, ListDy) => {
-        let _value_ = [];
+        const nextValues = modeAndValues.map(() => [0, 0]);
         console.log("1030  ListDy", ListDy);
         console.log("1030  modeAndValues", modeAndValues);
         if (modeAndValues.length > 0) {
@@ -228,18 +236,22 @@ const App = ({
                 console.log("1030  mode", mode);
 
                 if (mode.length > 0) {
-                    _value_[mode[0][0] - 1] =
-                        c["liquid_volume"] / (mode[0][1] / 5);
+                    const moduleIndex = mode[0][0] - 1;
+                    const volume = Number(c["liquid_volume"]);
+                    nextValues[moduleIndex] = [
+                        0,
+                        Number.isFinite(volume) ? volume : 0,
+                    ];
                 }
             });
-            console.log("1030   value", _value_);
+            console.log("1030   value", nextValues);
         }
 
-        set(_value_);
+        set(nextValues);
     };
 
     const getModuleIdByIndex = (groupIndex, subGroupIndex) => {
-        const moduleIndex = groupIndex * 2 + subGroupIndex;
+        const moduleIndex = groupIndex * 4 + subGroupIndex;
         const moduleId = moduleIndex + 1;
         return Number.isNaN(moduleId) ? null : moduleId;
     };
@@ -352,10 +364,7 @@ const App = ({
         return results;
     };
 
-    const calculateIndex = (row, col) => {
-        const result = col - 1 < 0 ? 0 : Math.pow(2, col - 1);
-        return row * 2 + result;
-    };
+    const calculateIndex = (row, col) => row * 4 + col;
 
     const combineGroups = (array, groupSize) => {
         const results = [];
@@ -365,9 +374,8 @@ const App = ({
         return results;
     };
 
-    const combinedGroups = combineGroups(groupsOfTen, 2);
+    const combinedGroups = combineGroups(groupsOfTen, 4);
 
-    // 根据索引获取对应的mode和tubeValue
     const getModeAndValue = (index) => {
         // 确保index不超过modeAndValues数组长度
         const safeIndex = index % modeAndValues.length;
@@ -377,188 +385,263 @@ const App = ({
     return (
         <div className="button-div">
             {combinedGroups.map((group, groupIndex) => (
-                <Row key={groupIndex} gutter={0} style={{ width: "100%" }}>
-                    {group.map((subGroup, subGroupIndex) => (
-                        <div className="card">
-                            <Col key={subGroupIndex}>
-                                {chunkArray(subGroup, 5).map(
-                                    (row, rowIndex) => (
+                <Row
+                    key={groupIndex}
+                    gutter={0}
+                    wrap={false}
+                    style={{ width: "100%" }}
+                >
+                    {group.map((subGroup, subGroupIndex) => {
+                        const module = groupIndex * 4 + subGroupIndex;
+                        const indexedSubGroup = subGroup.map((_, tubeIndex) => ({
+                            tubeIndex,
+                        }));
+                        const tubeColumns = chunkArray(indexedSubGroup, 5);
+                        const moduleOffset = groupsOfTen
+                            .slice(0, module)
+                            .reduce((sum, group) => sum + group.length, 0);
+
+                        return (
+                            <div className="card">
+                                <Row
+                                    justify="space-between"
+                                    align="middle"
+                                    wrap={false}
+                                    style={{ width: "70%" }}
+                                >
+                                    <Col flex="auto" key={subGroupIndex}>
                                         <Row
-                                            key={rowIndex}
                                             justify="space-around"
                                             gutter={0}
+                                            wrap={false}
                                         >
-                                            {row.map((item, index) => {
-                                                let module =
-                                                    groupIndex * 2 +
-                                                    subGroupIndex;
-                                                let tube_i =
-                                                    rowIndex * 5 + index;
-                                                const tube = item.tube;
-
-                                                const isSelected =
-                                                    selectedFlag.some(
-                                                        (flag) =>
-                                                            flag.module_index ===
-                                                                module &&
-                                                            flag.tube_index ===
-                                                                tube_i
-                                                    );
-
-                                                // num.map((n) => {
-                                                //     groupsOfTen[n.module_index][
-                                                //         n.tube_index
-                                                //     ].time_start = n.time_start;
-                                                //     groupsOfTen[n.module_index][
-                                                //         n.tube_index
-                                                //     ].time_end = n.time_end;
-                                                // });
-                                                let isNum = false;
-
-                                                num.forEach((n) => {
-                                                    const {
-                                                        module_index,
-                                                        tube_index,
-                                                        time_start,
-                                                        time_end,
-                                                    } = n;
-
-                                                    // 确保 module_index 和 tube_index 在 groupsOfTen 中有效
-                                                    if (
-                                                        module_index === module
-                                                    ) {
-                                                        groupsOfTen[
-                                                            module_index
-                                                        ][
-                                                            tube_index
-                                                        ].time_start =
-                                                            time_start;
-                                                        groupsOfTen[
-                                                            module_index
-                                                        ][tube_index].time_end =
-                                                            time_end;
-                                                        if (
-                                                            tube_index ===
-                                                            tube_i
-                                                        ) {
-                                                            isNum = true;
-                                                        }
-                                                    }
-                                                });
-
-                                                let buttonColorStyle = {};
-                                                let buttonDisabled = false;
-
-                                                if (cleanFlag == 1) {
-                                                    buttonDisabled = false;
-                                                } else {
-                                                    if (!isNum) {
-                                                        buttonColorStyle =
-                                                            color["colorEight"];
-                                                        buttonDisabled = true;
-                                                    }
-                                                }
-                                                let colorTube =
-                                                    findColorByModuleAndTube(
-                                                        module,
-                                                        tube_i
-                                                    );
-                                                if (colorTube) {
-                                                    buttonDisabled = true;
-                                                    let colorName = `color${colorTube}`;
-                                                    buttonColorStyle =
-                                                        color[colorName];
-                                                }
-
-                                                return (
-                                                    <Col key={index}>
-                                                        <div
-                                                            onClick={() =>
-                                                                handleButtonClick(
-                                                                    tube_i,
-                                                                    module,
-                                                                    groupIndex,
-                                                                    subGroupIndex
-                                                                )
-                                                            }
-                                                            className="card_buttton"
+                                            {tubeColumns.map(
+                                                (column, columnIndex) => {
+                                                    const columnItems =
+                                                        columnIndex % 2 === 0
+                                                            ? column
+                                                            : [...column].reverse();
+                                                    return (
+                                                        <Col
+                                                            key={`col-${columnIndex}`}
                                                         >
-                                                            <Button
-                                                                shape="circle"
-                                                                className="buttonTubes"
-                                                                disabled={
-                                                                    buttonDisabled
-                                                                }
+                                                            <div
                                                                 style={{
-                                                                    backgroundColor:
-                                                                        isSelected
-                                                                            ? "#d5d5f5"
-                                                                            : "",
-                                                                    color: isSelected
-                                                                        ? "white"
-                                                                        : "black",
-                                                                    ...buttonColorStyle,
+                                                                    display:
+                                                                        "flex",
+                                                                    flexDirection:
+                                                                        "column-reverse",
+                                                                    alignItems:
+                                                                        "center",
                                                                 }}
                                                             >
-                                                                {tube}
-                                                            </Button>
-                                                        </div>
-                                                    </Col>
-                                                );
-                                            })}
-                                        </Row>
-                                    )
-                                )}
-                            </Col>
+                                                                {columnItems.map(
+                                                                    (cell) => {
+                                                                        const {
+                                                                            tubeIndex,
+                                                                        } = cell;
+                                                                        let tube_i =
+                                                                            tubeIndex;
+                                                                        const tube =
+                                                                            moduleOffset +
+                                                                            tubeIndex +
+                                                                            1;
 
-                            <Rate
-                                character={<AliyunOutlined />}
-                                onChange={(newValue) =>
-                                    handleRateChange(
-                                        newValue,
-                                        calculateIndex(
-                                            groupIndex,
-                                            subGroupIndex
-                                        ),
-                                        subGroup
-                                    )
-                                }
-                                value={
-                                    value[
-                                        calculateIndex(
-                                            groupIndex,
-                                            subGroupIndex
-                                        )
-                                    ]
-                                }
-                                allowHalf
-                            />
-                            {(() => {
-                                const moduleLabel = getModuleIdByIndex(
-                                    groupIndex,
-                                    subGroupIndex
-                                );
-                                const retainVolume = getRetainVolumeByIndex(
-                                    groupIndex,
-                                    subGroupIndex
-                                );
-                                if (retainVolume === null) {
+                                                                        const isSelected =
+                                                                            selectedFlag.some(
+                                                                                (flag) =>
+                                                                                    flag.module_index ===
+                                                                                        module &&
+                                                                                    flag.tube_index ===
+                                                                                        tube_i
+                                                                            );
+
+                                                                        let isNum = false;
+
+                                                                        num.forEach(
+                                                                            (n) => {
+                                                                                const {
+                                                                                    module_index,
+                                                                                    tube_index,
+                                                                                    time_start,
+                                                                                    time_end,
+                                                                                } = n;
+
+                                                                                if (
+                                                                                    module_index ===
+                                                                                    module
+                                                                                ) {
+                                                                                    groupsOfTen[
+                                                                                        module_index
+                                                                                    ][
+                                                                                        tube_index
+                                                                                    ].time_start =
+                                                                                        time_start;
+                                                                                    groupsOfTen[
+                                                                                        module_index
+                                                                                    ][
+                                                                                        tube_index
+                                                                                    ].time_end =
+                                                                                        time_end;
+                                                                                    if (
+                                                                                        tube_index ===
+                                                                                        tube_i
+                                                                                    ) {
+                                                                                        isNum = true;
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        );
+
+                                                                        let buttonColorStyle =
+                                                                            {};
+                                                                        let buttonDisabled =
+                                                                            false;
+
+                                                                        if (cleanFlag == 1) {
+                                                                            buttonDisabled =
+                                                                                false;
+                                                                        } else {
+                                                                            if (!isNum) {
+                                                                                buttonColorStyle =
+                                                                                    color[
+                                                                                        "colorEight"
+                                                                                    ];
+                                                                                buttonDisabled =
+                                                                                    true;
+                                                                            }
+                                                                        }
+                                                                        let colorTube =
+                                                                            findColorByModuleAndTube(
+                                                                                module,
+                                                                                tube_i
+                                                                            );
+                                                                        if (colorTube) {
+                                                                            buttonDisabled =
+                                                                                true;
+                                                                            let colorName = `color${colorTube}`;
+                                                                            buttonColorStyle =
+                                                                                color[
+                                                                                    colorName
+                                                                                ];
+                                                                        }
+
+                                                                        return (
+                                                                            <div
+                                                                                key={tubeIndex}
+                                                                                onClick={() =>
+                                                                                    handleButtonClick(
+                                                                                        tube_i,
+                                                                                        module,
+                                                                                        groupIndex,
+                                                                                        subGroupIndex
+                                                                                    )
+                                                                                }
+                                                                                className="card_buttton"
+                                                                            >
+                                                                                <Button
+                                                                                    shape="circle"
+                                                                                    className="buttonTubes"
+                                                                                    disabled={
+                                                                                        buttonDisabled
+                                                                                    }
+                                                                                    style={{
+                                                                                        backgroundColor:
+                                                                                            isSelected
+                                                                                                ? "#d5d5f5"
+                                                                                                : "",
+                                                                                        color: isSelected
+                                                                                            ? "white"
+                                                                                            : "black",
+                                                                                        ...buttonColorStyle,
+                                                                                    }}
+                                                                                >
+                                                                                    {tube}
+                                                                                </Button>
+                                                                            </div>
+                                                                        );
+                                                                    }
+                                                                )}
+                                                            </div>
+                                                        </Col>
+                                                    );
+                                                }
+                                            )}
+                                        </Row>
+                                    </Col>
+                                    <Col flex="none">
+                                        <Slider
+                                            vertical
+                                            range
+                                            step={10}
+                                            min={0}
+                                            max={
+                                                modeAndValues[
+                                                    calculateIndex(
+                                                        groupIndex,
+                                                        subGroupIndex
+                                                    )
+                                                ]?.[1] || 0
+                                            }
+                                            defaultValue={[
+                                                0,
+                                                getRetainVolumeByIndex(
+                                                    groupIndex,
+                                                    subGroupIndex
+                                                ) || 0,
+                                            ]}
+                                            value={getSliderRangeValue(
+                                                value[
+                                                    calculateIndex(
+                                                        groupIndex,
+                                                        subGroupIndex
+                                                    )
+                                                ]
+                                            )}
+                                            onChange={(newValue) =>
+                                                handleRateChange(
+                                                    newValue,
+                                                    calculateIndex(
+                                                        groupIndex,
+                                                        subGroupIndex
+                                                    ),
+                                                    subGroup
+                                                )
+                                            }
+                                            style={{
+                                                height: 120,
+                                                marginLeft: 12,
+                                            }}
+                                        />
+                                    </Col>
+                                </Row>
+                                {(() => {
+                                    const moduleLabel = getModuleIdByIndex(
+                                        groupIndex,
+                                        subGroupIndex
+                                    );
+                                    const retainVolume = getRetainVolumeByIndex(
+                                        groupIndex,
+                                        subGroupIndex
+                                    );
+                                    if (retainVolume === null) {
+                                        return (
+                                            <span>
+                                                {moduleLabel}
+                                                模块
+                                            </span>
+                                        );
+                                    }
                                     return (
                                         <span>
                                             {moduleLabel}
-                                            模块
+                                            模块 - {retainVolume} ml
                                         </span>
                                     );
-                                }
-                                return (
-                                    <span>
-                                        {moduleLabel}
-                                        模块 - {retainVolume} ml
-                                    </span>
-                                );
-                            })()}
-                        </div>
-                    ))}
+                                })()}
+                            </div>
+                        );
+                    })}
                 </Row>
             ))}
         </div>

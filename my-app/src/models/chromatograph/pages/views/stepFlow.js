@@ -9,6 +9,28 @@ import {
 
 import "./stepFlow.css";
 
+const STORAGE_KEY = "chromatograph_step_flow_state";
+
+const loadCachedState = (steps) => {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || !Array.isArray(parsed.stepStatuses)) return null;
+        if (parsed.stepStatuses.length !== steps.length) return null;
+        return {
+            stepStatuses: parsed.stepStatuses,
+            latestStatus:
+                typeof parsed.latestStatus === "string"
+                    ? parsed.latestStatus
+                    : "",
+        };
+    } catch (error) {
+        console.warn("读取步骤缓存失败:", error);
+        return null;
+    }
+};
+
 const StepFlow = ({ onDemoStart, onDemoStop }) => {
     const steps = useMemo(
         () => [
@@ -62,12 +84,32 @@ const StepFlow = ({ onDemoStart, onDemoStop }) => {
         []
     );
 
-    const [stepStatuses, setStepStatuses] = useState(() =>
-        steps.map(() => "pending")
+    const cachedStateRef = useRef(loadCachedState(steps));
+
+    const [stepStatuses, setStepStatuses] = useState(
+        () => cachedStateRef.current?.stepStatuses || steps.map(() => "pending")
     );
-    const [latestStatus, setLatestStatus] = useState("");
+    const [latestStatus, setLatestStatus] = useState(
+        () => cachedStateRef.current?.latestStatus || ""
+    );
     const [sending, setSending] = useState(false);
     const socketRef = useRef(null);
+    const skipPersistRef = useRef(false);
+
+    useEffect(() => {
+        if (skipPersistRef.current) {
+            skipPersistRef.current = false;
+            return;
+        }
+        try {
+            localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify({ stepStatuses, latestStatus })
+            );
+        } catch (error) {
+            console.warn("保存步骤缓存失败:", error);
+        }
+    }, [stepStatuses, latestStatus]);
 
     useEffect(() => {
         const socket = io("http://localhost:5000");
@@ -124,6 +166,12 @@ const StepFlow = ({ onDemoStart, onDemoStop }) => {
     }, [statusLabelMap, steps]);
 
     const resetFlow = () => {
+        skipPersistRef.current = true;
+        try {
+            localStorage.removeItem(STORAGE_KEY);
+        } catch (error) {
+            console.warn("清除步骤缓存失败:", error);
+        }
         setStepStatuses(steps.map(() => "pending"));
         setLatestStatus("");
     };
