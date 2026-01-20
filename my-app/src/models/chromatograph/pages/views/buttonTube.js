@@ -3,9 +3,7 @@ import { Button, Row, Col, Slider } from "antd";
 import "./buttonTube.css";
 import color from "@components/color/index";
 import { getAllTubes } from "../../api/status";
-import { convertLegacyProps } from "antd/es/button";
-import { UpdateModuleListAPI } from "../../api/eluent_curve";
-import { linkHorizontal } from "d3";
+import { UpdateModuleListAPI,getModuleList } from "../../api/eluent_curve";
 import useIndexedDB from "../../hooks/useIndexedDB";
 
 let select_tube = [];
@@ -39,6 +37,8 @@ const App = ({
     reverseFlag,
     methodRefreshKey,
 }) => {
+
+
     const _ = require("lodash");
 
     const [selectedFlag, setSelectedFlags] = useState([]);
@@ -53,6 +53,7 @@ const App = ({
     );
     const [value, setValue] = useState([]);
     const [retainVolumeByModule, setRetainVolumeByModule] = useState({});
+    const [moduleListDefaults, setModuleListDefaults] = useState([]);
     const storedMethodId = Number(localStorage.getItem("methodId")); // 转换为数字
     const { data, loading, error } = useIndexedDB(
         storedMethodId,
@@ -117,6 +118,15 @@ const App = ({
     }, []);
 
     useEffect(() => {
+        getModuleList().then((res) => {
+            if (res && !res.error) {
+                const list = Array.isArray(res.data) ? res.data : [];
+                setModuleListDefaults(list);
+            }
+        });
+    }, [methodRefreshKey]);
+
+    useEffect(() => {
         setGroupsOfTen(_.cloneDeep(groupsOrigin));
     }, [groupsOrigin]);
 
@@ -154,8 +164,7 @@ const App = ({
 
     useEffect(() => {
         if (reverseFlag === 1) {
-            console.log("1021  select_tube_flag", select_tube_flag);
-            console.log("1021  groupsOrigin", groupsOrigin);
+
             setSelectedFlags((prevFlags) => {
                 let filteredData = groupsOrigin.map(
                     (moduleData, moduleIndex) => {
@@ -178,8 +187,7 @@ const App = ({
                         });
                     });
                 });
-                console.log("1021  filteredData", filteredData);
-                console.log("1021  result", result);
+
                 callback(result);
                 return result;
             });
@@ -190,15 +198,11 @@ const App = ({
         console.log("1030  data", data);
         let retainList = [];
         if (data) {
-            console.log(
-                "1030  typeof data.retainList :",
-                typeof data.retainList
-            );
+
             if (typeof data.retainList === "string") {
                 try {
                     retainList = JSON.parse(data.retainList);
                 } catch (error) {
-                    console.log("1030  invalid retainList json", error);
                     retainList = [];
                 }
             } else if (Array.isArray(data.retainList)) {
@@ -206,15 +210,16 @@ const App = ({
             }
         }
 
-        if (!retainList || retainList.length === 0) {
+        const activeList =
+            moduleListDefaults.length > 0 ? moduleListDefaults : retainList;
+        if (!activeList || activeList.length === 0) {
             setValue(modeAndValues.map(() => [0, 0]));
             setRetainVolumeByModule({});
             return;
         }
 
-        console.log("1030   retainList", retainList);
         const nextVolumes = {};
-        retainList.forEach((item) => {
+        activeList.forEach((item) => {
             const moduleId = Number(item.module_id);
             const volume = Number(item.liquid_volume);
             if (!Number.isNaN(moduleId) && Number.isFinite(volume)) {
@@ -222,18 +227,16 @@ const App = ({
             }
         });
         setRetainVolumeByModule(nextVolumes);
-        calculateRetainValues(setValue, retainList);
-    }, [data, modeAndValues]);
+        calculateRetainValues(setValue, activeList);
+    }, [data, modeAndValues, moduleListDefaults]);
     const calculateRetainValues = (set, ListDy) => {
         const nextValues = modeAndValues.map(() => [0, 0]);
-        console.log("1030  ListDy", ListDy);
-        console.log("1030  modeAndValues", modeAndValues);
+
         if (modeAndValues.length > 0) {
             ListDy?.forEach((c) => {
                 let mode = modeAndValues.filter(
                     (item) => item[0] === c["module_id"]
                 );
-                console.log("1030  mode", mode);
 
                 if (mode.length > 0) {
                     const moduleIndex = mode[0][0] - 1;
@@ -244,7 +247,6 @@ const App = ({
                     ];
                 }
             });
-            console.log("1030   value", nextValues);
         }
 
         set(nextValues);
@@ -256,13 +258,31 @@ const App = ({
         return Number.isNaN(moduleId) ? null : moduleId;
     };
 
+    const getMaxVolumeByModuleId = (moduleId) => {
+        if (moduleId === null) {
+            return null;
+        }
+        const match = modeAndValues.find(
+            (item) => Number(item?.[0]) === moduleId
+        );
+        const maxVolume = match ? Number(match[1]) : null;
+        return Number.isFinite(maxVolume) ? maxVolume : null;
+    };
+
     const getRetainVolumeByIndex = (groupIndex, subGroupIndex) => {
         const moduleId = getModuleIdByIndex(groupIndex, subGroupIndex);
         if (moduleId === null) {
             return null;
         }
         const volume = retainVolumeByModule[moduleId];
-        return Number.isFinite(volume) ? volume : null;
+        if (!Number.isFinite(volume)) {
+            return null;
+        }
+        const maxVolume = getMaxVolumeByModuleId(moduleId);
+        if (maxVolume !== null && volume > maxVolume) {
+            return maxVolume;
+        }
+        return volume;
     };
 
     const getCurrentTubeVolume = (groupIndex, subGroupIndex) => {
@@ -402,7 +422,10 @@ const App = ({
                             .reduce((sum, group) => sum + group.length, 0);
 
                         return (
-                            <div className="card">
+                            <div
+                                className="card"
+                                key={`module-${groupIndex}-${subGroupIndex}`}
+                            >
                                 <Row
                                     justify="space-between"
                                     align="middle"

@@ -195,7 +195,7 @@ body, html, #root {
 }
 
 .appContent {
-  padding: 7px;
+  padding: 13px;
   background: var(--layout-bg);
   overflow: auto;
 }

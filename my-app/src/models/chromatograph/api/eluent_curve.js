@@ -64,3 +64,9 @@ export function wasteMode(data) {
 export function getDetectedPeaks() {
   return axiosInstance.post("/eluent_curve/get_detected_peaks");
 }
+
+
+export function getModuleList(){
+  return axiosInstance.get("/eluent_curve/get_module_list");
+
+}

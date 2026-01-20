@@ -125,16 +125,33 @@ const renderCurve = (svg, height, xScale) => {
 const renderVertical = (svg, xScale, height) => {
     // // console.log("9090--------num-", num);
 
-    const parsedData = num?.map((d) => ({
-        ...d,
-        timeStart: parseTime(d.time_start),
-        timeEnd: parseTime(d.time_end),
-    }));
+    const parsedData = Array.isArray(num)
+        ? num.map((d) => ({
+              ...d,
+              timeStart: parseTime(d.time_start),
+              timeEnd: parseTime(d.time_end),
+          }))
+        : [];
+    const isValidTime = (time) =>
+        time instanceof Date && !Number.isNaN(time.getTime());
+    const uniqueTimeMap = new Map();
+    parsedData.forEach((item) => {
+        if (isValidTime(item.timeStart)) {
+            uniqueTimeMap.set(item.timeStart.getTime(), item.timeStart);
+        }
+        if (isValidTime(item.timeEnd)) {
+            uniqueTimeMap.set(item.timeEnd.getTime(), item.timeEnd);
+        }
+    });
+    const uniqueTimes = Array.from(uniqueTimeMap.values()).sort(
+        (a, b) => a - b
+    );
+    const verticalLineData = uniqueTimes.map((time) => ({ time }));
     const lineVertical = (d) => {
-        return `M${xScale(d.timeEnd)},${height}V${0}`;
+        return `M${xScale(d.time)},${height}V${0}`;
     };
     svg.selectAll(".vertical-line")
-        .data(parsedData)
+        .data(verticalLineData)
         .enter()
         .append("path")
         .attr("class", "vertical-line")
@@ -144,7 +161,11 @@ const renderVertical = (svg, xScale, height) => {
         .attr("d", lineVertical)
         .style("opacity", 0.8);
     svg.selectAll(".flag-text")
-        .data(parsedData)
+        .data(
+            parsedData.filter(
+                (item) => isValidTime(item.timeStart) && isValidTime(item.timeEnd)
+            )
+        )
         .enter()
         .append("text")
         .attr("class", "flag-text")
@@ -154,7 +175,7 @@ const renderVertical = (svg, xScale, height) => {
                 (xScale(d.timeEnd) - xScale(d.timeStart)) / 2 +
                 xScale(d.timeStart)
         )
-        .attr("y", 30) // 璁＄畻涓棿浣嶇疆鐨?y 鍧愭爣
+        .attr("y", 30)
         .attr("text-anchor", "middle")
         .text((d) => `${d.module_index + 1}-${d.tube_index + 1}`);
 };

@@ -20,17 +20,17 @@ const { Header, Sider, Content } = Layout;
 const NAV_ITEMS = [
     {
         key: "method",
-        label: "方法设置",
+        label: "方法",
         icon: ToolOutlined,
     },
     {
         key: "experiment",
-        label: "实验监控",
+        label: "监控",
         icon: ExperimentOutlined,
     },
     {
         key: "historical",
-        label: "历史数据",
+        label: "历史",
         icon: ProfileOutlined,
     },
 ];
@@ -47,6 +47,16 @@ const menuItems = NAV_ITEMS.map(({ key, label, icon: IconComponent }) => ({
 
 function App() {
     const [activeView, setActiveView] = useState("experiment");
+    const renderActiveView = () => {
+        switch (activeView) {
+            case "method":
+                return <Method />;
+            case "historical":
+                return <Historical />;
+            default:
+                return <Choramatograph />;
+        }
+    };
 
     return (
         <Layout className="appShell">
@@ -64,7 +74,7 @@ function App() {
             <Layout className="appBody">
                 <Sider
                     className="appSider"
-                    width={120}
+                    width={60}
                     breakpoint="lg"
                     collapsedWidth={64}
                 >
@@ -80,24 +90,11 @@ function App() {
                 </Sider>
                 <Content className="appContent">
                     <div
-                        className={`appView ${
-                            activeView === "experiment"
-                                ? "appViewActive"
-                                : ""
-                        }`}
+                        className="appView appViewActive"
+                        key={`active-${activeView}`}
                     >
-                        <Choramatograph />
+                        {renderActiveView()}
                     </div>
-                    {activeView === "method" ? (
-                        <div className="appView appViewActive">
-                            <Method />
-                        </div>
-                    ) : null}
-                    {activeView === "historical" ? (
-                        <div className="appView appViewActive">
-                            <Historical />
-                        </div>
-                    ) : null}
                 </Content>
             </Layout>
         </Layout>

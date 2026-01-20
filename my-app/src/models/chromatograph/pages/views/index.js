@@ -908,7 +908,8 @@ const App = () => {
 
         socket.on("new_curve_point", (responseData) => {
 
-            // console.log("1026   responseData", responseData);
+            console.log("0120   responseData,autoGradient", responseData,autoGradient);
+
 
             if (autoGradient == true) {
 
@@ -2853,6 +2854,19 @@ const App = () => {
 
     ];
 
+    const statusItemWidths = {
+        power: "90px",
+        pressure: "",
+        operatingTime: "",
+        pumpA: "",
+        pumpB: "",
+        detector: "",
+        tube: "",
+    };
+
+    const getStatusItemStyle = (width) =>
+        width ? { "--machine-status-item-width": width } : undefined;
+
     return (
 
         <Flex gap="middle" wrap className="flex">
@@ -2881,7 +2895,10 @@ const App = () => {
 
                     <div className="machine-status-bar__content">
 
-                        <div className="machine-status-bar__item">
+                        <div
+                            className="machine-status-bar__item"
+                            style={getStatusItemStyle(statusItemWidths.power)}
+                        >
 
                             <span className="machine-status-bar__label">
 
@@ -2915,7 +2932,12 @@ const App = () => {
 
                         <div className="machine-status-bar__separator"></div>
 
-                        <div className="machine-status-bar__item">
+                        <div
+                            className="machine-status-bar__item"
+                            style={getStatusItemStyle(
+                                statusItemWidths.pressure
+                            )}
+                        >
 
                             <span className="machine-status-bar__label">
 
@@ -2937,7 +2959,12 @@ const App = () => {
 
                         <div className="machine-status-bar__separator"></div>
 
-                        <div className="machine-status-bar__item">
+                        <div
+                            className="machine-status-bar__item"
+                            style={getStatusItemStyle(
+                                statusItemWidths.operatingTime
+                            )}
+                        >
 
                             <span className="machine-status-bar__label">
 
@@ -2955,7 +2982,10 @@ const App = () => {
 
                         <div className="machine-status-bar__separator"></div>
 
-                        <div className="machine-status-bar__item">
+                        <div
+                            className="machine-status-bar__item"
+                            style={getStatusItemStyle(statusItemWidths.pumpA)}
+                        >
 
                             <span className="machine-status-bar__label">
 
@@ -2967,7 +2997,7 @@ const App = () => {
 
                                 {(deviceStatus?.PumpASpeed?.value).toFixed(2)}{" "}
 
-                                ml/s
+                                ml/min
 
                             </span>
 
@@ -2975,7 +3005,10 @@ const App = () => {
 
                         <div className="machine-status-bar__separator"></div>
 
-                        <div className="machine-status-bar__item">
+                        <div
+                            className="machine-status-bar__item"
+                            style={getStatusItemStyle(statusItemWidths.pumpB)}
+                        >
 
                             <span className="machine-status-bar__label">
 
@@ -2987,7 +3020,7 @@ const App = () => {
 
                                 {(deviceStatus?.PumpBSpeed?.value).toFixed(2)}{" "}
 
-                                ml/s
+                                ml/min
 
                             </span>
 
@@ -2995,7 +3028,12 @@ const App = () => {
 
                         <div className="machine-status-bar__separator"></div>
 
-                        <div className="machine-status-bar__item">
+                        <div
+                            className="machine-status-bar__item"
+                            style={getStatusItemStyle(
+                                statusItemWidths.detector
+                            )}
+                        >
 
                             <span className="machine-status-bar__label">
 
@@ -3019,7 +3057,10 @@ const App = () => {
 
                         <div className="machine-status-bar__separator"></div>
 
-                        <div className="machine-status-bar__item">
+                        <div
+                            className="machine-status-bar__item"
+                            style={getStatusItemStyle(statusItemWidths.tube)}
+                        >
 
                             <span className="machine-status-bar__label">
 
@@ -3091,23 +3132,7 @@ const App = () => {
 
                         <Col span={24}>
 
-                            <Tabs
 
-                                activeKey={activePanelTab}
-
-                                onChange={handlePanelTabChange}
-
-                                items={[
-
-                                    {
-
-                                        key: "control",
-
-                                        label: "控制面板",
-
-                                        forceRender: true,
-
-                                        children: (
 
                                             <div className="control-panel">
 
@@ -3430,15 +3455,8 @@ const App = () => {
                                             </Row>
                                             </div>
 
-                                        ),
-
-                                    },
 
 
-
-                                ]}
-
-                            />
 
                         </Col>
 
