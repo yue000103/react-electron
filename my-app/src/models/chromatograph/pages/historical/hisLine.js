@@ -47,14 +47,12 @@ const renderCurve = (svg, height, samplingTime, xScale) => {
         ...d,
         time: parseTime(d.time),
     }));
-    console.log("0920   data--------------------", parsedData);
     const valueExtent = d3.extent(parsedData, (d) => d.value);
     const [minValue = -3, maxValue = 53] = valueExtent || [-3, 50]; // 默认值为 [0, 50]
 
     let newMinValue = parseFloat(minValue) - parseFloat(maxValue) * 0.05;
     let newMaxValue = parseFloat(maxValue) + parseFloat(maxValue) * 0.05;
-    console.log("0920  newMinValue ---- :", newMinValue);
-    console.log("0920  newMaxValue ---- :", newMaxValue);
+
     if (newMinValue > newMaxValue) {
         [newMinValue, newMaxValue] = [newMaxValue, newMinValue];
     }
@@ -63,8 +61,7 @@ const renderCurve = (svg, height, samplingTime, xScale) => {
         newMaxValue += 2;
     }
 
-    console.log("0920  newMinValue :", newMinValue);
-    console.log("0920  newMaxValue :", newMaxValue);
+
 
     endTime = new Date(now.getTime() + samplingTime * 60 * 1000);
 
@@ -107,7 +104,6 @@ const renderCurve = (svg, height, samplingTime, xScale) => {
 };
 
 const renderVertical = (svg, xScale, height) => {
-    console.log("9090--------num-", num);
 
     const parsedData = num?.map((d) => ({
         ...d,
@@ -204,8 +200,9 @@ const renderLine = (
         ...d,
         time: parseTime(d.time),
     }));
+    console.log("1012 parsedData :", parsedData);
 
-    const yScale = d3.scaleLinear().domain([70, 101]).range([height, 0]);
+    const yScale = d3.scaleLinear().domain([0, 101]).range([height, 0]);
     const y2Axis = d3
         .axisLeft(yScale)
         .tickFormat((d) => (d === 0 || d === 110 ? "" : d));
@@ -245,18 +242,8 @@ const renderLine = (
                 .attr("fill", "black")
                 .attr("pointer-events", "none"); // 防止文字影响鼠标事件
         })
-        .on("mouseout", function () {
-            svg.selectAll(".coordinate-text").remove(); // 移除显示的坐标信息
-        })
-        .on("click", function (event, d) {
-            handleClick(event, d);
-        });
-    const handleClick = (event, d) => {
-        setSelectedPoint({
-            time: parseTimeString(d.time),
-            value: d.value,
-        });
-    };
+
+
     // 折线生成器
     const line2 = d3
         .line()
@@ -265,11 +252,12 @@ const renderLine = (
         .curve(d3.curveLinear); // 使用 Cardinal 曲线插值
     // 绘制折线路径
     svg.append("path")
-        .datum(parsedData)
         .attr("fill", "none")
         .attr("stroke", "blue")
         .attr("stroke-width", 2)
-        .attr("d", line2);
+        .attr("d", line2(parsedData));  // 直接传入数据
+    console.log("1012 line2(parsedData) :", line2(parsedData));
+
 };
 
 const LineChart = (props) => {

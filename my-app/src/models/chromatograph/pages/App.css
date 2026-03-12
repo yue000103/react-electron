@@ -44,7 +44,7 @@
 
   /* 屏幕尺寸 */
   --target-screen-width: 1280px;
-  --target-screen-height: 800px;
+  --target-screen-height: 780px;
   --header-height: 64px;
 }
 
@@ -195,7 +195,7 @@ body, html, #root {
 }
 
 .appContent {
-  padding: 13px;
+  padding: 5px;
   background: var(--layout-bg);
   overflow: auto;
 }

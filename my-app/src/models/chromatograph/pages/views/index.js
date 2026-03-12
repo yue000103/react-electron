@@ -497,7 +497,7 @@ const App = () => {
 
     const [openWasteModel, setOpenWasteModel] = useState(false);
 
-    const [autoGradient, setAutoGradient] = useState(false);
+    const [autoGradient, setAutoGradient] = useState(true);
 
     let autoGradientLet = false;
 
@@ -3086,9 +3086,9 @@ const App = () => {
 
                     {/* D3图表区域 */}
 
-                    <Row gutter={16}>
+                    <Row gutter={10}>
 
-                        <Col span={24}>
+                        <Col span={24} style={{ padding: "0 10px" } }>
 
                             <div className="lineStyle overlayBox">
 
