@@ -1,23 +1,25 @@
 const { app, BrowserWindow } = require("electron");
-
 const path = require("path");
 
 console.log("hello");
 
-function createWindow() {
+async function createWindow() {
     const win = new BrowserWindow({
         width: 800,
-
         height: 600,
-
-        kiosk: true, // 直接进入全屏模式
-
+        kiosk: true,
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
         },
     });
 
-    win.loadFile("index.html");
+    await win.webContents.session.clearCache();
+    await win.webContents.session.clearStorageData();
+
+    await win.loadFile("index.html");
+    win.webContents.reloadIgnoringCache();
+
+    // win.webContents.openDevTools();
 }
 
 app.whenReady().then(() => {
