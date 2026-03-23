@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>11.1寸触控优化 - 色谱仪监控</title>
+    <style>
+        :root {
+            --bg-dark: #070a13;
+            --card-bg: #161b2c;
+            --brand-red: #cc1d1d;
+            --accent-cyan: #06b6d4;
+            --text-main: #f1f5f9;
+            --text-dim: #64748b;
+            /* 触控尺寸规范 */
+            --touch-min: 48px; 
+            --safe-gap: 12px;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: 100vh;
+            display: grid;
+            grid-template-rows: 60px 1fr 100px; /* Header, Content, Bottom Control */
+            overflow: hidden;
+            user-select: none; /* 防止长按选中文本 */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 顶部状态栏 - 针对触控加高 */
+        header {
+            background: #111827;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .device-status {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* 主内容区 */
+        main {
+            display: grid;
+            grid-template-columns: 80px 1fr 280px; /* 窄导航, 主视窗, 任务信息 */
+            gap: var(--safe-gap);
+            padding: var(--safe-gap);
+            overflow: hidden;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 15px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* 侧边触控导航 */
+        .touch-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            padding-top: 10px;
+        }
+        .nav-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background: rgba(255,255,255,0.05);
+            transition: 0.2s;
+        }
+        .nav-icon.active {
+            background: var(--brand-red);
+            color: white;
+            box-shadow: 0 0 20px rgba(204, 29, 29, 0.4);
+        }
+
+        /* 实时仪表盘 - 触控友好 */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .dash-tile {
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .dash-label { font-size: 13px; color: var(--text-dim); margin-bottom: 5px; }
+        .dash-value { font-size: 24px; font-weight: 800; color: var(--accent-cyan); font-family: monospace; }
+
+        /* 核心图表区 */
+        .chart-container {
+            flex: 1;
+            background: #0d1117;
+            border-radius: 12px;
+            position: relative;
+            margin-top: 10px;
+            min-height: 200px;
+        }
+
+        /* 试管选择区 - 针对手指滑动优化 */
+        .tube-area {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .tube-rack {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 8px;
+            overflow-x: auto;
+            padding: 5px;
+        }
+        .touch-tube {
+            height: 70px;
+            background: #2d3748;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 5px;
+            font-size: 10px;
+            color: #718096;
+            border: 2px solid transparent;
+        }
+        .touch-tube.filled { background: var(--accent-cyan); color: #000; font-weight: bold; box-shadow: 0 0 10px rgba(6, 182, 212, 0.5); }
+        .touch-tube.selecting { border-color: white; transform: scale(1.05); }
+
+        /* 底部操作大按钮 */
+        footer {
+            background: #111827;
+            padding: 10px 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .touch-btn {
+            flex: 1;
+            height: 65px;
+            border-radius: 15px;
+            border: none;
+            font-size: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .btn-go { background: #059669; color: white; }
+        .btn-pause { background: #d97706; color: white; }
+        .btn-stop { background: #dc2626; color: white; }
+        .btn-secondary { background: #374151; color: white; }
+
+        /* 任务队列 */
+        .queue-item {
+            padding: 12px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="device-status">
+        <span style="color: #10b981;">●</span> 色谱仪 1号机 - <span style="color: #fff;">正在监控</span>
+    </div>
+    <div style="font-family: monospace; font-size: 20px; color: var(--accent-cyan);">
+        00:42:15
+    </div>
+</header>
+
+<main>
+    <!-- 侧边导航 -->
+    <div class="touch-nav">
+        <div class="nav-icon active">📊</div>
+        <div class="nav-icon">⚙️</div>
+        <div class="nav-icon">📜</div>
+        <div class="nav-icon">🛠️</div>
+    </div>
+
+    <!-- 中间主视图 -->
+    <div style="display: flex; flex-direction: column; gap: var(--safe-gap);">
+        <!-- 仪表盘 -->
+        <div class="card dashboard-grid">
+            <div class="dash-tile">
+                <div class="dash-label">压力 (MPa)</div>
+                <div class="dash-value">15.2</div>
+            </div>
+            <div class="dash-tile">
+                <div class="dash-label">检测器 (AU)</div>
+                <div class="dash-value">0.024</div>
+            </div>
+            <div class="dash-tile">
+                <div class="dash-label">泵 A (%)</div>
+                <div class="dash-value">85.0</div>
+            </div>
+            <div class="dash-tile">
+                <div class="dash-label">当前流速</div>
+                <div class="dash-value">2.0</div>
+            </div>
+        </div>
+
+        <!-- 曲线图 -->
+        <div class="card" style="flex: 1; display: flex; flex-direction: column;">
+            <div style="font-size: 14px; margin-bottom: 8px; color: var(--text-dim);">实时色谱响应曲线</div>
+            <div class="chart-container">
+                <!-- SVG 画出的虚构曲线 -->
+                <svg width="100%" height="100%" viewBox="0 0 400 150">
+                    <path d="M0 120 L50 110 L80 40 L110 120 L180 115 L210 20 L240 120" 
+                          fill="none" stroke="#06b6d4" stroke-width="3" stroke-linejoin="round" />
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧任务/试管 -->
+    <div class="card tube-area">
+        <div style="font-size: 14px; font-weight: bold;">试管控制 (TOUCH)</div>
+        <div class="tube-rack">
+            <div class="touch-tube filled">1</div>
+            <div class="touch-tube filled">2</div>
+            <div class="touch-tube selecting">3</div>
+            <div class="touch-tube">4</div>
+            <div class="touch-tube">5</div>
+            <div class="touch-tube">6</div>
+            <div class="touch-tube">7</div>
+            <div class="touch-tube">8</div>
+            <div class="touch-tube">9</div>
+            <div class="touch-tube">10</div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <button class="touch-btn btn-secondary" style="height: 50px; font-size: 14px;">保留</button>
+            <button class="touch-btn btn-secondary" style="height: 50px; font-size: 14px;">废弃</button>
+        </div>
+
+        <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+            <div style="font-size: 14px; margin-bottom: 10px;">任务队列</div>
+            <div class="queue-item">
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Method_UV_254</span>
+                    <span style="color: var(--accent-cyan);">80%</span>
+                </div>
+                <div style="width: 100%; height: 4px; background: #333; margin-top: 5px;">
+                    <div style="width: 80%; height: 100%; background: var(--accent-cyan);"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <button class="touch-btn btn-go">▶ 开始 (START)</button>
+    <button class="touch-btn btn-pause">⏸ 暂停 (PAUSE)</button>
+    <button class="touch-btn btn-stop">■ 终止 (STOP)</button>
+    <button class="touch-btn btn-secondary" style="flex: 0.5;">⚙ 设置</button>
+</footer>
+
+</body>
+</html>
