@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Button, Flex, Checkbox, Tag, Empty } from "antd";
 import { pauseTube, resumeTube } from "@/models/chromatograph/api/tube";
 import "./taskTable.css";
@@ -10,6 +10,28 @@ const STATUS_MAP = {
     retain: "保留",
 };
 
+// 四态定义
+const TASK_STATE = {
+    RUNNING: "running",       // 执行中
+    PENDING: "pending",       // 待执行
+    COMPLETED: "completed",   // 已完毕
+    NORMAL: "normal",         // 默认
+};
+
+const STATE_LABEL = {
+    [TASK_STATE.RUNNING]: "执行中",
+    [TASK_STATE.PENDING]: "待执行",
+    [TASK_STATE.COMPLETED]: "已执行",
+    [TASK_STATE.NORMAL]: "",
+};
+
+const STATE_COLOR = {
+    [TASK_STATE.RUNNING]: "green",
+    [TASK_STATE.PENDING]: "blue",
+    [TASK_STATE.COMPLETED]: "default",
+    [TASK_STATE.NORMAL]: undefined,
+};
+
 const TaskTable = (props) => {
     const {
         callback,
@@ -18,13 +40,14 @@ const TaskTable = (props) => {
         buttonFlag,
         excuteTaskFlag,
     } = props;
-    console.log("0116  TaskTable props:", props);
+
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [runningKeys, setRunningKeys] = useState([]);
     const [completedKeys, setCompletedKeys] = useState([]);
     const [loading, setLoading] = useState(false);
+    const prevRunningTaskIdRef = useRef(null);
 
-    // 使用 useMemo 优化数据源计算
+    // 数据源
     const dataSource = useMemo(() => {
         return selectedAllTubes
             .filter((tube) => !isNaN(tube.module_index))
@@ -41,32 +64,67 @@ const TaskTable = (props) => {
             });
     }, [selectedAllTubes]);
 
-    // 判断任务状态：仅当前运行的任务显示运行，其余视为空闲
+    // 自动检测任务完成：当 runningInfo.taskId 变化时，将前一个 running 任务标记为 completed
+    useEffect(() => {
+        const currentTaskId = runningInfo?.taskId;
+        const prevTaskId = prevRunningTaskIdRef.current;
+
+        if (prevTaskId !== undefined && prevTaskId !== null && prevTaskId !== currentTaskId) {
+            // 前一个 running 任务不再是当前任务 → 标记为已完毕
+            const prevItem = dataSource.find((item) => item.taskId === prevTaskId);
+            if (prevItem && !completedKeys.includes(prevItem.key)) {
+                setCompletedKeys((prev) => [...prev, prevItem.key]);
+            }
+        }
+
+        prevRunningTaskIdRef.current = currentTaskId;
+    }, [runningInfo?.taskId, dataSource]);
+
+    // 当 excuteTaskFlag 变为 0 (device_free) 时，将当前 running 任务标记完成
+    useEffect(() => {
+        if (excuteTaskFlag === 0 && runningInfo?.taskId !== undefined) {
+            const item = dataSource.find((d) => d.taskId === runningInfo.taskId);
+            if (item && !completedKeys.includes(item.key)) {
+                setCompletedKeys((prev) => [...prev, item.key]);
+            }
+        }
+    }, [excuteTaskFlag]);
+
+    // 四态状态机
     const getItemStatus = useCallback(
         (item) => {
-            if (completedKeys.includes(item.key)) return "completed";
-            const isRunning =
-                excuteTaskFlag === 1 &&
+            // 1. 已完毕
+            if (completedKeys.includes(item.key)) {
+                return TASK_STATE.COMPLETED;
+            }
+
+            // 2. 执行中：匹配当前 runningInfo 的 taskId
+            if (
                 runningInfo &&
-                runningInfo.moduleId === item.moduleIndex + 1 &&
-                runningInfo.tubeId &&
-                item.tubes.includes(runningInfo.tubeId) &&
-                runningInfo.taskId !== undefined &&
                 item.taskId !== undefined &&
-                runningInfo.taskId === item.taskId;
-            if (isRunning) return "running";
-            return "normal";
+                runningInfo.taskId !== undefined &&
+                runningInfo.taskId === item.taskId
+            ) {
+                return TASK_STATE.RUNNING;
+            }
+
+            // 3. 待执行：有 taskId（已提交运行）但不是当前执行
+            if (item.taskId !== undefined && item.taskId !== null && runningKeys.includes(item.key)) {
+                return TASK_STATE.PENDING;
+            }
+
+            // 4. 默认
+            return TASK_STATE.NORMAL;
         },
-        [completedKeys, excuteTaskFlag, runningInfo]
+        [completedKeys, runningInfo, runningKeys]
     );
 
     // 点击任务项
     const handleItemClick = useCallback(
         (item) => {
             const status = getItemStatus(item);
-            console.log("0116 handleItemClick status:", item);
-            // 运行中的任务不能选中
-            if (status === "running") return;
+            // 执行中和已完毕的任务不能选中
+            if (status === TASK_STATE.RUNNING || status === TASK_STATE.COMPLETED) return;
 
             setSelectedRowKeys((prev) => {
                 if (prev.includes(item.key)) {
@@ -93,9 +151,8 @@ const TaskTable = (props) => {
 
     const runTubes = useCallback(() => {
         handleTubeAction("run");
-        // 将选中的任务标记为运行中
+        // 将选中的任务标记为待执行
         setRunningKeys((prev) => [...prev, ...selectedRowKeys]);
-        // 清空选中状态
         setSelectedRowKeys([]);
     }, [handleTubeAction, selectedRowKeys]);
 
@@ -106,24 +163,32 @@ const TaskTable = (props) => {
     const onSelectAll = useCallback(
         (e) => {
             if (e.target.checked) {
-                // 只选中未运行的任务
+                // 只选中 normal 和 pending 状态的任务
                 const availableKeys = dataSource
-                    .filter((item) => !runningKeys.includes(item.key))
+                    .filter((item) => {
+                        const s = getItemStatus(item);
+                        return s === TASK_STATE.NORMAL || s === TASK_STATE.PENDING;
+                    })
                     .map((item) => item.key);
                 setSelectedRowKeys(availableKeys);
             } else {
                 setSelectedRowKeys([]);
             }
         },
-        [dataSource, runningKeys]
+        [dataSource, getItemStatus]
     );
 
     const hasSelected = selectedRowKeys.length > 0;
     const allSelected =
         dataSource.length > 0 &&
-        dataSource.every((item) => selectedRowKeys.includes(item.key));
+        dataSource
+            .filter((item) => {
+                const s = getItemStatus(item);
+                return s !== TASK_STATE.RUNNING && s !== TASK_STATE.COMPLETED;
+            })
+            .every((item) => selectedRowKeys.includes(item.key));
 
-    // 清理已选中但不在当前数据源的 key，避免误判全选
+    // 清理已选中但不在当前数据源的 key
     useEffect(() => {
         setSelectedRowKeys((prev) =>
             prev.filter((k) => dataSource.some((item) => item.key === k))
@@ -143,7 +208,6 @@ const TaskTable = (props) => {
             });
     }, []);
 
-
     return (
         <div className="task-table-container">
             {dataSource.length > 0 ? (
@@ -151,31 +215,19 @@ const TaskTable = (props) => {
                     <div className="task-list">
                         {dataSource.map((item) => {
                             const status = getItemStatus(item);
-                            const isSelected = selectedRowKeys.includes(
-                                item.key
-                            );
-                            const isRunning =
-                                excuteTaskFlag === 1 &&
-                                runningInfo &&
-                                runningInfo.moduleId === item.moduleIndex + 1 &&
-                                runningInfo.tubeId &&
-                                item.tubes.includes(runningInfo.tubeId) &&
-                                runningInfo.taskId !== undefined &&
-                                item.taskId !== undefined &&
-                                runningInfo.taskId === item.taskId;
+                            const isSelected = selectedRowKeys.includes(item.key);
+                            const isDisabled = status === TASK_STATE.RUNNING || status === TASK_STATE.COMPLETED;
 
                             return (
                                 <div
                                     key={item.key}
-                                    className={`task-item ${status} ${
-                                        isSelected ? "selected" : ""
-                                    }`}
+                                    className={`task-item ${status} ${isSelected ? "selected" : ""}`}
                                     onClick={() => handleItemClick(item)}
                                 >
                                     <div className="task-checkbox">
                                         <Checkbox
                                             checked={isSelected}
-                                            disabled={status === "running"}
+                                            disabled={isDisabled}
                                             onChange={(e) => {
                                                 e.stopPropagation();
                                                 handleItemClick(item);
@@ -188,12 +240,15 @@ const TaskTable = (props) => {
                                             <span className="status-text">
                                                 {item.status}
                                             </span>
-                                            {isRunning && (
+                                            {STATE_LABEL[status] && (
                                                 <Tag
-                                                    color="green"
-                                                    className="running-tag"
+                                                    color={STATE_COLOR[status]}
+                                                    className={`status-tag status-tag--${status}`}
                                                 >
-                                                    运行中 #{runningInfo.tubeId}
+                                                    {STATE_LABEL[status]}
+                                                    {status === TASK_STATE.RUNNING && runningInfo?.tubeId
+                                                        ? ` #${runningInfo.tubeId}`
+                                                        : ""}
                                                 </Tag>
                                             )}
                                         </div>
@@ -202,15 +257,14 @@ const TaskTable = (props) => {
                                         </div>
                                     </div>
                                     <div className="task-status-icon">
-                                        {status === "completed" && (
-                                            <span className="status-icon completed">
-                                                ✓
-                                            </span>
+                                        {status === TASK_STATE.COMPLETED && (
+                                            <span className="status-icon completed">✓</span>
                                         )}
-                                        {status === "running" && (
-                                            <span className="status-icon running">
-                                                ⏳
-                                            </span>
+                                        {status === TASK_STATE.RUNNING && (
+                                            <span className="status-icon running">⏳</span>
+                                        )}
+                                        {status === TASK_STATE.PENDING && (
+                                            <span className="status-icon pending">⏸</span>
                                         )}
                                     </div>
                                 </div>
@@ -254,7 +308,6 @@ const TaskTable = (props) => {
                                 >
                                     终止
                                 </Button>
-
                             </div>
                         </div>
                     )}

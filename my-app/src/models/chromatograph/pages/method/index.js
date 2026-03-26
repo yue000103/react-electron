@@ -25,6 +25,7 @@ import {
     Table,
     Space,
     Tooltip,
+    Divider,
 } from "antd";
 import {
     SettingOutlined,
@@ -44,6 +45,7 @@ import {
     UpdateModuleListAPI,
 } from "../../api/eluent_curve";
 import { getAllTubes } from "../../api/status";
+import { getStockSolutions } from "../../api/settings";
 
 import "./index.css";
 import DynamicLine from "@components/d3/dynamicLine";
@@ -103,14 +105,19 @@ const Method = () => {
     const { storeData } = createDB("MyDatabase", "method", "methodId");
     const [uploadFlag, setUploadFlag] = useState(0);
     const [totalTubeCount, setTotalTubeCount] = useState(0);
+    const [pumpALabel, setPumpALabel] = useState("A");
+    const [pumpBLabel, setPumpBLabel] = useState("B");
+    const [flashA, setFlashA] = useState(false);
+    const [flashB, setFlashB] = useState(false);
+    const [pumpLabelLoading, setPumpLabelLoading] = useState(false);
 
     console.log("basisData :", basisData);
     console.log("elutionData :", elutionData);
 
     const columnsConfig = [
         { title: "时间", dataIndex: "time" },
-        { title: "泵A浓度", dataIndex: "pumpA" },
-        { title: "泵B浓度", dataIndex: "pumpB" },
+        { title: `泵 A (%) — ${pumpALabel}`, dataIndex: "pumpA" },
+        { title: `泵 B (%) — ${pumpBLabel}`, dataIndex: "pumpB" },
     ];
 
     const indexedDBMethod = async (method, methodId) => {
@@ -366,12 +373,12 @@ const Method = () => {
                             dataSource={[
                                 {
                                     key: "1",
-                                    label: "泵A流速",
+                                    label: `泵 A (%) — ${pumpALabel}`,
                                     value: `${item.pumpA}%`,
                                 },
                                 {
                                     key: "2",
-                                    label: "泵B流速",
+                                    label: `泵 B (%) — ${pumpBLabel}`,
                                     value: `${item.pumpB}%`,
                                 },
                             ]}
@@ -402,12 +409,12 @@ const Method = () => {
                                     key: "time",
                                 },
                                 {
-                                    title: "泵A (%)",
+                                    title: `泵 A (%) — ${pumpALabel}`,
                                     dataIndex: "pumpA",
                                     key: "pumpA",
                                 },
                                 {
-                                    title: "泵B (%)",
+                                    title: `泵 B (%) — ${pumpBLabel}`,
                                     dataIndex: "pumpB",
                                     key: "pumpB",
                                 },
@@ -463,8 +470,18 @@ const Method = () => {
     };
     const basisValuesChange = (changedValues, allValues) => {
         setFlowRateDefault(allValues.totalFlowRate);
-        setSamplingTime(Number(allValues.samplingTime));
         console.log("7890-----totalFlowRate", allValues.totalFlowRate);
+
+        // 自动计算采集时间 = 试管总数 * 收集体积 / 总流速
+        const drainSpeed = Number(allValues.drainSpeed);
+        const totalFlowRate = Number(allValues.totalFlowRate);
+        if (totalTubeCount > 0 && drainSpeed > 0 && totalFlowRate > 0) {
+            const calculatedTime = (totalTubeCount * drainSpeed / totalFlowRate).toFixed(2);
+            formBasis.setFieldValue('samplingTime', calculatedTime);
+            setSamplingTime(Number(calculatedTime));
+        } else {
+            setSamplingTime(Number(allValues.samplingTime));
+        }
 
         setTime((Number(allValues.time) / 60).toFixed(2));
     };
@@ -499,6 +516,16 @@ const Method = () => {
             // ];
         }
         setPressure([...newPoints, ...values.users]);
+
+        // 最高优先级：取梯度表中最大时间赋给采集时间
+        const allPoints = [...newPoints, ...values.users];
+        if (allPoints.length > 0) {
+            const maxTime = Math.max(...allPoints.map(p => Number(p.time) || 0));
+            if (maxTime > 0) {
+                formBasis.setFieldValue('samplingTime', maxTime);
+                setSamplingTime(maxTime);
+            }
+        }
     };
     const handleOk = () => {
         // setSpinning(true);
@@ -677,6 +704,36 @@ const Method = () => {
         });
     }, []);
 
+    // 影刃：拉取泵名称，检测外部同步变更并闪烁（A/B 独立）
+    useEffect(() => {
+        setPumpLabelLoading(true);
+        getStockSolutions().then((res) => {
+            if (res && !res.error && res.data) {
+                console.log("-------------0326-res----------------------",res)
+                // 纯 label 匹配，禁止 id 依赖
+                const d = res.data;
+                const list = d.stock_solutions || d.stock_solution || d.list || (Array.isArray(d) ? d : []);
+                const solA = list.find(item => item.label === "A")?.name || "A";
+                const solB = list.find(item => item.label === "B")?.name || "B";
+                                console.log("-------------0326-solB----------------------",solB)
+                                console.log("-------------0326-solA----------------------",solA)
+
+                if (solA !== pumpALabel) {
+                    setPumpALabel(solA);
+                    setFlashA(true);
+                    setTimeout(() => setFlashA(false), 1200);
+                }
+                if (solB !== pumpBLabel) {
+                    setPumpBLabel(solB);
+                    setFlashB(true);
+                    setTimeout(() => setFlashB(false), 1200);
+                }
+            }
+        }).catch(() => {}).finally(() => {
+            setPumpLabelLoading(false);
+        });
+    }, []);
+
     // 快捷键支持
     useEffect(() => {
         const handleKeyPress = (e) => {
@@ -694,6 +751,30 @@ const Method = () => {
 
         window.addEventListener("keydown", handleKeyPress);
         return () => window.removeEventListener("keydown", handleKeyPress);
+    }, []);
+
+    // 影刃：监听设置页保存事件，重新拉取泵名并触发闪烁
+    useEffect(() => {
+        const handleStorageSync = (e) => {
+            if (e.key === "pump-label-sync-ts") {
+                setPumpLabelLoading(true);
+                getStockSolutions().then((res) => {
+                    if (res && !res.error && res.data) {
+                        const d = res.data;
+                        const list = d.stock_solutions || d.stock_solution || d.list || (Array.isArray(d) ? d : []);
+                        const solA = Array.isArray(list) ? (list.find(item => item.label === "A")?.name || "A") : "A";
+                        const solB = Array.isArray(list) ? (list.find(item => item.label === "B")?.name || "B") : "B";
+                        setPumpALabel(solA);
+                        setPumpBLabel(solB);
+                        setFlashA(true);
+                        setFlashB(true);
+                        setTimeout(() => { setFlashA(false); setFlashB(false); }, 1200);
+                    }
+                }).catch(() => {}).finally(() => setPumpLabelLoading(false));
+            }
+        };
+        window.addEventListener("storage", handleStorageSync);
+        return () => window.removeEventListener("storage", handleStorageSync);
     }, []);
 
     const handleReceiveFlags = (cleanList, retainList) => {
@@ -762,290 +843,178 @@ const Method = () => {
     };
 
     return (
-        <Flex
-            gap="middle"
-            vertical
-            className="background-container"
-            style={{
-                backgroundImage: `url(${p7ConBg})`,
-                backgroundPosition: "right bottom", // 设置为右下角
-                backgroundSize: "28rem 30rem", // 保持图片大小
-                backgroundRepeat: "no-repeat", // 不重复
-                // height: "100vh", // 根据需要设置容器高度
-                // width: "100%", // 根据需要设置容器宽度
-            }}
-        >
+        <div className="method-view">
             {contextHolder}
-            <div className="method">
-                <Row gutter={20} align="middle">
-                    {/* 表单区域 */}
-                    <Col span={21}>
-                        <Form
-                            form={formBasis}
-                            layout="vertical"
-                            size="middle"
-                            initialValues={{
-                                equilibrationColumn: false,
-                                maxwidth: "none",
-                            }}
-                            onFinish={onFinishBasis}
-                            onValuesChange={basisValuesChange}
-                        >
-                            {/* 第一行：方法名称、采集时间、检测器波长、试管总数 */}
-                            <Row gutter={14}>
-                                <Col span={6}>
-                                    <Form.Item
-                                        label={
-                                            <span className="important-label">
-                                                方法名称
-                                            </span>
-                                        }
-                                        name="methodName"
-                                    >
-                                        <Input
-                                            disabled={true}
-                                            placeholder="当前方法名称"
-                                        />
-                                    </Form.Item>
-                                </Col>
-                                <Col span={6}>
-                                    <Form.Item
-                                        label="采集时间 (min)"
-                                        name="samplingTime"
-                                        rules={[
-                                            {
-                                                required: true,
-                                                message: "请输入采集时间",
-                                            },
-                                        ]}
-                                    >
-                                        <Input placeholder="请输入采集时间" />
-                                    </Form.Item>
-                                </Col>
-                                <Col span={6}>
-                                    <Form.Item
-                                        label="检测器波长"
-                                        name="detectorWavelength"
-                                    >
-                                        <Input placeholder="请输入波长" />
-                                    </Form.Item>
-                                </Col>
-                                <Col span={6}>
-                                    <Form.Item label="试管总数">
-                                        <Input
-                                            disabled={true}
-                                            value={totalTubeCount}
-                                            placeholder="0"
-                                            suffix="根"
-                                        />
-                                    </Form.Item>
-                                </Col>
-                            </Row>
 
-                            {/* 第二行：总流速、泵B比例、润柱时间、清洗次数 */}
-                            <Row gutter={14}>
-                                <Col span={6}>
-                                    <Form.Item
-                                        label="总流速 (mL/min)"
-                                        name="totalFlowRate"
-                                    >
-                                        <Input placeholder="请输入总流速" />
-                                    </Form.Item>
-                                </Col>
-                                <Col span={6}>
-                                    <Form.Item label="泵B比例 (%)" name="speed">
-                                        <Input placeholder="请输入泵B比例" />
-                                    </Form.Item>
-                                </Col>
-                                <Col span={6}>
-                                    <Form.Item
-                                        label="润柱时间 (min)"
-                                        name="equilibrationTime"
-                                    >
-                                        <Input placeholder="请输入润柱时间" />
-                                    </Form.Item>
-                                </Col>
-                                <Col span={6}>
-                                    <Form.Item
-                                        label="清洗次数"
-                                        name="cleaningCount"
-                                    >
-                                        <Input placeholder="请输入清洗次数" />
-                                    </Form.Item>
-                                </Col>
-                            </Row>
+            {/* ===== 操作栏：方法名称 + 按钮同行 ===== */}
+            <div className="method-view__toolbar" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Form
+                    form={formBasis}
+                    layout="vertical"
+                    size="large"
+                    initialValues={{
+                        equilibrationColumn: false,
+                    }}
+                    onFinish={onFinishBasis}
+                    onValuesChange={basisValuesChange}
+                    component="div"
+                    style={{ flex: 1, minWidth: 0 }}
+                >
+                    <Form.Item
+                        name="methodName"
+                        style={{ marginBottom: 0 }}
+                    >
+                        <Input size="large" disabled placeholder="当前方法名称" />
+                    </Form.Item>
+                </Form>
+                <div className="method-view__actions" style={{ flexShrink: 0 }}>
+                    <Button type="primary" size="large" icon={<SaveOutlined />} className="button button4" onClick={() => saveMethod()}>
+                        保存&上传
+                    </Button>
+                    <Button type="primary" size="large" icon={<FileTextOutlined />} className="button button3" onClick={() => allMethod()}>
+                        方法
+                    </Button>
+                    <Button type="primary" size="large" icon={<ClearOutlined />} className="button button5" onClick={() => clearMethod()}>
+                        清空
+                    </Button>
+                </div>
+            </div>
 
-                            {/* 第三行：目标化合物、清洗体积、收集体积 */}
-                            <Row gutter={14}>
-                                <Col span={8}>
-                                    <Form.Item
-                                        label="目标化合物SMILES"
-                                        name="smiles"
-                                    >
-                                        <Input
-                                            type="text"
-                                            placeholder="可选填"
-                                        />
+            {/* ===== Row 1: 润柱 + 清洗 并列 ===== */}
+            <Row gutter={[16, 16]}>
+                <Col span={12}>
+                    <div className="method-view__panel">
+                        <Divider className="method-view__divider" orientation="left">
+                            <span className="method-view__section-id">01</span> 润柱参数
+                        </Divider>
+                        <Form form={formBasis} layout="vertical" size="large" onFinish={onFinishBasis} onValuesChange={basisValuesChange} component="div">
+                            <Row gutter={12}>
+                                <Col span={12} className={`pump-input--b${flashB ? " sync-flash-input--b" : ""}`}>
+                                    <Form.Item label={<span className={`pump-label--b${flashB ? " sync-flash" : ""}`}><span className="pump-badge pump-badge--b">B</span><span className="pump-desc">比例 (%)</span>{pumpLabelLoading ? <span className="pump-name--loading" /> : <span className="pump-name">{pumpBLabel}</span>}</span>} name="speed">
+                                        <Input size="large" />
                                     </Form.Item>
                                 </Col>
-                                <Col span={8}>
-                                    <Form.Item
-                                        label="清洗体积 (mL)"
-                                        name="cleaningSpeed"
-                                    >
-                                        <InputNumber
-                                            style={{ width: "100%" }}
-                                            min={0}
-                                            step={0.1}
-                                            placeholder="请输入清洗体积"
-                                            onChange={(value) =>
-                                                handleCleanVolumeChange(value)
-                                            }
-                                        />
-                                    </Form.Item>
-                                </Col>
-                                <Col span={8}>
-                                    <Form.Item
-                                        label="收集体积 (mL)"
-                                        name="drainSpeed"
-                                    >
-                                        <InputNumber
-                                            style={{ width: "100%" }}
-                                            min={0}
-                                            step={0.1}
-                                            placeholder="请输入收集体积"
-                                            onChange={(value) =>
-                                                handleRetainVolumeChange(value)
-                                            }
-                                        />
+                                <Col span={12}>
+                                    <Form.Item label="润柱时间 (min)" name="equilibrationTime">
+                                        <Input size="large"  />
                                     </Form.Item>
                                 </Col>
                             </Row>
                         </Form>
-                    </Col>
-
-                    {/* 按钮区域 */}
-                    <Col span={3}>
-                        <div className="button-container">
-                            <Button
-                                type="primary"
-                                size="middle"
-                                icon={<SaveOutlined />}
-                                className="button button4"
-                                onClick={() => saveMethod()}
-                            >
-                                保存
-                            </Button>
-
-                            <Button
-                                type="primary"
-                                size="middle"
-                                icon={<FileTextOutlined />}
-                                className="button button3"
-                                onClick={() => allMethod()}
-                            >
-                                方法
-                            </Button>
-
-                            <Button
-                                type="primary"
-                                size="middle"
-                                icon={<ClearOutlined />}
-                                className="button button5"
-                                onClick={() => clearMethod()}
-                            >
-                                清空
-                            </Button>
-                        </div>
-                    </Col>
-                </Row>
-
-                {/* 试管配置区域 */}
-                {/*<Row style={{ marginTop: '16px' }}>*/}
-                {/*    <Col span={24}>*/}
-                {/*        <Buttons*/}
-                {/*            cleanListDy={cleanList}*/}
-                {/*            retainListDy={retainList}*/}
-                {/*            callback={handleReceiveFlags}*/}
-                {/*        />*/}
-                {/*    </Col>*/}
-                {/*</Row>*/}
-            </div>
-
-            {/* 洗脱模式配置区域 - 全宽 */}
-            <div className="clean">
-                <Card className="config-card" title="洗脱模式" bordered={false}>
-                    <div className="elution-mode-selector">
-                        <Radio.Group onChange={onChange} value={value}>
-                            <Radio value={1}>等度洗脱</Radio>
-                            <Radio value={2}>二元高压梯度</Radio>
-                        </Radio.Group>
                     </div>
-                    {value === 1 && (
-                        <div className="isocratic">
-                            <Row justify="center">
-                                <Col span={8}>
-                                    <Form
-                                        labelCol={{ span: 10 }}
-                                        wrapperCol={{ span: 14 }}
-                                        layout="horizontal"
-                                        size="middle"
-                                        form={formElution}
-                                        onFinish={onFinishElution}
-                                    >
-                                        <Form.Item
-                                            label="泵A流速 (%)"
-                                            name="pumpA"
-                                        >
-                                            <Input placeholder="请输入泵A流速" />
-                                        </Form.Item>
-                                        <Form.Item
-                                            label="泵B流速 (%)"
-                                            name="pumpB"
-                                        >
-                                            <Input placeholder="请输入泵B流速" />
-                                        </Form.Item>
-                                    </Form>
-                                </Col>
-                            </Row>
-                        </div>
-                    )}
-
-                    {value === 2 && (
-                        <div className="pressure">
-                            <Row gutter={24} justify="center">
+                </Col>
+                <Col span={12}>
+                    <div className="method-view__panel">
+                        <Divider className="method-view__divider" orientation="left">
+                            <span className="method-view__section-id">02</span> 清洗参数
+                        </Divider>
+                        <Form form={formBasis} layout="vertical" size="large" onFinish={onFinishBasis} onValuesChange={basisValuesChange} component="div">
+                            <Row gutter={12}>
                                 <Col span={12}>
-                                    <div className="dynamic-line">
-                                        <DynamicLine
-                                            widthLine={400}
-                                            heightLine={250}
-                                            samplingTime={samplingTime}
-                                            pressure={pressure}
-                                        />
-                                    </div>
+                                    <Form.Item label="清洗体积 (mL)" name="cleaningSpeed">
+                                        <InputNumber size="large" style={{ width: "100%" }} min={0} step={0.1} onChange={(v) => handleCleanVolumeChange(v)} />
+                                    </Form.Item>
                                 </Col>
-                                <Col span={10}>
-                                    <DynamicForm
-                                        flowRateDefault={flowRateDefault}
-                                        pressure={pressure}
-                                        onValuesChange={handleValuesChange}
-                                    />
+                                <Col span={12}>
+                                    <Form.Item label="清洗次数" name="cleaningCount">
+                                        <Input size="large"  />
+                                    </Form.Item>
                                 </Col>
                             </Row>
+                        </Form>
+                    </div>
+                </Col>
+            </Row>
+
+            {/* ===== Row 2: 过柱参数(12) + 洗脱参数(12) 并列 ===== */}
+            <Row gutter={[16, 16]}>
+                <Col span={12}>
+                    <div className="method-view__panel">
+                        <Divider className="method-view__divider" orientation="left">
+                            <span className="method-view__section-id">03</span> 过柱参数
+                        </Divider>
+                        <Form form={formBasis} layout="vertical" size="large" onFinish={onFinishBasis} onValuesChange={basisValuesChange} component="div">
+                            <Row gutter={12}>
+                                <Col span={12}>
+                                    <Form.Item label="采集时间 (min)" name="samplingTime" rules={[{ required: true, message: "请输入采集时间" }]}>
+                                        <Input size="large"  />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={12}>
+                                    <Form.Item label="总流速 (mL/min)" name="totalFlowRate">
+                                        <Input size="large"  />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={12}>
+                                    <Form.Item label="检测器波长" name="detectorWavelength">
+                                        <Input size="large" />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={12}>
+                                    <Form.Item label="试管总数">
+                                        <Input size="large" disabled value={totalTubeCount}   />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={12}>
+                                    <Form.Item label="收集体积 (mL)" name="drainSpeed">
+                                        <InputNumber size="large" style={{ width: "100%" }} min={0} step={0.1}  onChange={(v) => handleRetainVolumeChange(v)} />
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+                        </Form>
+                    </div>
+                </Col>
+                <Col span={12}>
+                    <Spin spinning={pumpLabelLoading} size="small">
+                    <div className="method-view__panel method-view__panel--elution">
+                        <Divider className="method-view__divider" orientation="left">
+                            <span className="method-view__section-id method-view__section-id--elution">04</span> 洗脱参数
+                        </Divider>
+                        <div className="elution-mode-selector">
+                            <Radio.Group onChange={onChange} value={value} size="large">
+                                <Radio value={1} style={{color:"white"}}>等度洗脱</Radio>
+                                <Radio value={2} style={{color:"white"}}>二元高压梯度</Radio>
+                            </Radio.Group>
                         </div>
-                    )}
-                </Card>
-            </div>
-            <div className="button-div">
+                        {value === 1 && (
+                            <Form layout="vertical" size="large" form={formElution} onFinish={onFinishElution}>
+                                <Row gutter={12}>
+                                    <Col span={12} className={`pump-input--a${flashA ? " sync-flash-input--a" : ""}`}>
+                                        <Form.Item label={<span className={`pump-label--a${flashA ? " sync-flash" : ""}`}><span className="pump-badge pump-badge--a">A</span><span className="pump-desc">流速 (%)</span>{pumpLabelLoading ? <span className="pump-name--loading" /> : <span className="pump-name">{pumpALabel}</span>}</span>} name="pumpA">
+                                            <Input size="large"  />
+                                        </Form.Item>
+                                    </Col>
+                                    <Col span={12} className={`pump-input--b${flashB ? " sync-flash-input--b" : ""}`}>
+                                        <Form.Item label={<span className={`pump-label--b${flashB ? " sync-flash" : ""}`}><span className="pump-badge pump-badge--b">B</span><span className="pump-desc">流速 (%)</span>{pumpLabelLoading ? <span className="pump-name--loading" /> : <span className="pump-name">{pumpBLabel}</span>}</span>} name="pumpB">
+                                            <Input size="large"  />
+                                        </Form.Item>
+                                    </Col>
+                                </Row>
+                            </Form>
+                        )}
+                        {value === 2 && (
+                            <div>
+                                <div className="dynamic-line">
+                                    <DynamicLine widthLine={400} heightLine={200} samplingTime={samplingTime} pressure={pressure} />
+                                </div>
+                                
+                                <DynamicForm flowRateDefault={flowRateDefault} pressure={pressure} onValuesChange={handleValuesChange} />
+                            </div>
+                        )}
+                    </div>
+                    </Spin>
+                </Col>
+            </Row>
+            <div className="method-view__modals">
                 <Modal
                     open={open}
                     onOk={handleOk}
                     confirmLoading={confirmLoading}
                     onCancel={handleCancel}
                 >
-                    {/* <p>{modalText}</p> */}
                     <p>方法名称：</p>
                     <Input
+                        size="large"
                         disabled={isMethodName}
                         value={inputValue}
                         onChange={handleInputChange}
@@ -1068,8 +1037,8 @@ const Method = () => {
                 >
                     <div
                         style={{
-                            height: "40rem", // 设置折叠面板的固定高度
-                            overflowY: "auto", // 当内容超出高度时显示滚动条
+                            height: "40rem",
+                            overflowY: "auto",
                             padding: "10px",
                         }}
                     >
@@ -1078,8 +1047,7 @@ const Method = () => {
                 </Modal>
                 <Spin spinning={spinning} fullscreen tip="正在保存......" />
             </div>
-            {/* </DynamicCard> */}
-        </Flex>
+        </div>
     );
 };
 

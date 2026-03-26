@@ -1,81 +1,291 @@
-.buttonTubes{
-  margin: 2px; 
+/* ====== 影刃：试管阵列 - 紧凑型工业风 V2 ====== */
+
+.buttonTubes {
+  margin: 1px;
+  width: 40px;
+  height: 40px;
+}
+.card_buttton{
+  padding-top: 10px;
 }
 
+/* 试管色谱标记 - 暗黑适配（文字统一白色） */
+.colorOne   { background-color: rgba(243, 195, 209, 0.25); color: #FFFFFF !important; }
+.colorTwo   { background-color: rgba(245, 233, 213, 0.25); color: #FFFFFF !important; }
+.colorThere { background-color: rgba(231, 245, 213, 0.25); color: #FFFFFF !important; }
+.colorFour  { background-color: rgba(213, 245, 227, 0.25); color: #FFFFFF !important; }
+.colorFive  { background-color: rgba(213, 236, 245, 0.25); color: #FFFFFF !important; }
+.colorSix   { background-color: rgba(213, 213, 245, 0.25); color: #FFFFFF !important; }
+.colorSeven { background-color: rgba(239, 213, 245, 0.25); color: #FFFFFF !important; }
+.colorEight { background-color: rgba(228, 226, 226, 0.2);  color: #FFFFFF !important; }
 
-.colorOne{
-  background-color: #f3c3d1;
-  color: white,
+/* 试管网格容器 - 紧凑 4 列，gap 替代 margin */
+.button-div {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
 }
 
-.colorTwo{
-  background-color: #f5e9d5;
-  color: white,
-  
-}
-
-.colorThere{background-color: #e7f5d5;
-  color: white,
-  
-}.colorFour{background-color: #d5f5e3;
-  color: white,
-  
-}.colorFive{background-color: #d5ecf5;
-  color: white,
-  
-}.colorSix{background-color: #d5d5f5;
-  color: white,
-  
-}.colorSeven{background-color: #efd5f5;
-  color: white,
-  
-}.colorEight{background-color: #e4e2e2;
-  color: rgb(252, 252, 252),
-  
-}
-
-.button-div .card{
-  border: 2px solid ;
-  margin-right: 0.1rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px ;
-  display: flex; /* 使用Flexbox */
-  flex-direction: column; /* 垂直排列子元素 */
-  justify-content: center; /* 垂直居中 */
-  align-items: center; /* 水平居中 */
-  width: 70%;
-  max-width: calc((100% - 3 * 0.8rem) / 4);
+/* 试管卡片 - 金属拉丝毛玻璃质感 */
+.button-div .card {
+  border: 1px solid var(--border-color, #2A3444);
+  margin: 0;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: auto;
+  max-width: 100%;
   box-sizing: border-box;
-  background-color: #ffffff;
+  /* 影刃：金属拉丝底 + 毛玻璃层 + 高对比度 */
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 50%, rgba(255,255,255,0.03) 100%),
+    var(--card-bg, #151A25);
+  backdrop-filter: blur(2px) contrast(1.1);
+  -webkit-backdrop-filter: blur(2px) contrast(1.1);
+  padding: 4px 2px;
+  box-shadow:
+    var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.4)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  /* 影刃：高频响应 — 更快的过渡 */
+  transition: border-color 0.08s ease, box-shadow 0.08s ease, transform 0.06s ease, background 0.08s ease;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-.card-button{
+
+/* 卡片内部：试管列 + 滑块横排 */
+.card__content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+}
+
+/* 试管列容器 */
+.card__tubes {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  flex: 1;
+  min-width: 0;
+}
+
+/* 单列试管（垂直反序堆叠） */
+.card__tubeCol {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+}
+
+/* 模块标签 */
+.card__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ffffff !important;
+  margin-top: 2px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* 影刃：高频响应 hover — 轻快待命感 */
+.button-div .card:hover {
+  border-color: rgba(0, 229, 255, 0.4);
+  background:
+    linear-gradient(135deg, rgba(0, 229, 255, 0.04) 0%, transparent 50%, rgba(0, 229, 255, 0.02) 100%),
+    var(--card-bg, #151A25);
+  box-shadow:
+    0 0 8px rgba(0, 229, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
+}
+
+/* 影刃：高频响应 active — 瞬发按压 */
+.button-div .card:active {
+  transform: scale(0.95);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+  border-color: rgba(0, 229, 255, 0.2);
+  background: var(--card-bg, #151A25);
+  transition-duration: 0.03s;
+}
+
+.card-button {
   cursor: pointer;
 }
-.statusClass{
-  font-size: 20px;
+
+/* 影刃：全局文字白色化 — 确保深色背板下绝对清晰 */
+.statusClass {
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFFFFF !important;
+}
+
+.listClass {
+  font-size: 14px;
   font-weight: 500;
+  color: #FFFFFF !important;
 }
-.listClass{
-  font-size: 20px;  font-weight: 500;
 
+.button-div .card span,
+.button-div .card div,
+.button-div .card p {
+  color: #FFFFFF !important;
 }
-.ant-rate{
-  color:#8b9cbbb5;
-  font-size: 18px;
 
+.ant-rate {
+  color: rgba(0, 229, 255, 0.5);
+  font-size: 14px;
 }
+
 .background-text {
-  position: absolute; /* 绝对定位 */
-  top: 50%; /* 垂直居中 */
-  left: 50%; /* 水平居中 */
-  transform: translate(-50%, -50%); /* 调整位置 */
-  font-size: 3rem; /* 字体大小 */
-  color: rgba(128, 128, 128, 0.5); /* 灰色且半透明 */
-  pointer-events: none; /* 不影响其他元素的点击 */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  color: rgba(160, 174, 192, 0.15);
+  pointer-events: none;
 }
-.button-div{
-  width: 100%;
+
+/* ====== 影刃：模糊穿透对比度增强 ====== */
+/* 当背景模糊时，试管区域保持高对比 */
+.app-blurred .monitorView__tubes {
+  filter: contrast(1.15) brightness(1.05);
+}
+
+/* 色谱标记在模糊下的增强饱和度 */
+.app-blurred .colorOne,
+.app-blurred .colorTwo,
+.app-blurred .colorThere,
+.app-blurred .colorFour,
+.app-blurred .colorFive,
+.app-blurred .colorSix,
+.app-blurred .colorSeven,
+.app-blurred .colorEight {
+  filter: saturate(1.3) brightness(1.1);
+}
+
+/* ====== 影刃：多态试管视觉系统 ====== */
+
+/* --- 试管基础容器（相对定位，供小圆点定位） --- */
+.buttonTubes {
+  position: relative;
+}
+
+/* --- 1. 选中态：青色外发光 --- */
+.buttonTubes.isSelected {
+  outline: 2px solid var(--accent-cyan, #00E5FF);
+  outline-offset: 1px;
+  box-shadow:
+    0 0 10px rgba(0, 229, 255, 0.3),
+    0 0 4px rgba(0, 229, 255, 0.15);
+  border-radius: 50%;
+}
+
+.buttonTubes.isSelected::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 229, 255, 0.15);
+  pointer-events: none;
+  animation: tube-select-ring 1.5s ease-in-out infinite;
+}
+
+@keyframes tube-select-ring {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* --- 2. 已有任务态：中心小圆点标记 --- */
+.buttonTubes.hasTask::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-orange, #FF9F1C);
+  box-shadow: 0 0 6px rgba(255, 159, 28, 0.5);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* 已执行完毕的任务管 — 灰色圆点 */
+.buttonTubes.hasTask.taskDone::before {
+  background: var(--text-disabled, #3A4556);
+  box-shadow: none;
+}
+
+/* 正在执行的任务管 — 青色呼吸圆点 */
+.buttonTubes.hasTask.taskRunning::before {
+  background: var(--accent-cyan, #00E5FF);
+  box-shadow: 0 0 6px rgba(0, 229, 255, 0.6);
+  animation: tube-task-dot-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes tube-task-dot-pulse {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(0, 229, 255, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.8);
+    transform: scale(1.2);
+  }
+}
+
+/* 任务编号标记（替代小圆点，显示数字） */
+.tube-task-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: var(--accent-orange, #FF9F1C);
+  color: #0B101E;
+  font-size: 9px;
+  font-weight: 800;
+  font-family: 'Courier New', monospace;
   display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  pointer-events: none;
+  box-shadow: 0 0 6px rgba(255, 159, 28, 0.4);
+  line-height: 1;
+}
+
+.tube-task-badge--done {
+  background: var(--text-disabled, #3A4556);
+  color: var(--text-muted, #606D80);
+  box-shadow: none;
+}
+
+.tube-task-badge--running {
+  background: var(--accent-cyan, #00E5FF);
+  color: #0B101E;
+  box-shadow: 0 0 6px rgba(0, 229, 255, 0.5);
+  animation: tube-task-dot-pulse 1.5s ease-in-out infinite;
+}
+
+/* --- 3. 清脆按压确认 --- */
+.buttonTubes:active {
+  transform: scale(0.88);
+  transition: transform 0.03s ease;
+}
+
+/* 点击后的瞬间反弹 */
+.buttonTubes.just-clicked {
+  animation: tube-click-bounce 0.25s ease-out;
+}
+
+@keyframes tube-click-bounce {
+  0% { transform: scale(0.88); }
+  50% { transform: scale(1.06); }
+  100% { transform: scale(1); }
 }

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-    Table,
     Badge,
     Descriptions,
     Button,
@@ -310,49 +309,89 @@ const App = () => {
     return (
         <div className="data-main">
             {contextHolder}
-            <div>
-                <Row>
-                    <Col span={8}>
-                        <Input
-                            placeholder="请输入文件夹名称"
-                            value={folderName}
-                            onChange={(e) => setFolderName(e.target.value)}
-                        />
-                    </Col>
-                    <Col span={4}>
-                        <Button type="primary" onClick={handleDownloadAll}>
-                            导出所有文件
-                        </Button>
-                    </Col>
-                </Row>
+            <div className="history-toolbar">
+                <Input
+                    size="large"
+                    placeholder="请输入文件夹名称"
+                    value={folderName}
+                    onChange={(e) => setFolderName(e.target.value)}
+                    style={{ flex: 1 }}
+                />
+                <Button type="primary" size="large" onClick={handleDownloadAll}>
+                    导出所有文件
+                </Button>
             </div>
-            <Table
-                columns={columns}
-                dataSource={currentPageData}
-                rowKey={(record) => record.saveTime || Math.random()}
-                pagination={false}
-                className="headerStyle"
-                scroll={{ x: 1000 }}
-            />
+
+            {/* 卡片流 */}
+            <div className="history-card-list">
+                {currentPageData.length > 0 ? (
+                    currentPageData.map((record, index) => (
+                        <div
+                            className="history-card"
+                            key={record.saveTime || index}
+                        >
+                            <div className="history-card__time">
+                                {record.saveTime || "未知时间"}
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <div className="history-card__body" style={{ display: "flex", gap: 16, flex: 1 }}>
+                                <div className="history-card__field">
+                                    <span className="history-card__label">方法</span>
+                                    <span className="history-card__value">
+                                        {record.methodName || "未知"}
+                                    </span>
+                                </div>
+                                <div className="history-card__field">
+                                    <span className="history-card__label">采集时长</span>
+                                    <span className="history-card__value">
+                                        {record.samplingTime || 0} min
+                                    </span>
+                                </div>
+                                <div className="history-card__field">
+                                    <span className="history-card__label">时间范围</span>
+                                    <span className="history-card__value">
+                                        {record.methodStartTime || "?"} ~ {record.methodEndTime || "?"}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="history-card__actions" style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                                <Button
+                                    type="primary"
+                                    size="large"
+                                    onClick={() => handleViewDetail(record)}
+                                >
+                                    查看详情
+                                </Button>
+                                <Button
+                                    size="large"
+                                    onClick={() => handleDownload(record)}
+                                >
+                                    下载
+                                </Button>
+                            </div>
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <div className="history-empty">暂无历史数据</div>
+                )}
+            </div>
+
             {/* 分页控件 */}
             {historyData.length > 0 && (
-                <div style={{
-                    marginTop: '20px',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: '20px'
-                }}>
+                <div className="history-pagination">
                     <Button
+                        size="large"
                         onClick={handlePrevPage}
                         disabled={currentPage === 1}
                     >
                         上一页
                     </Button>
-                    <span style={{ fontSize: '14px' }}>
+                    <span className="history-pagination__info">
                         第 {currentPage} / {totalPages} 页 （共 {historyData.length} 条）
                     </span>
                     <Button
+                        size="large"
                         onClick={handleNextPage}
                         disabled={currentPage >= totalPages}
                     >
@@ -400,9 +439,9 @@ const App = () => {
                         <Descriptions.Item label="结束时间">
                             {selectedRecord.methodEndTime || "未知"}
                         </Descriptions.Item>
-                        <Descriptions.Item label="目标化合物SMILES" span={2}>
+                        {/* <Descriptions.Item label="目标化合物SMILES" span={2}>
                             {selectedRecord.smiles || "未知"}
-                        </Descriptions.Item>
+                        </Descriptions.Item> */}
                         <Descriptions.Item label="试管体积">
                             {selectedRecord.tubeVolume || "未知"}
                         </Descriptions.Item>

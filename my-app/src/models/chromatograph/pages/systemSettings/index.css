@@ -1,0 +1,202 @@
+.systemSettings {
+  padding: 8px;
+  overflow-y: auto;
+  height: 100%;
+  color: #ffffff;
+}
+
+.systemSettings__divider {
+  margin: var(--spacing-md) 0 var(--spacing-sm) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+}
+
+.systemSettings__section-id {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: rgba(0, 229, 255, 0.12);
+  color: var(--accent-cyan, #00E5FF);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  margin-right: 6px;
+  letter-spacing: 1px;
+}
+
+.systemSettings__actions {
+  margin-top: var(--spacing-lg);
+  display: flex;
+  gap: 8px;
+}
+
+/* 分块标题行：Divider + 操作按钮同行 */
+.systemSettings__sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.systemSettings__sectionHeader .systemSettings__divider {
+  flex: 1;
+  margin-right: 0 !important;
+}
+
+/* ====== 影刃：工业名牌 — 实验室贴纸 ====== */
+.lab-sticker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: 0.5px;
+  user-select: none;
+}
+
+.lab-sticker__tag {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* A 泵贴纸 — 青色 */
+.lab-sticker--a {
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.25) 0%, rgba(0, 184, 212, 0.15) 100%);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.1);
+}
+
+/* B 泵贴纸 — 橙色 */
+.lab-sticker--b {
+  background: linear-gradient(135deg, rgba(255, 159, 28, 0.25) 0%, rgba(230, 126, 34, 0.15) 100%);
+  border: 1px solid rgba(255, 159, 28, 0.4);
+  box-shadow: 0 0 8px rgba(255, 159, 28, 0.1);
+}
+
+/* A 泵输入框 */
+.systemSettings .pump-input--a .ant-input {
+  border-color: rgba(0, 229, 255, 0.3) !important;
+}
+.systemSettings .pump-input--a .ant-input:focus {
+  border-color: #00E5FF !important;
+  box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.15) !important;
+}
+
+/* B 泵输入框 */
+.systemSettings .pump-input--b .ant-input {
+  border-color: rgba(255, 159, 28, 0.3) !important;
+}
+.systemSettings .pump-input--b .ant-input:focus {
+  border-color: #FF9F1C !important;
+  box-shadow: 0 0 0 2px rgba(255, 159, 28, 0.15) !important;
+}
+
+/* ====== 影刃：体积选块 — 大触控快选 ====== */
+.volume-picker {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: var(--spacing-md);
+}
+
+.volume-picker__block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--border-color, #2A3444);
+  border-radius: 4px;
+  background: var(--card-bg, #151A25);
+  color: var(--text-primary, #E8ECF1);
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.volume-picker__block:hover {
+  border-color: rgba(0, 229, 255, 0.3);
+  background: var(--hover-bg, #1C2333);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.volume-picker__block:active {
+  transform: scale(0.96);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.volume-picker__block--selected {
+  border-color: rgba(0, 229, 255, 0.5);
+  background: linear-gradient(145deg, #002A33, #00404D);
+  color: var(--accent-cyan, #00E5FF);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.15);
+}
+
+.volume-picker__block--selected:hover {
+  border-color: rgba(0, 229, 255, 0.6);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.25);
+}
+
+.volume-picker__unit {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted, #606D80);
+  margin-left: 2px;
+}
+
+/* ====== 影刃：分块加载态 ====== */
+.systemSettings__section {
+  position: relative;
+  min-height: 80px;
+}
+
+.systemSettings__section .ant-spin-nested-loading {
+  width: 100%;
+}
+
+/* ====== 影刃：骨架加载占位 — 视觉稳定性 ====== */
+.systemSettings .ant-form-item {
+  min-height: 72px;
+}
+
+.lab-sticker__desc {
+  color: var(--text-secondary, #A0AEC0);
+  font-weight: 500;
+}
+
+/* Skeleton shimmer for loading state */
+.lab-sticker__skeleton {
+  display: inline-block;
+  width: 56px;
+  height: 14px;
+  border-radius: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--border-color, #2A3444) 25%,
+    var(--hover-bg, #1C2333) 50%,
+    var(--border-color, #2A3444) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer-settings 1.5s ease-in-out infinite;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+@keyframes skeleton-shimmer-settings {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

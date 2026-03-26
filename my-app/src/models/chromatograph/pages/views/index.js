@@ -106,6 +106,8 @@ import {
     stopPurgeColumn,
 
 } from "../../api/column";
+import { getStockSolutions } from "../../api/settings";
+
 
 import { saveExperimentData, executionMethod } from "../../api/experiment";
 
@@ -171,9 +173,6 @@ const STATUS_DISABLED_ACTIONS = {
         "pause",
         "terminate",
         "equilibration",
-        "switchTube",
-        "waste",
-        "autoGradient",
         "continue",
     ]),
 };
@@ -213,6 +212,8 @@ const statusLabelMap = {
 const EXPERIMENT_STORAGE_KEY = "chromatograph:experiment-state:v1";
 
 const App = () => {
+     const [pumpALabel, setPumpALabel] = useState("A");
+    const [pumpBLabel, setPumpBLabel] = useState("B");
 
     const [loading, setLoading] = React.useState(false);
 
@@ -234,7 +235,7 @@ const App = () => {
 
     //清洗标志，当0时，所有试管禁用，当1时，所有试管可以选择。
 
-    const [clean_flag, setCleanFlag] = useState(0);
+    const [clean_flag, setCleanFlag] = useState(1);
 
     //方法，当0时，所有按钮禁用，当1时，所有按钮可以正常使用。
 
@@ -1710,81 +1711,22 @@ const App = () => {
     };
 
     const reverseFlags = () => {
-
-        ////console.log("1021-2 selected_tube :", selected_tube);
-
-        ////console.log("1021-2  groupsOrigin :", groupsOrigin);
-
-        // if (reverseFlag == 1) {
-
-        //     setReverseFlag(0);
-
-        // } else {
-
         setReverseFlag(1);
-
-        // }
-
-        // if (selected_tubes.length > 0) {
-
-        //     setSelectedReverse(selected_tubes);
-
-        //     let reverse = num.filter(
-
-        //         (item) =>
-
-        //             !selected_reverse.includes(item.tube) &&
-
-        //             item.flag == undefined
-
-        //     );
-
-        //     let selected_r = reverse.map((item) => item.tube);
-
-        //     setSelectedReverse(selected_r);
-
-        //     selected_tube = selected_r;
-
-        //    //console.log("selected_tube :", selected_tube);
-
-        //     setNum(selected_reverse);
-
-        //     handleReceiveFlags(selected_reverse, num);
-
-        // } else {
-
-        //     error();
-
-        // }
-
     };
 
     const updateExcuteTask = (tubeId, taskId) => {
-
         if (excutedTubesUpdateFlag) {
-
             excuted_tubes = excutedTubes;
-
             excuted_tubes.forEach((task) => {
-
                 if (task.task_id === taskId) {
-
                     task.currentTubeId = tubeId;
-
                     task.flag = excute_status;
-
                 }
-
             });
-
             setExcutedTubes((prevExcutedTubes) => {
-
                 return [...excuted_tubes];
-
             });
-
         }
-
     };
 
     const undoReceiveFlags = async (result) => {
@@ -2201,10 +2143,21 @@ const App = () => {
         setSelectedTask([]);
         selected_tube = [];
         selected_tubes = [];
+        excuted_tubes = [];
+        excute_status = 0;
+        colorNum = 0;
+        newPoints = [];
+        setCurrentTubeId(undefined);
+        setCurrentTaskId(undefined);
+        setExcuteTaskFlag(undefined);
+        setAutoGradient(false);
+        setErrorCode([]);
+        setWarningCode({ code: 0, time: "", operate: undefined });
     };
     const handleClear = () => {
         clearData();
         setExperimentStatus(EXPERIMENT_STATUS.idle);
+        setActivePanelTab("control");
     };
     const saveExcute = (experimentId) => {
 
@@ -2287,12 +2240,6 @@ const App = () => {
             });
 
         }
-
-    };
-
-    const reset = () => {
-
-        setOpenReset(true);
 
     };
 
@@ -2388,17 +2335,14 @@ const App = () => {
 
     const clean = () => {
 
-        setData(() => []);
+        // setData(() => []);
 
-        setSelectedReverse([]);
+        // setSelectedReverse([]);
 
-        setNum([]);
+        // setNum([]);
 
         setCleanFlag(1);
 
-       //console.log("clean_flag--- :", clean_flag);
-
-       //console.log("1101   selected_tube", selected_tube);
 
         if (selected_tube.length > 0) {
 
@@ -2426,25 +2370,22 @@ const App = () => {
 
         }
 
-        // else {
-
-        //     error();
-
-        // }
-
-    };
-
-    const setSampleStatus = () => {
-
-        SetSampleStatusAPI().then((responsedata) => {
-
-            // console.log("responsedata :", responsedata);
-
-        });
+       
 
     };
 
     useEffect(() => {
+         getStockSolutions().then((res) => {
+                            if (res && !res.error && res.data) {
+                                const d = res.data;
+                                const list = d.stock_solutions || d.stock_solution || d.list || (Array.isArray(d) ? d : []);
+                                const solA = Array.isArray(list) ? (list.find(item => item.label === "A")?.name || "A") : "A";
+                                const solB = Array.isArray(list) ? (list.find(item => item.label === "B")?.name || "B") : "B";
+                                setPumpALabel(solA);
+                                setPumpBLabel(solB);
+                             
+                            }
+                        }).catch(() => {});
 
        //console.log("1029   ", formatTimeWithRegex("00:02:00"));
 
@@ -2694,12 +2635,9 @@ const App = () => {
 
     };
     const statusDisabledActions = STATUS_DISABLED_ACTIONS[experimentStatus];
-    const isOperateTabLocked =
-        experimentStatus === EXPERIMENT_STATUS.collect ||
-        experimentStatus === EXPERIMENT_STATUS.demo;
+    const isOperateTabLocked = false;
     const isActionDisabled = (key, baseDisabled = false) => {
         if (baseDisabled) return true;
-        if (experimentStatus === EXPERIMENT_STATUS.demo) return true;
         return statusDisabledActions ? statusDisabledActions.has(key) : false;
     };
     const handlePanelTabChange = (key) => {
@@ -2723,13 +2661,13 @@ const App = () => {
             label: "复位",
             onClick: () => handleClear(),
             disabled: isActionDisabled("clear", methodFlag === 0),
-            className: "button4",
+            className: "btn-reset-danger",
         },
 
         {
 
             key: "start",
-            label: "\u5f00\u542f",
+            label: "开始",
             onClick: () => showModal(),
             disabled: isActionDisabled(
                 "start",
@@ -2835,7 +2773,7 @@ const App = () => {
 
             key: "purgeColumn",
 
-            label: "吹扫柱子",
+            label: "吹扫系统",
 
             onClick: () => setPurgeColumn(true),
 
@@ -2846,7 +2784,7 @@ const App = () => {
         },
            {
             key: "save",
-            label: "\u4fdd\u5b58",
+            label: "保存",
             onClick: () => handleOkRest(),
             disabled: isActionDisabled("save", methodFlag === 0),
             className: "button4",
@@ -2856,12 +2794,12 @@ const App = () => {
 
     const statusItemWidths = {
         power: "90px",
-        pressure: "",
-        operatingTime: "",
-        pumpA: "",
-        pumpB: "",
-        detector: "",
-        tube: "",
+        pressure: "120px",
+        operatingTime: "130px",
+        pumpA: "170px",
+        pumpB: "170px",
+        detector: "130px",
+        tube: "110px",
     };
 
     const getStatusItemStyle = (width) =>
@@ -2989,7 +2927,7 @@ const App = () => {
 
                             <span className="machine-status-bar__label">
 
-                                泵A
+                                泵A-{(pumpALabel)}
 
                             </span>
 
@@ -3012,7 +2950,8 @@ const App = () => {
 
                             <span className="machine-status-bar__label">
 
-                                泵B
+                                                                泵B-{(pumpBLabel)}
+
 
                             </span>
 
@@ -3086,9 +3025,9 @@ const App = () => {
 
                     {/* D3图表区域 */}
 
-                    <Row gutter={10}>
+                    <Row gutter={3}>
 
-                        <Col span={24} style={{ padding: "0 10px" } }>
+                        <Col span={24} style={{ padding: "0 0px" } }>
 
                             <div className="lineStyle overlayBox">
 
@@ -3128,7 +3067,7 @@ const App = () => {
 
 
 
-                    <Row gutter={16} style={{ marginTop: "0px" }}>
+                    <Row gutter={0} style={{ marginTop: "0px" }}>
 
                         <Col span={24}>
 
@@ -3216,6 +3155,11 @@ const App = () => {
                                                         methodFlag !== 0 ? (
 
                                                             <div className="buttonTubeFun">
+  <Row> <Col
+
+                                                                        span={22}
+
+                                                                    >
 
                                                                 <Buttons
 
@@ -3262,15 +3206,16 @@ const App = () => {
 
                                                                 ></Buttons>
 
-                                                                <Row>
+                                                              </Col>
 
                                                                     <Col
 
-                                                                        span={6}
+                                                                        span={2}
 
                                                                     >
-
-                                                                        <Button
+                                                                        <div className="retain_button">
+                                                                        <Row>
+ <Button
 
                                                                             type="primary"
 
@@ -3288,15 +3233,10 @@ const App = () => {
 
                                                                         </Button>
 
-                                                                    </Col>
+                                                                        </Row>
 
-                                                                    <Col
-
-                                                                        span={6}
-
-                                                                    >
-
-                                                                        <Button
+                                                                       <Row>
+ <Button
 
                                                                             type="primary"
 
@@ -3313,16 +3253,9 @@ const App = () => {
                                                                             废弃
 
                                                                         </Button>
-
-                                                                    </Col>
-
-                                                                    <Col
-
-                                                                        span={6}
-
-                                                                    >
-
-                                                                        <Button
+                                                                       </Row>
+                                                                        <Row>
+                                                                          <Button
 
                                                                             type="primary"
 
@@ -3340,15 +3273,9 @@ const App = () => {
 
                                                                         </Button>
 
-                                                                    </Col>
-
-                                                                    <Col
-
-                                                                        span={6}
-
-                                                                    >
-
-                                                                        <Button
+                                                                       </Row>
+                                                                        <Row>
+                                                                           <Button
 
                                                                             type="primary"
 
@@ -3365,9 +3292,11 @@ const App = () => {
                                                                             清洗
 
                                                                         </Button>
-
+                                                                       </Row>
+</div>
                                                                     </Col>
 
+                                                                  
                                                                 </Row>
 
                                                             </div>
@@ -3478,6 +3407,10 @@ const App = () => {
 
                 onCancel={handleCancel}
 
+                styles={{ content: { backgroundColor: '#1A2030', color: '#fff' }, header: { backgroundColor: '#1A2030', color: '#fff' }, body: { backgroundColor: '#1A2030', color: '#fff' }, footer: { backgroundColor: '#1A2030' } }}
+                closeIcon={<span style={{ color: '#fff' }}>✕</span>}
+             
+
             >
 
                 <Form
@@ -3500,7 +3433,8 @@ const App = () => {
 
                     style={{
 
-                        maxWidth: 600,
+                        
+                        backgroundColor:"#1A2030"
 
                     }}
 
@@ -3515,6 +3449,7 @@ const App = () => {
                         waste_mode: false,
 
                     }}
+                    
 
                 >
 
@@ -3548,7 +3483,7 @@ const App = () => {
 
                     <Form.Item label="开始模块：">
 
-                        <Form.Item name="module_id" noStyle>
+                        <Form.Item name="module_id" >
 
                             <InputNumber
 
@@ -3566,7 +3501,7 @@ const App = () => {
 
                     <Form.Item label="开始试管：">
 
-                        <Form.Item name="tube_id" noStyle>
+                        <Form.Item name="tube_id" >
 
                             <InputNumber
 
@@ -3598,9 +3533,15 @@ const App = () => {
 
                 onCancel={handleCancelReset}
 
-                okText="保存" // 修改确认按钮文字
+                okText="保存"
 
-                cancelText="不保存" // 修改取消按钮文字
+                cancelText="不保存"
+
+                title="复位确认"
+
+                className="industrial-warning-modal"
+
+                centered
 
             >
 
@@ -3858,7 +3799,7 @@ const App = () => {
 
             <Modal
 
-                title="吹扫色谱柱"
+                title="吹扫系统"
 
                 open={purgeColumn}
 

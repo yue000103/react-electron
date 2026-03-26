@@ -46,7 +46,18 @@ now.setHours(0, 0, 0, 0); // 起点固定为当天 00:00
 // now.setHours(1, 0, 0);
 // const endTime = new Date(now.getTime() + 5 * 60 * 1000);
 
-const renderCurve = (svg, height, xScale) => {
+const renderCurve = (
+    svg,
+    width,
+    height,
+    margin,
+    cleanFlag,
+    samplingTime,
+    xScale,
+    kCompensate = 1
+) => {
+    // // console.log("data", data);
+    //data{time: '17:46:47', value: 81.41712213857508}
     const parsedData =
         data?.map((d) => ({
             ...d,
@@ -64,6 +75,7 @@ const renderCurve = (svg, height, xScale) => {
         .sort((a, b) => a.time - b.time); // 按时间排序，避免乱序导致曲线异常
     const hasValidData = validData.length > 0;
 
+    console.log("0920   data--------------------", validData);
     const valueExtent = d3.extent(
         hasValidData ? validData : [{ value: 0 }],
         (d) => d.value
@@ -82,6 +94,7 @@ const renderCurve = (svg, height, xScale) => {
     }
     const padding = Math.max(Math.abs(maxValue), 1) * 0.05;
 
+    // const xScale = d3.scaleTime().domain([now, endTime]).range([0, width]);
     const yScale = d3
         .scaleLinear()
         .domain([minValue - padding, maxValue + padding])
@@ -110,48 +123,100 @@ const renderCurve = (svg, height, xScale) => {
         .y((d) => yScale(d.value))
         .curve(d3.curveBasis);
 
-    svg.append("path")
-        .datum(validData)
-        .attr("fill", "none")
-        .attr("stroke", `#0097a7`)
-        .attr("stroke-width", 3)
-        .attr("d", line)
-        .style("filter", "drop-shadow(0px 2px 4px rgba(0, 188, 212, 0.3))");
+    // 创建渐变定义
+    const gradientId = "curveGradient";
+    const defs = svg.append("defs");
+    const gradient = defs
+        .append("linearGradient")
+        .attr("id", gradientId)
+        .attr("x1", "0%")
+        .attr("x2", "100%")
+        .attr("y1", "0%")
+        .attr("y2", "0%");
 
+    gradient
+        .append("stop")
+        .attr("offset", "0%")
+        .attr("stop-color", "#00bcd4")
+        .attr("stop-opacity", 1);
+
+    gradient
+        .append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", "#0097a7")
+        .attr("stop-opacity", 1);
+
+    // // console.log("par", parsedData);
+    // 单个点/无效数据时兜底：复制点或画一条水平线，避免路径瞬间消失
+    const baseValue = hasValidData ? validData[0].value : 0;
+    const allTimesSame =
+        hasValidData &&
+        validData.every(
+            (d) => d.time.getTime() === validData[0].time.getTime()
+        );
+    // 时间全相同或无数据时，用 x 轴两端生成基线，避免 0 长度路径瞬间消失
+    const lineData =
+        hasValidData && !allTimesSame
+            ? validData.length === 1
+                ? [validData[0], { ...validData[0] }]
+                : validData
+            : [
+                  { time: now, value: baseValue },
+                  { time: endTime, value: baseValue },
+              ];
+    console.log("1201   validData--------------------", validData);
+
+    console.log("1201   lineData--------------------", lineData);
+    svg.append("path")
+        .datum(lineData)
+        .attr("fill", "none")
+        .attr("stroke", `url(#${gradientId})`)
+        .attr("stroke-width", 3 * kCompensate)
+        .attr("d", line)
+        .style("filter", `drop-shadow(0px ${2 * kCompensate}px ${4 * kCompensate}px rgba(0, 188, 212, 0.3))`);
+
+    // 单个点时额外画一个点标记
+    if (hasValidData && validData.length === 1) {
+        svg.append("circle")
+            .attr("cx", xScale(validData[0].time))
+            .attr("cy", yScale(validData[0].value))
+            .attr("r", 3)
+            .attr("fill", `url(#${gradientId})`);
+    }
+    // const lineX = d3
+    //     .line()
+    //     .x((d) => xScale(d.time))
+    //     .y(height)
+    //     .curve(d3.curveLinear);
+
+    // svg.append("path")
+    //     .datum(data)
+    //     .attr("fill", "none")
+    //     .attr("stroke", "red")
+    //     .attr("stroke-width", 2)
+    //     .attr("d", lineX);
     renderVertical(svg, xScale, height);
+    // console.log("cleanFlag", cleanFlag);
+    // if (cleanFlag == 0) {
     renderArea(svg, xScale, yScale, height);
+    // }
 };
 
 const renderVertical = (svg, xScale, height) => {
     // // console.log("9090--------num-", num);
 
-    const parsedData = Array.isArray(num)
-        ? num.map((d) => ({
-              ...d,
-              timeStart: parseTime(d.time_start),
-              timeEnd: parseTime(d.time_end),
-          }))
-        : [];
-    const isValidTime = (time) =>
-        time instanceof Date && !Number.isNaN(time.getTime());
-    const uniqueTimeMap = new Map();
-    parsedData.forEach((item) => {
-        if (isValidTime(item.timeStart)) {
-            uniqueTimeMap.set(item.timeStart.getTime(), item.timeStart);
-        }
-        if (isValidTime(item.timeEnd)) {
-            uniqueTimeMap.set(item.timeEnd.getTime(), item.timeEnd);
-        }
-    });
-    const uniqueTimes = Array.from(uniqueTimeMap.values()).sort(
-        (a, b) => a - b
-    );
-    const verticalLineData = uniqueTimes.map((time) => ({ time }));
+    const parsedData = num?.map((d) => ({
+        ...d,
+        timeStart: parseTime(d.time_start),
+        timeEnd: parseTime(d.time_end),
+    }));
+    // 鐢熸垚鍨傜洿铏氱嚎鐨勮矾寰勭敓鎴愬櫒
     const lineVertical = (d) => {
-        return `M${xScale(d.time)},${height}V${0}`;
+        return `M${xScale(d.timeEnd)},${height}V${0}`;
     };
+    // 缁樺埗鍨傜洿铏氱嚎
     svg.selectAll(".vertical-line")
-        .data(verticalLineData)
+        .data(parsedData)
         .enter()
         .append("path")
         .attr("class", "vertical-line")
@@ -160,12 +225,9 @@ const renderVertical = (svg, xScale, height) => {
         .attr("stroke-dasharray", "5,5") // 璁剧疆铏氱嚎鏍峰紡
         .attr("d", lineVertical)
         .style("opacity", 0.8);
+    // //鐢熸垚flag
     svg.selectAll(".flag-text")
-        .data(
-            parsedData.filter(
-                (item) => isValidTime(item.timeStart) && isValidTime(item.timeEnd)
-            )
-        )
+        .data(parsedData)
         .enter()
         .append("text")
         .attr("class", "flag-text")
@@ -175,7 +237,7 @@ const renderVertical = (svg, xScale, height) => {
                 (xScale(d.timeEnd) - xScale(d.timeStart)) / 2 +
                 xScale(d.timeStart)
         )
-        .attr("y", 30)
+        .attr("y", 30) // 璁＄畻涓棿浣嶇疆鐨?y 鍧愭爣
         .attr("text-anchor", "middle")
         .text((d) => `${d.module_index + 1}-${d.tube_index + 1}`);
 };
@@ -195,8 +257,7 @@ const renderArea = (svg, xScale, yScale, height) => {
     // console.log("1021   num:", num);
     console.log("1203 selectedAllTubes  selected:", selected);
     // console.log("1118 selected count", selected.length);
-    const safeSelected = Array.isArray(selected) ? selected : [];
-    safeSelected.forEach((selectTube) => {
+    selected.forEach((selectTube) => {
         // console.log("1021 selectTube", selectTube);
         // console.log("1021   selectTube :", selectTube);
 
@@ -263,6 +324,7 @@ const parseTimeString = (time) => {
     });
     return parseTimeString;
 };
+//鏍煎紡鍖栦负涓€鑷寸殑鏍煎紡锛堝'00:06:00'锛夛紝鐒跺悗鍐嶆瘮杈?
 const normalizeTime = (time) => time.padStart(8, "0");
 const isEqual = (p1, p2) =>
     normalizeTime(p1.time) === normalizeTime(p2.time) && p1.value === p2.value;
@@ -283,10 +345,7 @@ const renderLine = (
     xScale
 ) => {
     // console.log("1012 time linePointChange :", linePointChange);
-    const safeLinePoints = Array.isArray(linePointChange)
-        ? linePointChange
-        : [];
-    safeLinePoints.sort((a, b) => {
+    linePointChange?.sort((a, b) => {
         const timeA = a.time
             .split(":")
             .reduce((acc, time) => 60 * acc + +time, 0);
@@ -295,7 +354,7 @@ const renderLine = (
             .reduce((acc, time) => 60 * acc + +time, 0);
         return timeA - timeB; // 浠庡皬鍒板ぇ鎺掑簭
     });
-    const parsedData = safeLinePoints.map((d) => ({
+    const parsedData = linePointChange?.map((d) => ({
         ...d,
         time: parseTime(d.time),
     }));
@@ -373,8 +432,9 @@ const renderLine = (
         .attr("stroke", "#e0e0e0")
         .attr("stroke-width", 1)
         .attr("stroke-dasharray", "3,3")
-        .style("opacity", 0.6);
+        .style("opacity", 0.6); // 璁剧疆铏氱嚎鏍峰紡
     points.each(function () {
+        // 浣跨敤 each 鏉ョ‘淇濇瘡涓偣閮界粦瀹氫簡浜嬩欢
         const point = d3.select(this);
         point
             .on("mouseover", function (event, d) {
@@ -416,6 +476,16 @@ const renderLine = (
         });
         setIsModalVisible(true);
     };
+
+    const dragThreshold = 300;
+    let startX, startY;
+    let isDragging = false;
+    let dragTimeout;
+
+    function prepareDrag(event, d) {
+        startX = event.x;
+        startY = event.y;
+    }
 };
 
 const LineChart = (props) => {
@@ -533,7 +603,19 @@ const LineChart = (props) => {
         // console.log("1021    props---------------5");
 
         // 缁樺埗鏇茬嚎
-        renderCurve(gContent, height, zoomedXScale);
+        // 影刃：动态补偿因子 — 缩放时保持视觉一致性
+        const kCompensate = 1 / Math.sqrt(zoomState.k);
+
+        renderCurve(
+            gContent,
+            zoomedWidth,
+            height,
+            margin,
+            props.clean_flag,
+            samplingTime,
+            zoomedXScale,
+            kCompensate
+        );
         renderLine(
             zoomedWidth,
             height,
@@ -563,6 +645,39 @@ const LineChart = (props) => {
         scrollPosition,
         selected,
     ]);
+
+    // ====== 影刃：D3 多点触控 Pinch-to-Zoom ======
+    useEffect(() => {
+        if (!svgRef.current || dimensions.width === 0) return;
+
+        const svgEl = d3.select(svgRef.current);
+        const zoom = d3.zoom()
+            .scaleExtent([1, 8])
+            .translateExtent([[0, 0], [dimensions.width * 8, dimensions.height]])
+            .filter((event) => {
+                // 允许触控事件（touch）和鼠标滚轮，阻止鼠标拖拽（留给点击交互）
+                if (event.type === 'wheel') return true;
+                if (event.touches && event.touches.length >= 2) return true;
+                return false;
+            })
+            .on("zoom", (event) => {
+                const { k, x } = event.transform;
+                setZoomState({ k, x, y: 0 });
+            });
+
+        svgEl.call(zoom);
+
+        // 双击复位：由铁毡负责，此处仅确保 zoom 不拦截 dblclick
+        svgEl.on("dblclick.zoom", () => {
+            setZoomState({ k: 1, x: 0, y: 0 });
+            setScrollPosition(0);
+            setRealPosition(0);
+        });
+
+        return () => {
+            svgEl.on(".zoom", null);
+        };
+    }, [dimensions]);
 
     useEffect(() => {
         // console.log("1014    props", props);
@@ -679,13 +794,13 @@ const LineChart = (props) => {
                 ref={svgRef}
                 width="100%"
                 height="20rem"
-                style={{ position: "relative", zIndex: 1 }}
+                style={{ position: "relative", zIndex: 1, touchAction: "none" }}
             ></svg>
 
             <div
                 style={{
                     position: "absolute",
-                    top: "10rem",
+                    top: "15rem",
                     width: "100%",
                     zIndex: 2,
                     pointerEvents: "none",
@@ -695,32 +810,38 @@ const LineChart = (props) => {
                 <Row>
                     <Col span={17} style={{ height: "0rem" }}></Col>
                     <Col span={2} style={{ height: "0rem" }}>
-                        {" "}
+                    <div className="zoomBtnGroup">
                         <Button
                             icon={<PlusOutlined />}
                             onClick={handleZoomIn}
+                            className="zoomBtn"
+                            size="small"
                             style={{ pointerEvents: "auto" }}
                         />
                         <Button
+                            className="zoomBtn"
+                            size="small"
                             style={{
-                                marginLeft: "10px",
+                                marginLeft: "4px",
                                 pointerEvents: "auto",
                             }}
                             icon={<MinusOutlined />}
                             onClick={handleZoomOut}
                         />
+                        </div>
                     </Col>
-                    <Col
+                    {/* <Col
                         span={4}
-                        style={{ pointerEvents: "auto", height: "0rem" }}
                     >
+                        <div style={{marginTop:"0"}}>
                         <CustomScrollbar
-                            style={{ pointerEvents: "auto" }}
+                            style={{ pointerEvents: "auto" ,marginTop:"0 !important"}}
                             scrollPosition={scrollPosition}
                             maxScrollPosition={maxScrollPosition}
                             onScrollChange={handleScrollChange}
                         />
-                    </Col>
+                        </div>
+                    </Col> */}
                 </Row>
             </div>
             <Modal

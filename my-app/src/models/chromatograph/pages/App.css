@@ -1,29 +1,36 @@
-﻿:root {
-  /* 品牌色系 */
-  --brand-color: #9b0000;
-  --brand-secondary: #c24141;
+:root {
+  /* === 工业暗黑配色 · 影刃出品 === */
+
+  /* 品牌/强调色系 */
+  --brand-color: #00E5FF;
+  --brand-secondary: #00B8D4;
+  --accent-cyan: #00E5FF;
+  --accent-orange: #FF9F1C;
+  --accent-green: #39FF14;
 
   /* 功能色系 */
-  --success-color: #52c41a;
-  --warning-color: #faad14;
-  --danger-color: #ff4d4f;
-  --info-color: #1890ff;
-  --neutral-color: #8c8c8c;
+  --success-color: #39FF14;
+  --warning-color: #FF9F1C;
+  --danger-color: #FF3D5A;
+  --info-color: #00E5FF;
+  --neutral-color: #4A5568;
 
-  /* 背景色系 */
-  --layout-bg: #f6f7fb;
-  --card-bg: #ffffff;
-  --hover-bg: #f5f5f5;
+  /* 背景色系 - 深空工业风 */
+  --layout-bg: #0B101E;
+  --card-bg: #151A25;
+  --hover-bg: #1C2333;
+  --surface-raised: #1A2030;
 
-  /* 文字色系 */
-  --text-primary: #262626;
-  --text-secondary: #595959;
-  --text-muted: #7a7a7a;
-  --text-disabled: #bfbfbf;
+  /* 文字色系 - 暗黑适配 */
+  --text-primary: #E8ECF1;
+  --text-secondary: #A0AEC0;
+  --text-muted: #606D80;
+  --text-disabled: #3A4556;
 
-  /* 边框色系 */
-  --border-color: #e8e8e8;
-  --border-color-light: #f0f0f0;
+  /* 边框色系 - 金属质感 */
+  --border-color: #2A3444;
+  --border-color-light: #1E2836;
+  --border-glow: rgba(0, 229, 255, 0.15);
 
   /* 间距系统 */
   --spacing-xs: 4px;
@@ -37,167 +44,140 @@
   --radius-md: 8px;
   --radius-lg: 12px;
 
-  /* 阴影系统 */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+  /* 阴影系统 - 暗黑发光 */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --glow-cyan: 0 0 15px rgba(0, 229, 255, 0.3);
+  --glow-orange: 0 0 15px rgba(255, 159, 28, 0.3);
+  --glow-green: 0 0 15px rgba(57, 255, 20, 0.3);
 
-  /* 屏幕尺寸 */
-  --target-screen-width: 1280px;
-  --target-screen-height: 780px;
-  --header-height: 64px;
+  /* 屏幕尺寸 - 竖屏 4:5 */
+  --target-screen-width: 600px;
+  --target-screen-height: 750px;
+  --header-height: 44px;
+  --bottom-bar-height: 64px;
 }
 
 body, html, #root {
-  height: 100%;
-  background-color: var(--layout-bg);
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #06080F;
 }
 
+/* ===== 主容器：全屏自适应仪器屏幕 ===== */
 .appShell {
-  width: min(var(--target-screen-width), 100vw);
-  height: min(var(--target-screen-height), 100vh);
-  margin: 0 auto;
+  width: 100%;
+  height: 100%;
   background: var(--layout-bg);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+  /* 金属质感边框 */
+  border: 2px solid #2A3444;
+  border-image: linear-gradient(
+    180deg,
+    #3A4A5C 0%,
+    #1E2836 40%,
+    #2A3444 60%,
+    #3A4A5C 100%
+  ) 1;
+  /* 屏幕外发光 - 模拟仪器背光溢出 */
+  box-shadow:
+    0 0 30px rgba(0, 229, 255, 0.08),
+    0 0 60px rgba(0, 229, 255, 0.04),
+    inset 0 0 30px rgba(0, 0, 0, 0.3);
 }
 
+/* ===== 顶部：品牌栏（钉死） ===== */
 .appHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--brand-color) !important;
-  padding: 0 0px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+  /* 暗金属渐变 */
+  background: linear-gradient(
+    135deg,
+    #0D1320 0%,
+    #151D2E 30%,
+    #1A2540 60%,
+    #0D1320 100%
+  ) !important;
+  padding: 0 12px;
+  height: var(--header-height) !important;
+  min-height: var(--header-height);
+  /* 底部发光分割线 */
+  box-shadow:
+    0 1px 0 rgba(0, 229, 255, 0.25),
+    0 2px 12px rgba(0, 0, 0, 0.5);
+  border-bottom: 1px solid rgba(0, 229, 255, 0.15);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.ant-layout-header {
+  height: var(--header-height) !important;
+  line-height: 12px !important;
 }
 
 .brandBlock {
   display: flex;
   align-items: center;
-  gap: 16px;
-  color: #fff;
+  gap: 12px;
+  color: var(--text-primary);
 }
 
 .brandLogo {
   height: 20px;
-  margin-left: 10px;
+  filter: brightness(1.2) drop-shadow(0 0 4px rgba(0, 229, 255, 0.4));
 }
 
 .brandInfo {
   margin: 0;
-  font-size: 0.3rem;
-  font-weight: 600;
+}
+
+.brandInfo h1 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #E8ECF1;
+  letter-spacing: 1px;
+  /* 霓虹发光 */
+  text-shadow:
+    0 0 6px rgba(0, 229, 255, 0.6),
+    0 0 12px rgba(0, 229, 255, 0.3),
+    0 0 24px rgba(0, 229, 255, 0.15);
 }
 
 .brandInfo p {
   margin: 0;
-  font-size: 0.9rem;
-  color: #ffe7e7;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
 }
 
 .headerClock {
-  color: #fff;
+  color: var(--accent-cyan);
   font-weight: 500;
+  font-size: 0.85rem;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
 }
 
-.appBody {
-  flex: 1;
-  display: flex;
-  min-height: 0;
-  height: calc(100% - var(--header-height));
-}
-
-.appSider {
-  background: #151515 !important;
-  padding: 0px 10px;
-  display: flex;
-  flex-direction: column;
-  min-height: min(
-    calc(100vh - var(--header-height)),
-    calc(var(--target-screen-height) - var(--header-height))
-  );
-}
-
-.appNavMenu {
-  flex: 1;
-  background: transparent !important;
-  border-inline-end: none !important;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 0;
-}
-
-.ant-layout-header{
-  line-height:12px !important;
-}
-.navItemContent {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  gap: 10px;
-}
-
-.navItemIcon {
-  font-size: 1.9rem;
-  line-height: 1;
-  padding: 0 !important;
-
-}
-.ant-menu .ant-menu-item .anticon +span{
-  margin-inline-start: 0px;
-}
-.navItemText {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin: 0;
-}
-
-.appNavMenu .ant-menu-item {
-  margin: 0 !important;
-  flex: 1;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.08);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  text-align: center;
-  padding: 83px 20px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-}
-
-.appNavMenu .ant-menu-item::after {
-  display: none;
-}
-
-.appNavMenu .ant-menu-item .ant-menu-item-icon {
-  margin-inline-end: 0;
-  font-size: 1.9rem;
-}
-
-.appNavMenu .ant-menu-item-selected {
-  background: linear-gradient(145deg, #f43f5e, #be123c) !important;
-  box-shadow: 10 0px 30px rgba(190, 18, 60, 0.35);
-  transform: translateY(-2px);
-}
-
-.appNavMenu .ant-menu-item:not(.ant-menu-item-selected):hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(255, 255, 255, 0.15);
-}
-
+/* ===== 中间：核心操作区（独立滚动） ===== */
 .appContent {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 5px;
   background: var(--layout-bg);
-  overflow: auto;
 }
 
 .appView {
@@ -211,23 +191,114 @@ body, html, #root {
 
 .appContent > * {
   background: var(--card-bg);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 7px;
-  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
 }
 
-@media (max-width: 800px) {
+/* ===== 底部：硬核导航栏（钉死） ===== */
+.appBottomBar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: var(--bottom-bar-height);
+  min-height: var(--bottom-bar-height);
+  flex-shrink: 0;
+  /* 暗金属底座 */
+  background: linear-gradient(0deg, #0A0E18 0%, #111827 100%);
+  border-top: 1px solid rgba(0, 229, 255, 0.12);
+  padding: 0 8px;
+  gap: 8px;
+  z-index: 10;
+}
+
+/* 工业仪器物理按键 */
+.industrialBtn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 52px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  border: 1px solid transparent;
+}
+
+/* 影刃：强化悬停 — 明确可点击性 */
+.industrialBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* 影刃：强化按压 — 机械内凹确认感 */
+.industrialBtn:active {
+  transform: scale(0.93) translateY(0);
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.15);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+/* 影刃：活跃态重绘 — 青色脉冲 */
+.industrialBtn--active {
+  background: linear-gradient(145deg, #002A33, #00404D);
+  color: var(--accent-cyan);
+  border-color: rgba(0, 229, 255, 0.35);
+  box-shadow:
+    0 0 12px rgba(0, 229, 255, 0.2),
+    inset 0 0 8px rgba(0, 229, 255, 0.05);
+  animation: industrialBtn-pulse 2s ease-in-out infinite;
+}
+
+.industrialBtn--active:hover {
+  border-color: rgba(0, 229, 255, 0.5);
+  box-shadow:
+    0 0 18px rgba(0, 229, 255, 0.3),
+    inset 0 0 10px rgba(0, 229, 255, 0.08);
+}
+
+@keyframes industrialBtn-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 12px rgba(0, 229, 255, 0.2),
+      inset 0 0 8px rgba(0, 229, 255, 0.05);
+  }
+  50% {
+    box-shadow:
+      0 0 20px rgba(0, 229, 255, 0.35),
+      0 0 6px rgba(0, 229, 255, 0.15),
+      inset 0 0 10px rgba(0, 229, 255, 0.08);
+  }
+}
+
+.industrialBtn__icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.industrialBtn__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 480px) {
   .appHeader {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 12px 0px;
+    padding: 0 8px;
   }
 
   .appContent {
-    padding: 16px;
+    padding: 4px;
   }
-}
-.ant-layout-header {
-  height: 40px;
 }

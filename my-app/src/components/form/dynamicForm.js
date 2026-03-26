@@ -101,7 +101,7 @@ const App = (props) => {
                                 style={{
                                     position: "sticky",
                                     top: 0,
-                                    background: "#fff",
+                                    background: "#ffffff00",
                                     zIndex: 1,
                                     paddingBottom: "10px",
                                 }}
@@ -131,6 +131,12 @@ const App = (props) => {
                                     </Col>
                                 </Row>
                             </div>
+                            <Space style={{ display: "flex", marginBottom: 4, paddingLeft: 0 }}>
+                                <div style={{ width: 150, fontWeight: 600, color: "#fff", textAlign: "center" }}>时间</div>
+                                <div style={{ width: 160, fontWeight: 600, color: "#fff", textAlign: "center" }}>泵A速度</div>
+                                <div style={{ width: 160, fontWeight: 600, color: "#fff", textAlign: "center" }}>泵B速度</div>
+                                <div style={{ width: 160, fontWeight: 600, color: "#fff", textAlign: "center" }}>总流速</div>
+                            </Space>
                             {fields.map(({ key, name, ...restField }) => (
                                 <Space
                                     key={key}
