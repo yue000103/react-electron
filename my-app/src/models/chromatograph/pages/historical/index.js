@@ -59,7 +59,7 @@ const App = () => {
     const [folderNameOnly, setFolderNameOnly] = useState("");
     // 分页相关状态
     const [currentPage, setCurrentPage] = useState(1); // 当前页码
-    const pageSize = 10; // 每页显示10条
+    const pageSize = 7; // 每页显示7条
     // 详情弹窗状态
     const [openDetail, setOpenDetail] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState(null);
