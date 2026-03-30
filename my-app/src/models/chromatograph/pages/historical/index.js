@@ -220,6 +220,7 @@ const App = () => {
 
     // 查看详情
     const handleViewDetail = (record) => {
+        console.log("0330   record",record)
         setSelectedRecord(record);
         checkMethod(record.methodId);
 

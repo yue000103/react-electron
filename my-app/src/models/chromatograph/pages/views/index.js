@@ -725,6 +725,13 @@ const App = () => {
 
             }
 
+            if (saved.currentMethod && typeof saved.currentMethod === "object") {
+                setCurrentMethod(saved.currentMethod);
+            }
+            if (typeof saved.methodRefreshKey === "number") {
+                setMethodRefreshKey(saved.methodRefreshKey);
+            }
+
             return true;
 
         } catch (error) {
@@ -802,6 +809,8 @@ const App = () => {
             startTime,
             flagStartTime,
             colorNum,
+            currentMethod,
+            methodRefreshKey,
         };
 
         latestExperimentStateRef.current = payload;
@@ -850,6 +859,8 @@ const App = () => {
         autoGradient,
         activePanelTab,
         experimentStatus,
+        currentMethod,
+        methodRefreshKey,
     ]);
 
 
@@ -2406,6 +2417,7 @@ const App = () => {
             getEluentLine().then((responseData) => {
 
                 if (!responseData.error) {
+                    console.log("0330,",responseData)
 
                     setMethodFlag(1);
 
@@ -2485,13 +2497,13 @@ const App = () => {
 
                     newPoints = responseData.data.point;
 
-                    // console.log(
+                    console.log(
 
-                    //     "samplingTime  responseData.data :",
+                        "0330  responseData.data :",
 
-                    //     responseData.data
+                        responseData.data
 
-                    // );
+                    );
 
                     setSamplingTime(responseData.data.sampling_time);
 
@@ -3857,6 +3869,8 @@ const App = () => {
 
                 width={800}
 
+                styles={{ header: { color: 'black' }, body: { color: 'black' } }}
+
             >
 
                 <Form
@@ -3864,6 +3878,8 @@ const App = () => {
                     form={autoGradientForm}
 
                     layout="vertical"
+
+                    style={{ color: 'black' }}
 
                     initialValues={{
 
@@ -3897,7 +3913,7 @@ const App = () => {
 
                             <Form.Item
 
-                                label={<span>start_ratio 起始比例</span>}
+                                label={<span style={{ color: 'black' }}>start_ratio 起始比例</span>}
 
                                 name="start_ratio"
 
@@ -3935,7 +3951,7 @@ const App = () => {
 
                             <Form.Item
 
-                                label={<span>end_ratio 终止比例</span>}
+                                label={<span style={{ color: 'black' }}>end_ratio 终止比例</span>}
 
                                 name="end_ratio"
 
@@ -3973,7 +3989,7 @@ const App = () => {
 
                             <Form.Item
 
-                                label={<span>n1_volumes N1柱体积倍数</span>}
+                                label={<span style={{ color: 'black' }}>n1_volumes N1柱体积倍数</span>}
 
                                 name="n1_volumes"
 
@@ -4009,7 +4025,7 @@ const App = () => {
 
                             <Form.Item
 
-                                label={<span>gradient_rate 梯度速率</span>}
+                                label={<span style={{ color: 'black' }}>gradient_rate 梯度速率</span>}
 
                                 name="gradient_rate"
 
@@ -4045,7 +4061,7 @@ const App = () => {
 
                             <Form.Item
 
-                                label={<span>peak_threshold 峰检测阈值</span>}
+                                label={<span style={{ color: 'black' }}>peak_threshold 峰检测阈值</span>}
 
                                 name="peak_threshold"
 
@@ -4081,7 +4097,7 @@ const App = () => {
 
                             <Form.Item
 
-                                label={<span>column_volume 柱体积</span>}
+                                label={<span style={{ color: 'black' }}>column_volume 柱体积</span>}
 
                                 name="column_volume"
 
@@ -4111,7 +4127,7 @@ const App = () => {
 
                             <Form.Item
 
-                                label={<span>sg_window 平滑窗口宽度</span>}
+                                label={<span style={{ color: 'black' }}>sg_window 平滑窗口宽度</span>}
 
                                 name="sg_window"
 
@@ -4147,7 +4163,7 @@ const App = () => {
 
                             <Form.Item
 
-                                label={<span>sg_order 平滑多项式阶数</span>}
+                                label={<span style={{ color: 'black' }}>sg_order 平滑多项式阶数</span>}
 
                                 name="sg_order"
 
@@ -4185,7 +4201,7 @@ const App = () => {
 
                                 label={
 
-                                    <span>baseline_window 基线窗口宽度</span>
+                                    <span style={{ color: 'black' }}>baseline_window 基线窗口宽度</span>
 
                                 }
 
@@ -4223,7 +4239,7 @@ const App = () => {
 
                             <Form.Item
 
-                                label={<span>k_factor 灵敏度系数K</span>}
+                                label={<span style={{ color: 'black' }}>k_factor 灵敏度系数K</span>}
 
                                 name="k_factor"
 

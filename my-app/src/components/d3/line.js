@@ -210,22 +210,20 @@ const renderVertical = (svg, xScale, height) => {
         timeStart: parseTime(d.time_start),
         timeEnd: parseTime(d.time_end),
     }));
-    // 鐢熸垚鍨傜洿铏氱嚎鐨勮矾寰勭敓鎴愬櫒
     const lineVertical = (d) => {
         return `M${xScale(d.timeEnd)},${height}V${0}`;
     };
-    // 缁樺埗鍨傜洿铏氱嚎
+    
     svg.selectAll(".vertical-line")
         .data(parsedData)
         .enter()
         .append("path")
         .attr("class", "vertical-line")
-        .attr("stroke", "#546e7a")
+        .attr("stroke", "#ffffff")
         .attr("stroke-width", 1.5)
-        .attr("stroke-dasharray", "5,5") // 璁剧疆铏氱嚎鏍峰紡
+        .attr("stroke-dasharray", "5,5") 
         .attr("d", lineVertical)
         .style("opacity", 0.8);
-    // //鐢熸垚flag
     svg.selectAll(".flag-text")
         .data(parsedData)
         .enter()
@@ -522,7 +520,7 @@ const LineChart = (props) => {
     // );
 
     data = props.data;
-    // console.log("data.props", props.data);
+    console.log("0330 data.props", props);
     num = props.num;
     let cleanFlag = props.clean_flag;
     linePoint = props.linePoint;

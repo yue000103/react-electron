@@ -673,7 +673,23 @@ const Method = () => {
         setMethodID((preNum) => methodId);
 
         console.log("methodId :", methodId);
-        if (methodId) {
+
+        // 优先从 localStorage 的 experiment-state 中读取 currentMethod
+        const experimentRaw = localStorage.getItem("chromatograph:experiment-state:v1");
+        let restoredFromStorage = false;
+        if (experimentRaw) {
+            try {
+                const experimentState = JSON.parse(experimentRaw);
+                if (experimentState.currentMethod && Object.keys(experimentState.currentMethod).length > 0) {
+                    applyMethod(experimentState.currentMethod);
+                    restoredFromStorage = true;
+                }
+            } catch (e) {
+                console.log("Parse experiment state failed", e);
+            }
+        }
+
+        if (!restoredFromStorage && methodId) {
             setCurrentMethodOperate({ method_id: Number(methodId) }).then(
                 (response) => {
                     if (!response.error) {

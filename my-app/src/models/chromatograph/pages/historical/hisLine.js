@@ -312,7 +312,7 @@ const LineChart = (props) => {
         svg.selectAll("*").remove();
 
         const width = dimensions.width - 300;
-        const height = dimensions.height - 820;
+        const height = dimensions.height - 500;
         const margin = { top: 0, right: width, bottom: 10, left: 0 };
 
         const zoomedWidth = width * zoomState.k;
