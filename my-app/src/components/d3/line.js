@@ -809,7 +809,7 @@ const LineChart = (props) => {
                     <Col span={17} style={{ height: "0rem" }}></Col>
                     <Col span={2} style={{ height: "0rem" }}>
                     <div className="zoomBtnGroup">
-                        <Button
+                        {/* <Button
                             icon={<PlusOutlined />}
                             onClick={handleZoomIn}
                             className="zoomBtn"
@@ -825,7 +825,7 @@ const LineChart = (props) => {
                             }}
                             icon={<MinusOutlined />}
                             onClick={handleZoomOut}
-                        />
+                        /> */}
                         </div>
                     </Col>
                     {/* <Col

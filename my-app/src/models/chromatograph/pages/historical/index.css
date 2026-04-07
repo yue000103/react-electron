@@ -33,15 +33,15 @@
 }
 
 .history-card:hover {
-  border-color: rgba(0, 229, 255, 0.35);
-  box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);
+  border-color: rgba(var(--brand-rgb), 0.35);
+  box-shadow: 0 0 10px rgba(var(--brand-rgb), 0.1);
 }
 
 /* 时间标题 */
 .history-card__time {
   font-size: 13px;
   font-weight: 700;
-  color: var(--accent-cyan, #00E5FF);
+  color: var(--brand-color, #00E5FF);
   font-family: 'Courier New', monospace;
 }
 

@@ -3408,483 +3408,257 @@ const App = () => {
             </Layout>
 
             <Modal
-
                 title="初始化"
-
                 open={openStart}
-
                 onOk={start}
-
                 confirmLoading={confirmLoading}
-
                 onCancel={handleCancel}
-
-                styles={{ content: { backgroundColor: '#1A2030', color: '#fff' }, header: { backgroundColor: '#1A2030', color: '#fff' }, body: { backgroundColor: '#1A2030', color: '#fff' }, footer: { backgroundColor: '#1A2030' } }}
-                closeIcon={<span style={{ color: '#fff' }}>✕</span>}
-             
-
+                className="industrial-modal"
+                centered
             >
-
                 <Form
-
                     form={form}
-
-                    labelCol={{
-
-                        span: 4,
-
-                    }}
-
-                    wrapperCol={{
-
-                        span: 14,
-
-                    }}
-
+                    labelCol={{ span: 6 }}
+                    wrapperCol={{ span: 16 }}
                     layout="horizontal"
-
-                    style={{
-
-                        
-                        backgroundColor:"#1A2030"
-
-                    }}
-
                     initialValues={{
-
                         tube_id: inputTubeId,
-
                         module_id: inputModuleId,
-
                         detector_zeroing: true,
-
                         waste_mode: false,
-
                     }}
-                    
-
                 >
-
                     <Form.Item
-
-                        label="检测器清零："
-
+                        label="检测器清零"
                         name="detector_zeroing"
-
                         valuePropName="checked"
-
                     >
-
-                        <Checkbox></Checkbox>
-
+                        <Checkbox />
                     </Form.Item>
-
                     <Form.Item
-
-                        label="废弃模式："
-
+                        label="废弃模式"
                         name="waste_mode"
-
                         valuePropName="checked"
-
                     >
-
-                        <Checkbox></Checkbox>
-
+                        <Checkbox />
                     </Form.Item>
-
-                    <Form.Item label="开始模块：">
-
-                        <Form.Item name="module_id" >
-
+                    <Form.Item label="开始模块">
+                        <Form.Item name="module_id" noStyle>
                             <InputNumber
-
                                 min={minModuleId}
-
                                 max={maxModuleId}
-
                                 onChange={handleInputNumberChange}
-
+                                style={{ width: "100%" }}
                             />
-
                         </Form.Item>
-
                     </Form.Item>
-
-                    <Form.Item label="开始试管：">
-
-                        <Form.Item name="tube_id" >
-
+                    <Form.Item label="开始试管">
+                        <Form.Item name="tube_id" noStyle>
                             <InputNumber
-
                                 min={minTubeId}
-
                                 max={maxTubeId}
-
                                 onChange={handleInputNumberChange}
-
+                                style={{ width: "100%" }}
                             />
-
                         </Form.Item>
-
                     </Form.Item>
-
                 </Form>
-
             </Modal>
 
             <Spin spinning={spinning} fullscreen tip="正在上传......" />
 
             <Modal
-
                 open={openReset}
-
                 onOk={handleOkRest}
-
                 confirmLoading={confirmLoading}
-
                 onCancel={handleCancelReset}
-
                 okText="保存"
-
                 cancelText="不保存"
-
                 title="复位确认"
-
                 className="industrial-warning-modal"
-
                 centered
-
             >
-
                 <p>是否保存实验数据?</p>
-
             </Modal>
 
             <Modal
-
                 title="暂停设置"
-
                 open={openPause}
-
                 onOk={handlePauseOk}
-
                 onCancel={handlePauseCancel}
-
+                className="industrial-modal"
+                centered
             >
-
                 <Form form={pauseForm} layout="vertical">
-
                     <Form.Item
-
                         label="Value"
-
                         name="value"
-
                         rules={[{ required: true, message: "请输入value值" }]}
-
                     >
-
                         <InputNumber style={{ width: "100%" }} />
-
                     </Form.Item>
-
                     <Form.Item
-
                         label="New Rate"
-
                         name="new_rate"
-
                         rules={[
 
                             { required: true, message: "请输入new_rate值" },
-
                         ]}
-
                     >
-
                         <InputNumber style={{ width: "100%" }} />
-
                     </Form.Item>
-
                 </Form>
-
             </Modal>
 
             <Modal
-
                 title="手动保持"
-
                 open={openManualHold}
-
                 onCancel={() => setOpenManualHold(false)}
-
+                className="industrial-modal"
+                centered
                 footer={null}
-
             >
-
                 <div style={{ textAlign: "right" }}>
-
                     <Button
-
                         type="primary"
-
                         onClick={() => {
-
                             SetManualHoldAPI({ hold_enabled: true }).then(
-
                                 () => {
-
                                     messageApi.open({
-
                                         type: "success",
-
                                         content: "已启用手动保持",
-
                                     });
-
                                     setOpenManualHold(false);
-
                                 }
-
                             );
-
                         }}
-
                         style={{ marginRight: 8 }}
-
                     >
-
                         开启
-
                     </Button>
-
                     <Button
-
                         onClick={() => {
-
                             SetManualHoldAPI({ hold_enabled: false }).then(
-
                                 () => {
-
                                     messageApi.open({
-
                                         type: "success",
-
                                         content: "已关闭手动保持",
-
                                     });
-
                                     setOpenManualHold(false);
-
                                 }
-
                             );
-
                         }}
-
                     >
-
                         关闭
-
                     </Button>
-
                 </div>
-
             </Modal>
 
             <Modal
-
                 title="废弃模式"
-
                 open={openWasteModel}
-
                 onCancel={() => setOpenWasteModel(false)}
-
+                className="industrial-modal"
+                centered
                 footer={null}
-
             >
-
                 <div style={{ textAlign: "right" }}>
-
                     <Button
-
                         type="primary"
-
                         onClick={() => {
-
                             wasteMode({ waste_mode: true }).then(() => {
-
                                 messageApi.open({
-
                                     type: "success",
-
                                     content: "已启用废弃模式",
-
                                 });
-
                                 setOpenWasteModel(false);
-
                             });
-
                         }}
-
                         style={{ marginRight: 8 }}
-
                     >
-
                         开启
-
                     </Button>
-
                     <Button
-
                         onClick={() => {
-
                             wasteMode({ waste_mode: false }).then(() => {
-
                                 messageApi.open({
-
                                     type: "success",
-
                                     content: "已关闭废弃模式",
-
                                 });
-
                                 setOpenWasteModel(false);
-
                             });
-
                         }}
-
                     >
-
                         关闭
-
                     </Button>
-
                 </div>
-
             </Modal>
 
             <Modal
-
                 title="润柱"
-
                 open={openEquilibration}
-
                 onCancel={handleEquilibrationStop}
-
+                className="industrial-modal"
+                centered
                 footer={null}
-
             >
-
                 <div style={{ textAlign: "center", padding: "20px" }}>
-
                     <p>是否开始润柱？</p>
-
                     <div style={{ marginTop: "20px" }}>
-
                         <Button
-
                             type="primary"
-
                             onClick={handleEquilibrationStart}
-
                             loading={equilibrationLoading}
-
                             style={{ marginRight: "10px" }}
-
                         >
-
                             开始
-
                         </Button>
-
                         <Button onClick={handleEquilibrationStop}>结束</Button>
-
                     </div>
-
                 </div>
-
             </Modal>
 
             <Modal
-
                 title="吹扫系统"
-
                 open={purgeColumn}
-
                 onCancel={handlePurgeColumnStop}
-
+                className="industrial-modal"
+                centered
                 footer={null}
-
             >
-
                 <div style={{ textAlign: "center", padding: "20px" }}>
-
                     <p>是否开始吹扫？</p>
-
                     <div style={{ marginTop: "20px" }}>
-
                         <Button
-
                             type="primary"
-
                             onClick={handlePurgeColumnStart}
-
                             loading={purgeColumnLoading}
-
                             style={{ marginRight: "10px" }}
-
                         >
-
                             开始
-
                         </Button>
-
                         <Button onClick={handlePurgeColumnStop}>结束</Button>
-
                     </div>
-
                 </div>
-
             </Modal>
 
             <Modal
-
                 title="自动梯度参数设置"
-
                 open={openAutoGradientModal}
-
                 onOk={handleAutoGradientOk}
-
                 onCancel={handleAutoGradientCancel}
-
                 confirmLoading={autoGradientLoading}
-
                 okText="保存"
-
                 cancelText="取消"
-
                 width={800}
-
-                styles={{ header: { color: 'black' }, body: { color: 'black' } }}
-
+                className="industrial-modal"
+                centered
             >
-
                 <Form
-
                     form={autoGradientForm}
-
                     layout="vertical"
-
-                    style={{ color: 'black' }}
-
                     initialValues={{
-
                         start_ratio: 0,
-
                         end_ratio: 100,
 
                         n1_volumes: 1,
@@ -3913,7 +3687,7 @@ const App = () => {
 
                             <Form.Item
 
-                                label={<span style={{ color: 'black' }}>start_ratio 起始比例</span>}
+                                label="start_ratio 起始比例"
 
                                 name="start_ratio"
 
@@ -3951,7 +3725,7 @@ const App = () => {
 
                             <Form.Item
 
-                                label={<span style={{ color: 'black' }}>end_ratio 终止比例</span>}
+                                label="end_ratio 终止比例"
 
                                 name="end_ratio"
 
@@ -3989,7 +3763,7 @@ const App = () => {
 
                             <Form.Item
 
-                                label={<span style={{ color: 'black' }}>n1_volumes N1柱体积倍数</span>}
+                                label="n1_volumes N1柱体积倍数"
 
                                 name="n1_volumes"
 
@@ -4025,7 +3799,7 @@ const App = () => {
 
                             <Form.Item
 
-                                label={<span style={{ color: 'black' }}>gradient_rate 梯度速率</span>}
+                                label="gradient_rate 梯度速率"
 
                                 name="gradient_rate"
 
@@ -4061,7 +3835,7 @@ const App = () => {
 
                             <Form.Item
 
-                                label={<span style={{ color: 'black' }}>peak_threshold 峰检测阈值</span>}
+                                label="peak_threshold 峰检测阈值"
 
                                 name="peak_threshold"
 
@@ -4097,7 +3871,7 @@ const App = () => {
 
                             <Form.Item
 
-                                label={<span style={{ color: 'black' }}>column_volume 柱体积</span>}
+                                label="column_volume 柱体积"
 
                                 name="column_volume"
 
@@ -4127,7 +3901,7 @@ const App = () => {
 
                             <Form.Item
 
-                                label={<span style={{ color: 'black' }}>sg_window 平滑窗口宽度</span>}
+                                label="sg_window 平滑窗口宽度"
 
                                 name="sg_window"
 
@@ -4163,7 +3937,7 @@ const App = () => {
 
                             <Form.Item
 
-                                label={<span style={{ color: 'black' }}>sg_order 平滑多项式阶数</span>}
+                                label="sg_order 平滑多项式阶数"
 
                                 name="sg_order"
 
@@ -4199,11 +3973,7 @@ const App = () => {
 
                             <Form.Item
 
-                                label={
-
-                                    <span style={{ color: 'black' }}>baseline_window 基线窗口宽度</span>
-
-                                }
+                                label="baseline_window 基线窗口宽度"
 
                                 name="baseline_window"
 
@@ -4239,7 +4009,7 @@ const App = () => {
 
                             <Form.Item
 
-                                label={<span style={{ color: 'black' }}>k_factor 灵敏度系数K</span>}
+                                label="k_factor 灵敏度系数K"
 
                                 name="k_factor"
 

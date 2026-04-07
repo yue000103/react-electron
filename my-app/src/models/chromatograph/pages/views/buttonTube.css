@@ -91,12 +91,12 @@
 
 /* 影刃：高频响应 hover — 轻快待命感 */
 .button-div .card:hover {
-  border-color: rgba(0, 229, 255, 0.4);
+  border-color: rgba(var(--brand-rgb), 0.4);
   background:
-    linear-gradient(135deg, rgba(0, 229, 255, 0.04) 0%, transparent 50%, rgba(0, 229, 255, 0.02) 100%),
+    linear-gradient(135deg, rgba(var(--brand-rgb), 0.04) 0%, transparent 50%, rgba(var(--brand-rgb), 0.02) 100%),
     var(--card-bg, #151A25);
   box-shadow:
-    0 0 8px rgba(0, 229, 255, 0.12),
+    0 0 8px rgba(var(--brand-rgb), 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
   transform: translateY(-1px);
 }
@@ -105,7 +105,7 @@
 .button-div .card:active {
   transform: scale(0.95);
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
-  border-color: rgba(0, 229, 255, 0.2);
+  border-color: rgba(var(--brand-rgb), 0.2);
   background: var(--card-bg, #151A25);
   transition-duration: 0.03s;
 }
@@ -114,27 +114,27 @@
   cursor: pointer;
 }
 
-/* 影刃：全局文字白色化 — 确保深色背板下绝对清晰 */
+/* 影刃：全局文字色 — 确保深色背板下绝对清晰 */
 .statusClass {
   font-size: 14px;
   font-weight: 600;
-  color: #FFFFFF !important;
+  color: var(--text-primary) !important;
 }
 
 .listClass {
   font-size: 14px;
   font-weight: 500;
-  color: #FFFFFF !important;
+  color: var(--text-primary) !important;
 }
 
 .button-div .card span,
 .button-div .card div,
 .button-div .card p {
-  color: #FFFFFF !important;
+  color: var(--text-primary) !important;
 }
 
 .ant-rate {
-  color: rgba(0, 229, 255, 0.5);
+  color: rgba(var(--brand-rgb), 0.5);
   font-size: 14px;
 }
 
@@ -173,13 +173,13 @@
   position: relative;
 }
 
-/* --- 1. 选中态：青色外发光 --- */
+/* --- 1. 选中态：品牌色外发光 --- */
 .buttonTubes.isSelected {
-  outline: 2px solid var(--accent-cyan, #00E5FF);
+  outline: 2px solid var(--brand-color, #00E5FF);
   outline-offset: 1px;
   box-shadow:
-    0 0 10px rgba(0, 229, 255, 0.3),
-    0 0 4px rgba(0, 229, 255, 0.15);
+    0 0 10px rgba(var(--brand-rgb), 0.3),
+    0 0 4px rgba(var(--brand-rgb), 0.15);
   border-radius: 50%;
 }
 
@@ -188,7 +188,7 @@
   position: absolute;
   inset: -3px;
   border-radius: 50%;
-  border: 1px solid rgba(0, 229, 255, 0.15);
+  border: 1px solid rgba(var(--brand-rgb), 0.15);
   pointer-events: none;
   animation: tube-select-ring 1.5s ease-in-out infinite;
 }
@@ -219,20 +219,20 @@
   box-shadow: none;
 }
 
-/* 正在执行的任务管 — 青色呼吸圆点 */
+/* 正在执行的任务管 — 品牌色呼吸圆点 */
 .buttonTubes.hasTask.taskRunning::before {
-  background: var(--accent-cyan, #00E5FF);
-  box-shadow: 0 0 6px rgba(0, 229, 255, 0.6);
+  background: var(--brand-color, #00E5FF);
+  box-shadow: 0 0 6px rgba(var(--brand-rgb), 0.6);
   animation: tube-task-dot-pulse 1.5s ease-in-out infinite;
 }
 
 @keyframes tube-task-dot-pulse {
   0%, 100% {
-    box-shadow: 0 0 4px rgba(0, 229, 255, 0.4);
+    box-shadow: 0 0 4px rgba(var(--brand-rgb), 0.4);
     transform: scale(1);
   }
   50% {
-    box-shadow: 0 0 10px rgba(0, 229, 255, 0.8);
+    box-shadow: 0 0 10px rgba(var(--brand-rgb), 0.8);
     transform: scale(1.2);
   }
 }
@@ -267,9 +267,9 @@
 }
 
 .tube-task-badge--running {
-  background: var(--accent-cyan, #00E5FF);
+  background: var(--brand-color, #00E5FF);
   color: #0B101E;
-  box-shadow: 0 0 6px rgba(0, 229, 255, 0.5);
+  box-shadow: 0 0 6px rgba(var(--brand-rgb), 0.5);
   animation: tube-task-dot-pulse 1.5s ease-in-out infinite;
 }
 

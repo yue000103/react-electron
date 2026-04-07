@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Form, Input, InputNumber, Divider, Button, Popconfirm, Spin, message } from "antd";
+import { Form, Input, InputNumber, Divider, Button, Popconfirm, Spin, message, Switch } from "antd";
 import { SaveOutlined, DeleteOutlined } from "@ant-design/icons";
 import "./index.css";
 import {
@@ -7,8 +7,9 @@ import {
     updateStockSolution,
     getCollectionBottles,
     updateCollectionBottle,
-   
+
 } from "../../api/settings";
+import { useTheme } from "../../theme/ThemeContext";
 
 const STORAGE_KEY = "chromatograph:system-settings:v1";
 
@@ -41,6 +42,7 @@ const SystemSettings = () => {
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [selectedVolume, setSelectedVolume] = useState(15);
+    const { mode, isDark, toggleTheme } = useTheme();
 
     // 页面加载时拉取远端数据，如果远端不可用则回退 localStorage
     useEffect(() => {
@@ -258,6 +260,26 @@ const SystemSettings = () => {
                     <Button type="primary" size="large" icon={<SaveOutlined />} onClick={handleSave} loading={saving}>
                         保存设置
                     </Button>
+                </div>
+
+                {/* 主题切换 */}
+                <div className="systemSettings__sectionHeader" style={{ marginTop: 16 }}>
+                    <Divider className="systemSettings__divider" orientation="left">
+                        <span className="systemSettings__section-id">03</span> 主题模式
+                    </Divider>
+                </div>
+                <div className="theme-toggle-row">
+                    <span className="theme-toggle-label">
+                        {isDark ? "暗色模式" : "明亮模式"}
+                    </span>
+                    <div className="industrial-toggle">
+                        <Switch
+                            checked={!isDark}
+                            onChange={toggleTheme}
+                            checkedChildren="明亮"
+                            unCheckedChildren="暗色"
+                        />
+                    </div>
                 </div>
             </Spin>
         </div>

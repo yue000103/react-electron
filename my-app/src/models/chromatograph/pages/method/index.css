@@ -5,7 +5,7 @@
   padding: 8px;
   overflow-y: auto;
   height: 100%;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 /* 操作栏 - 影刃：仪表控制台 */
@@ -46,9 +46,9 @@
   font-weight: 700;
   padding: 1px 6px;
   border-radius: 3px;
-  background: rgba(0, 229, 255, 0.12);
-  color: var(--accent-cyan, #00E5FF);
-  border: 1px solid rgba(0, 229, 255, 0.25);
+  background: rgba(var(--brand-rgb), 0.12);
+  color: var(--brand-color, #00E5FF);
+  border: 1px solid rgba(var(--brand-rgb), 0.25);
   margin-right: 6px;
   letter-spacing: 1px;
 }
@@ -147,9 +147,9 @@
 
 /* 模块编号颜色 — 视觉引导 */
 .module-header--01 .module-header__number {
-  background: rgba(0, 229, 255, 0.15);
-  color: #00E5FF;
-  border: 1px solid rgba(0, 229, 255, 0.3);
+  background: rgba(var(--brand-rgb), 0.15);
+  color: var(--brand-color);
+  border: 1px solid rgba(var(--brand-rgb), 0.3);
 }
 .module-header--02 .module-header__number {
   background: rgba(52, 152, 219, 0.15);
@@ -170,8 +170,8 @@
 /* 模块对应的 Focus 外发光颜色 */
 .module--01 .ant-input:focus,
 .module--01 .ant-input-number:focus-within {
-  border-color: #00E5FF !important;
-  box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.15) !important;
+  border-color: var(--brand-color) !important;
+  box-shadow: 0 0 0 2px rgba(var(--brand-rgb), 0.15) !important;
 }
 .module--02 .ant-input:focus,
 .module--02 .ant-input-number:focus-within {
@@ -304,7 +304,7 @@
 .ant-form-item-label > label {
   font-size: 13px;
   font-weight: 500;
-  color: #FFFFFF !important;
+  color: var(--text-primary) !important;
 }
 
 .ant-form-item-required::before {
@@ -318,7 +318,7 @@
   height: 40px !important;
   min-height: 40px;
   font-size: 14px;
-  background: rgba(0, 0, 0, 0.2) !important;
+  background: var(--input-bg) !important;
   border-color: var(--border-color) !important;
   color: var(--text-primary) !important;
 }

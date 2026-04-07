@@ -10,6 +10,8 @@ const App = (props) => {
     const [form] = Form.useForm();
     const [flowRateDefault, setFlowRateDefault] = useState(0);
     const [lastData, setLastData] = useState([]);
+    const pumpAName = props.pumpALabel || "泵A";
+    const pumpBName = props.pumpBLabel || "泵B";
 
     const onFinish = (values) => {
         props.onValuesChange(values);
@@ -132,10 +134,10 @@ const App = (props) => {
                                 </Row>
                             </div>
                             <Space style={{ display: "flex", marginBottom: 4, paddingLeft: 0 }}>
-                                <div style={{ width: 150, fontWeight: 600, color: "#fff", textAlign: "center" }}>时间</div>
-                                <div style={{ width: 160, fontWeight: 600, color: "#fff", textAlign: "center" }}>泵A速度</div>
-                                <div style={{ width: 160, fontWeight: 600, color: "#fff", textAlign: "center" }}>泵B速度</div>
-                                <div style={{ width: 160, fontWeight: 600, color: "#fff", textAlign: "center" }}>总流速</div>
+                                <div style={{ width: 150, fontWeight: 600, color: "var(--text-primary)", textAlign: "center" }}>时间</div>
+                                <div style={{ width: 160, fontWeight: 600, color: "var(--text-primary)", textAlign: "center" }}>{pumpAName}</div>
+                                <div style={{ width: 160, fontWeight: 600, color: "var(--text-primary)", textAlign: "center" }}>{pumpBName}</div>
+                                <div style={{ width: 160, fontWeight: 600, color: "var(--text-primary)", textAlign: "center" }}>总流速</div>
                             </Space>
                             {fields.map(({ key, name, ...restField }) => (
                                 <Space

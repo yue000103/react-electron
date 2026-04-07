@@ -972,9 +972,9 @@ const Method = () => {
                                     </Form.Item>
                                 </Col>
                                 <Col span={12}>
-                                    <Form.Item label="收集体积 (mL)" name="drainSpeed">
+                                    {/* <Form.Item label="收集体积 (mL)" name="drainSpeed">
                                         <InputNumber size="large" style={{ width: "100%" }} min={0} step={0.1}  onChange={(v) => handleRetainVolumeChange(v)} />
-                                    </Form.Item>
+                                    </Form.Item> */}
                                 </Col>
                             </Row>
                         </Form>
@@ -988,8 +988,8 @@ const Method = () => {
                         </Divider>
                         <div className="elution-mode-selector">
                             <Radio.Group onChange={onChange} value={value} size="large">
-                                <Radio value={1} style={{color:"white"}}>等度洗脱</Radio>
-                                <Radio value={2} style={{color:"white"}}>二元高压梯度</Radio>
+                                <Radio value={1} style={{color:"var(--text-primary)"}}>等度洗脱</Radio>
+                                <Radio value={2} style={{color:"var(--text-primary)"}}>二元高压梯度</Radio>
                             </Radio.Group>
                         </div>
                         {value === 1 && (
@@ -1014,7 +1014,7 @@ const Method = () => {
                                     <DynamicLine widthLine={400} heightLine={200} samplingTime={samplingTime} pressure={pressure} />
                                 </div>
                                 
-                                <DynamicForm flowRateDefault={flowRateDefault} pressure={pressure} onValuesChange={handleValuesChange} />
+                                <DynamicForm flowRateDefault={flowRateDefault} pressure={pressure} onValuesChange={handleValuesChange} pumpALabel={pumpALabel} pumpBLabel={pumpBLabel} />
                             </div>
                         )}
                     </div>

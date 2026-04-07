@@ -1,9 +1,11 @@
 :root {
   /* === 工业暗黑配色 · 影刃出品 === */
+  /* 注意：以下变量由 ThemeProvider 动态覆盖，此处为默认暗色值 */
 
   /* 品牌/强调色系 */
   --brand-color: #00E5FF;
   --brand-secondary: #00B8D4;
+  --brand-rgb: 0, 229, 255;
   --accent-cyan: #00E5FF;
   --accent-orange: #FF9F1C;
   --accent-green: #39FF14;
@@ -16,6 +18,7 @@
   --neutral-color: #4A5568;
 
   /* 背景色系 - 深空工业风 */
+  --body-bg: #06080F;
   --layout-bg: #0B101E;
   --card-bg: #151A25;
   --hover-bg: #1C2333;
@@ -48,9 +51,34 @@
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --glow-brand: 0 0 15px rgba(0, 229, 255, 0.3);
   --glow-cyan: 0 0 15px rgba(0, 229, 255, 0.3);
   --glow-orange: 0 0 15px rgba(255, 159, 28, 0.3);
   --glow-green: 0 0 15px rgba(57, 255, 20, 0.3);
+
+  /* 激活态渐变 */
+  --brand-bg-dark: #002A33;
+  --brand-bg-mid: #00404D;
+
+  /* 头部渐变 */
+  --header-bg-1: #0D1320;
+  --header-bg-2: #151D2E;
+  --header-bg-3: #1A2540;
+
+  /* 底栏渐变 */
+  --bar-bg-1: #0A0E18;
+  --bar-bg-2: #111827;
+
+  /* 面板渐变 */
+  --panel-bg-1: #1A2030;
+  --panel-bg-2: #151A25;
+
+  /* 输入框 */
+  --input-bg: rgba(0, 0, 0, 0.2);
+
+  /* 开关 checked */
+  --switch-checked-bg-1: #003D47;
+  --switch-checked-bg-2: #00262E;
 
   /* 屏幕尺寸 - 竖屏 4:5 */
   --target-screen-width: 600px;
@@ -68,7 +96,7 @@ body, html, #root {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #06080F;
+  background-color: var(--body-bg);
 }
 
 /* ===== 主容器：全屏自适应仪器屏幕 ===== */
@@ -82,18 +110,18 @@ body, html, #root {
   overflow: hidden;
   position: relative;
   /* 金属质感边框 */
-  border: 2px solid #2A3444;
+  border: 2px solid var(--border-color);
   border-image: linear-gradient(
     180deg,
-    #3A4A5C 0%,
-    #1E2836 40%,
-    #2A3444 60%,
-    #3A4A5C 100%
+    var(--border-color) 0%,
+    var(--border-color-light) 40%,
+    var(--border-color) 60%,
+    var(--border-color) 100%
   ) 1;
   /* 屏幕外发光 - 模拟仪器背光溢出 */
   box-shadow:
-    0 0 30px rgba(0, 229, 255, 0.08),
-    0 0 60px rgba(0, 229, 255, 0.04),
+    0 0 30px rgba(var(--brand-rgb), 0.08),
+    0 0 60px rgba(var(--brand-rgb), 0.04),
     inset 0 0 30px rgba(0, 0, 0, 0.3);
 }
 
@@ -105,19 +133,19 @@ body, html, #root {
   /* 暗金属渐变 */
   background: linear-gradient(
     135deg,
-    #0D1320 0%,
-    #151D2E 30%,
-    #1A2540 60%,
-    #0D1320 100%
+    var(--header-bg-1) 0%,
+    var(--header-bg-2) 30%,
+    var(--header-bg-3) 60%,
+    var(--header-bg-1) 100%
   ) !important;
   padding: 0 12px;
   height: var(--header-height) !important;
   min-height: var(--header-height);
   /* 底部发光分割线 */
   box-shadow:
-    0 1px 0 rgba(0, 229, 255, 0.25),
+    0 1px 0 rgba(var(--brand-rgb), 0.25),
     0 2px 12px rgba(0, 0, 0, 0.5);
-  border-bottom: 1px solid rgba(0, 229, 255, 0.15);
+  border-bottom: 1px solid rgba(var(--brand-rgb), 0.15);
   flex-shrink: 0;
   z-index: 10;
 }
@@ -136,7 +164,7 @@ body, html, #root {
 
 .brandLogo {
   height: 20px;
-  filter: brightness(1.2) drop-shadow(0 0 4px rgba(0, 229, 255, 0.4));
+  filter: brightness(1.2) drop-shadow(0 0 4px rgba(var(--brand-rgb), 0.4));
 }
 
 .brandInfo {
@@ -147,13 +175,13 @@ body, html, #root {
   margin: 0;
   font-size: 0.95rem;
   font-weight: 700;
-  color: #E8ECF1;
+  color: var(--brand-color);
   letter-spacing: 1px;
   /* 霓虹发光 */
   text-shadow:
-    0 0 6px rgba(0, 229, 255, 0.6),
-    0 0 12px rgba(0, 229, 255, 0.3),
-    0 0 24px rgba(0, 229, 255, 0.15);
+    0 0 6px rgba(var(--brand-rgb), 0.6),
+    0 0 12px rgba(var(--brand-rgb), 0.3),
+    0 0 24px rgba(var(--brand-rgb), 0.15);
 }
 
 .brandInfo p {
@@ -167,7 +195,7 @@ body, html, #root {
   color: var(--accent-cyan);
   font-weight: 500;
   font-size: 0.85rem;
-  text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+  text-shadow: 0 0 8px rgba(var(--brand-rgb), 0.4);
 }
 
 /* ===== 中间：核心操作区（独立滚动） ===== */
@@ -206,8 +234,8 @@ body, html, #root {
   min-height: var(--bottom-bar-height);
   flex-shrink: 0;
   /* 暗金属底座 */
-  background: linear-gradient(0deg, #0A0E18 0%, #111827 100%);
-  border-top: 1px solid rgba(0, 229, 255, 0.12);
+  background: linear-gradient(0deg, var(--bar-bg-1) 0%, var(--bar-bg-2) 100%);
+  border-top: 1px solid rgba(var(--brand-rgb), 0.12);
   padding: 0 8px;
   gap: 8px;
   z-index: 10;
@@ -250,35 +278,35 @@ body, html, #root {
   border-color: rgba(255, 255, 255, 0.05);
 }
 
-/* 影刃：活跃态重绘 — 青色脉冲 */
+/* 影刃：活跃态重绘 — 品牌色脉冲 */
 .industrialBtn--active {
-  background: linear-gradient(145deg, #002A33, #00404D);
-  color: var(--accent-cyan);
-  border-color: rgba(0, 229, 255, 0.35);
+  background: linear-gradient(145deg, var(--brand-bg-dark), var(--brand-bg-mid));
+  color: var(--brand-color);
+  border-color: rgba(var(--brand-rgb), 0.35);
   box-shadow:
-    0 0 12px rgba(0, 229, 255, 0.2),
-    inset 0 0 8px rgba(0, 229, 255, 0.05);
+    0 0 12px rgba(var(--brand-rgb), 0.2),
+    inset 0 0 8px rgba(var(--brand-rgb), 0.05);
   animation: industrialBtn-pulse 2s ease-in-out infinite;
 }
 
 .industrialBtn--active:hover {
-  border-color: rgba(0, 229, 255, 0.5);
+  border-color: rgba(var(--brand-rgb), 0.5);
   box-shadow:
-    0 0 18px rgba(0, 229, 255, 0.3),
-    inset 0 0 10px rgba(0, 229, 255, 0.08);
+    0 0 18px rgba(var(--brand-rgb), 0.3),
+    inset 0 0 10px rgba(var(--brand-rgb), 0.08);
 }
 
 @keyframes industrialBtn-pulse {
   0%, 100% {
     box-shadow:
-      0 0 12px rgba(0, 229, 255, 0.2),
-      inset 0 0 8px rgba(0, 229, 255, 0.05);
+      0 0 12px rgba(var(--brand-rgb), 0.2),
+      inset 0 0 8px rgba(var(--brand-rgb), 0.05);
   }
   50% {
     box-shadow:
-      0 0 20px rgba(0, 229, 255, 0.35),
-      0 0 6px rgba(0, 229, 255, 0.15),
-      inset 0 0 10px rgba(0, 229, 255, 0.08);
+      0 0 20px rgba(var(--brand-rgb), 0.35),
+      0 0 6px rgba(var(--brand-rgb), 0.15),
+      inset 0 0 10px rgba(var(--brand-rgb), 0.08);
   }
 }
 

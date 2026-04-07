@@ -13,6 +13,7 @@ import {
     ToolOutlined,
     SettingOutlined,
 } from "@ant-design/icons";
+import { ThemeProvider } from "../theme/ThemeContext";
 
 import pkuImage from "@/assets/image/pku.png";
 import "@components/css/overlay.css";
@@ -58,6 +59,7 @@ function App() {
     };
 
     return (
+        <ThemeProvider>
         <Layout className="appShell">
             {/* 顶部：品牌栏 */}
             <Header className="appHeader">
@@ -94,6 +96,7 @@ function App() {
                 ))}
             </nav>
         </Layout>
+        </ThemeProvider>
     );
 }
 
